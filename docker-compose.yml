@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: demonet-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_DATABASE: demonet
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+  redis:
+    image: redis:7-alpine
+    container_name: demonet-redis
+    restart: always
+    ports:
+      - "6379:6379"
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: demonet-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"    # AMQP 协议端口
+      - "15672:15672"  # 管理界面
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: changeme
+volumes:
+  mysql_data:
