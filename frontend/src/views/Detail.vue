@@ -57,9 +57,24 @@ async function fetchItem() {
 
 const typeMeta = computed(() => typeMetaMap[item.value?.type] || { label: item.value?.type, emoji:'', color:'text-gray-400 bg-gray-800' })
 const info = computed(() => { try { return JSON.parse(item.value?.infoJson || '{}') } catch { return {} } })
+const hasDemo = computed(() => !!info.value.demo_url)
 const currentStatusLabel = computed(() => statusOptions.find(s => s.key === myStatus.value)?.label || '收藏')
 
 function goBack() { router.push(item.value?.type ? `/list/${item.value.type}` : '/') }
+function isEmbed(url) { return url && (url.includes('youtube.com/embed') || url.includes('player.bilibili.com')) }
+
+const videos = computed(() => info.value.videos || {})
+const videoSources = computed(() => Object.entries(videos.value).map(([k,v])=>({key:k,url:v})))
+const activeVideoUrl = ref('')
+
+watch(() => item.value, () => {
+  if (videos.value.bilibili) activeVideoUrl.value = videos.value.bilibili
+  else if (videos.value.youtube) activeVideoUrl.value = videos.value.youtube
+  else if (item.value?.mediaUrl && isEmbed(item.value.mediaUrl)) activeVideoUrl.value = item.value.mediaUrl
+  else activeVideoUrl.value = ''
+})
+
+function switchVideo(url) { activeVideoUrl.value = url }
 async function setStatus(status) {
   if (!auth.isLoggedIn) { router.push({ name:'Login', query:{ redirect:route.fullPath }}); return }
   savingStatus.value = true
@@ -92,8 +107,17 @@ const infoFields = computed(() => {
         <button @click="goBack" class="text-gray-400 hover:text-white text-sm mb-6 transition">← 返回</button>
 
         <div class="bg-gray-900 rounded-2xl border border-gray-800 overflow-visible">
-          <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl rounded-t-2xl overflow-hidden">
-            {{ typeMeta.emoji }}
+          <div class="aspect-video rounded-t-2xl overflow-hidden relative" :class="!activeVideoUrl ? 'bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : ''">
+            <iframe v-if="activeVideoUrl" :src="activeVideoUrl" class="w-full h-full" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen />
+            <span v-else>{{ typeMeta.emoji }}</span>
+            <div v-if="videoSources.length > 1" class="absolute top-3 right-3 flex gap-1 z-10">
+              <button v-for="src in videoSources" :key="src.key" @click="switchVideo(src.url)"
+                :class="activeVideoUrl===src.url ? 'bg-white/20 text-white' : 'bg-black/40 text-white/60 hover:bg-black/60'"
+                class="text-[10px] px-2 py-1 rounded backdrop-blur-sm transition">
+                {{ src.key === 'youtube' ? 'YT' : 'B站' }}
+              </button>
+            </div>
           </div>
 
           <div class="p-8">
@@ -118,6 +142,17 @@ const infoFields = computed(() => {
             </div>
 
             <p class="text-gray-300 text-base leading-relaxed mb-6">{{ item.description }}</p>
+
+            <div v-if="item.type==='game' && (hasDemo || item.externalLink)" class="flex gap-3 mb-6">
+              <a v-if="hasDemo" :href="info.demo_url" target="_blank"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-emerald-900/20">
+                🎮 免费试玩
+              </a>
+              <a v-if="item.externalLink" :href="item.externalLink" target="_blank"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white text-sm transition-all">
+                Steam 商店页 →
+              </a>
+            </div>
 
             <div v-if="infoFields.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-gray-800/50 rounded-lg">
               <div v-for="f in infoFields" :key="f[0]" class="text-center">

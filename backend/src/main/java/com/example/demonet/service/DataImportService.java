@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class DataImportService implements CommandLineRunner {
 
     private final ItemMapper itemMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     private static final Map<String, List<String>> ITEM_TAGS = Map.ofEntries(
         Map.entry("hades-2", List.of("roguelike", "action", "mythology", "indie")),
@@ -70,6 +72,8 @@ public class DataImportService implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        seedUser();
+
         if (itemMapper.selectCount(new LambdaQueryWrapper<>()) > 0) {
             log.info("Data already exists, skipping seed import.");
             return;
@@ -79,61 +83,58 @@ public class DataImportService implements CommandLineRunner {
 
         insert("game", "Hades II", "hades-2",
                 "Supergiant 最新力作，冥界公主的复仇之旅。暗黑神话 Rogue-like，每场战斗都是不一样的体验。",
-                "{\"developer\":\"Supergiant Games\",\"genre\":\"Roguelike\",\"platform\":\"PC,PS5,Xbox\"}");
-        insert("movie", "Oppenheimer", "oppenheimer",
-                "诺兰执导原子弹之父传记片。IMAX 胶片拍摄的视觉奇观，探讨科学与道德。",
-                "{\"director\":\"Christopher Nolan\",\"year\":2023,\"duration\":\"180min\"}");
+                "{\"developer\":\"Supergiant Games\",\"genre\":\"Roguelike\",\"platform\":\"PC,PS5,Xbox\",\"demo_available\":true,\"demo_url\":\"steam://install/2846690\",\"videos\":{\"youtube\":\"https://www.youtube.com/embed/TUOERgENrVs\",\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1Wx4y1W7Gh\"}}",
+                "https://picsum.photos/seed/hades2/600/400", "https://store.steampowered.com/app/1145350/", null);
+        insert("movie", "奥本海默", "oppenheimer",
+                "克里斯托弗·诺兰执导的原子弹之父传记片。IMAX 胶片拍摄的视觉奇观，探讨科学与道德。",
+                "{\"director\":\"Christopher Nolan\",\"year\":2023,\"duration\":\"180min\",\"genre\":\"剧情, 历史, 惊悚\",\"trailer\":\"https://www.youtube.com/embed/uYPbbksJxIg\",\"videos\":{\"youtube\":\"https://www.youtube.com/embed/uYPbbksJxIg\",\"bilibili\":\"\"}}",
+                "https://image.tmdb.org/t/p/w500/a6v21Mgz2w6OQL7ezkQxGbGA92W.jpg", "https://www.themoviedb.org/movie/872585", null);
         insert("game", "Black Myth: Wukong", "black-myth-wukong",
                 "游戏科学工作室开发的国产 ARPG 大作，基于西游记改编。",
-                "{\"developer\":\"游戏科学\",\"genre\":\"ARPG\",\"platform\":\"PC,PS5\"}");
-        insert("anime", "Dandadan", "dandadan",
-                "龙幸伸的超自然战斗喜剧漫画改编，幽灵 vs 外星人。",
-                "{\"studio\":\"Science SARU\",\"episodes\":12,\"year\":2024}");
-        insert("boardgame", "Ark Nova", "ark-nova",
-                "打造一个成功的动物园！手牌管理与板块放置的完美结合。BGG 排名前 5。",
-                "{\"players\":\"1-4\",\"playtime\":\"90-150min\",\"weight\":3.7}");
-        insert("game", "Elden Ring: Nightreign", "elden-ring-nightreign",
-                "FromSoftware 全新合作生存玩法。黑夜降临，三人协力挑战三天循环的生存战。",
-                "{\"developer\":\"FromSoftware\",\"genre\":\"Survival RPG\",\"platform\":\"PC,PS5,Xbox\"}");
+                "{\"developer\":\"游戏科学\",\"genre\":\"ARPG\",\"platform\":\"PC,PS5\",\"demo_available\":true}",
+                "https://picsum.photos/seed/wukong/600/400", "https://store.steampowered.com/app/2358720/",
+                "steam://install/2581550");
         insert("movie", "Dune: Part Two", "dune-part-two",
                 "维伦纽瓦史诗续作。保罗·厄崔迪与弗雷曼人联合，展开对银河的复仇之战。",
-                "{\"director\":\"Denis Villeneuve\",\"year\":2024,\"duration\":\"166min\"}");
+                "{\"director\":\"Denis Villeneuve\",\"year\":2024,\"duration\":\"166min\"}",
+                "https://picsum.photos/seed/dune2/600/400", null, null);
+        insert("game", "Elden Ring: Nightreign", "elden-ring-nightreign",
+                "FromSoftware 全新合作生存玩法。黑夜降临，三人协力挑战三天循环的生存战。",
+                "{\"developer\":\"FromSoftware\",\"genre\":\"Survival RPG\",\"platform\":\"PC,PS5,Xbox\",\"demo_available\":false}",
+                "https://picsum.photos/seed/elden/600/400", "https://store.steampowered.com/app/1245620/", null);
         insert("game", "Hollow Knight: Silksong", "hollow-knight-silksong",
                 "Team Cherry 精雕细琢的续作。黄蜂女踏上丝歌之旅，全新的敌人与王国等待探索。",
-                "{\"developer\":\"Team Cherry\",\"genre\":\"Metroidvania\",\"platform\":\"PC,Switch\"}");
-        insert("anime", "Frieren: Beyond Journey's End", "frieren",
-                "葬送的芙莉莲。长寿精灵魔法师在旅途中重新理解人类生命的短暂与珍贵。",
-                "{\"studio\":\"MADHOUSE\",\"episodes\":28,\"year\":2023}");
-        insert("boardgame", "Brass: Birmingham", "brass-birmingham",
-                "工业革命主题的策略桌游。在运河与铁路时代中建造工厂，BGG 排名第1。",
-                "{\"players\":\"2-4\",\"playtime\":\"120-180min\",\"weight\":3.9}");
+                "{\"developer\":\"Team Cherry\",\"genre\":\"Metroidvania\",\"platform\":\"PC,Switch\",\"demo_available\":false}",
+                "https://picsum.photos/seed/silksong/600/400", null, null);
         insert("game", "Metaphor: ReFantazio", "metaphor-refantazio",
                 "Atlus 全新奇幻 RPG。在选举中周游王国，唤醒沉睡的魔法机甲拯救世界。",
-                "{\"developer\":\"Atlus\",\"genre\":\"JRPG\",\"platform\":\"PC,PS5,Xbox\"}");
-        insert("anime", "Chainsaw Man", "chainsaw-man",
-                "藤本树异色少年漫画改编。为还债与恶魔签订契约的少年，电锯轰鸣斩碎一切。",
-                "{\"studio\":\"MAPPA\",\"episodes\":12,\"year\":2022}");
-        insert("model", "MGEX Strike Freedom Gundam", "mgex-strike-freedom",
-                "万代 MGEX 系列旗舰产品。金色骨架多色电镀，极致可动与细节表现。",
-                "{\"grade\":\"MGEX\",\"scale\":\"1/100\",\"material\":\"PS,ABS,PE\",\"series\":\"SEED\"}");
-        insert("boardgame", "Terraforming Mars", "terraforming-mars",
-                "火星改造计划。通过科技、资源建设将红色星球变为人类新家园。",
-                "{\"players\":\"1-5\",\"playtime\":\"120min\",\"weight\":3.2}");
-        insert("movie", "The Boy and the Heron", "the-boy-and-the-heron",
-                "宫崎骏 10 年后回归之作。少年与苍鹭的奇幻冒险，奥斯卡最佳动画长片。",
-                "{\"director\":\"宫崎骏\",\"year\":2023,\"duration\":\"124min\"}");
+                "{\"developer\":\"Atlus\",\"genre\":\"JRPG\",\"platform\":\"PC,PS5,Xbox\",\"demo_available\":true}",
+                "https://picsum.photos/seed/metaphor/600/400", "https://store.steampowered.com/app/2679460/",
+                "steam://install/3130330");
         insert("game", "S.T.A.L.K.E.R. 2", "stalker-2",
                 "GSC Game World 开发的硬核生存 FPS。重返切尔诺贝利禁区的心跳之旅。",
-                "{\"developer\":\"GSC Game World\",\"genre\":\"Survival FPS\",\"platform\":\"PC,Xbox\"}");
-        insert("anime", "Jujutsu Kaisen", "jujutsu-kaisen",
-                "咒术回战。咒术师与诅咒之战，MAPPA 制作的顶级战斗动画。",
-                "{\"studio\":\"MAPPA\",\"episodes\":48,\"year\":2020}");
-        insert("model", "PG Unleashed RX-78-2 Gundam", "pg-unleashed-rx78",
-                "完美级释放版元祖高达。三阶段组合结构，内部机械细节达到全新高度。",
-                "{\"grade\":\"PGU\",\"scale\":\"1/60\",\"material\":\"PS,ABS,PE\",\"series\":\"UC\"}");
+                "{\"developer\":\"GSC Game World\",\"genre\":\"Survival FPS\",\"platform\":\"PC,Xbox\",\"demo_available\":false}",
+                "https://picsum.photos/seed/stalker2/600/400", "https://store.steampowered.com/app/1643320/", null);
+
+        insert("game", "Celeste", "celeste",
+                "像素平台跳跃神作。帮助 Madeline 攀登塞莱斯特山，超过 700 个关卡 + 内置开发者评论。",
+                "{\"developer\":\"Extremely OK Games\",\"genre\":\"Platformer\",\"platform\":\"PC,Switch,PS4\",\"demo_available\":true}",
+                "https://picsum.photos/seed/celeste/600/400", "https://store.steampowered.com/app/504230/",
+                "https://mattmakesgames.itch.io/celeste-classic");
+        insert("game", "Buckshot Roulette", "buckshot-roulette",
+                "俄罗斯轮盘赌 + 霰弹枪。与庄家对赌，道具有限、运气与胆量的博弈。itch 爆款独立游戏。",
+                "{\"developer\":\"Mike Klubnika\",\"genre\":\"Table Horror\",\"platform\":\"PC\",\"demo_available\":true}",
+                "https://picsum.photos/seed/buckshot/600/400", "https://store.steampowered.com/app/2835570/",
+                "https://mikeklubnika.itch.io/buckshot-roulette");
+
+        insert("movie", "The Boy and the Heron", "the-boy-and-the-heron",
+                "宫崎骏 10 年后回归之作。少年与苍鹭的奇幻冒险，奥斯卡最佳动画长片。",
+                "{\"director\":\"宫崎骏\",\"year\":2023,\"duration\":\"124min\"}",
+                "https://picsum.photos/seed/heron/600/400", null);
         insert("movie", "The Super Mario Bros. Movie", "super-mario-movie",
                 "照明娱乐制作的马力欧大电影。水管工兄弟的蘑菇王国冒险，全球票房破10亿。",
-                "{\"director\":\"Aaron Horvath\",\"year\":2023,\"duration\":\"92min\"}");
+                "{\"director\":\"Aaron Horvath\",\"year\":2023,\"duration\":\"92min\"}",
+                "https://picsum.photos/seed/mario/600/400", null);
         insert("boardgame", "Dune: Imperium", "dune-imperium",
                 "沙丘帝国。工人放置+牌库构筑的完美融合，体验阿拉基斯的权谋与战争。",
                 "{\"players\":\"1-4\",\"playtime\":\"60-120min\",\"weight\":3.0}");
@@ -261,14 +262,37 @@ public class DataImportService implements CommandLineRunner {
     }
 
     private void insert(String type, String title, String slug, String description, String infoJson) {
+        insert(type, title, slug, description, infoJson, null, null, null);
+    }
+
+    private void insert(String type, String title, String slug, String description, String infoJson,
+                        String coverUrl, String externalLink) {
+        insert(type, title, slug, description, infoJson, coverUrl, externalLink, null);
+    }
+
+    private void insert(String type, String title, String slug, String description, String infoJson,
+                        String coverUrl, String externalLink, String mediaUrl) {
         Item item = new Item();
         item.setType(type);
         item.setTitle(title);
         item.setSlug(slug);
         item.setDescription(description);
         item.setInfoJson(infoJson);
+        item.setCoverUrl(coverUrl);
+        item.setExternalLink(externalLink);
+        item.setMediaUrl(mediaUrl);
         item.setSource("manual");
         item.setStatus(1);
         itemMapper.insert(item);
+    }
+
+    private void seedUser() {
+        Long count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Long.class);
+        if (count != null && count > 0) return;
+
+        jdbcTemplate.update(
+                "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+                "admin", "admin@demonet.local", passwordEncoder.encode("changeme"));
+        log.info("Default user created: admin / changeme");
     }
 }
