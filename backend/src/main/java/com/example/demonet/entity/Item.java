@@ -21,6 +21,8 @@ public class Item {
     private String wideCoverUrl;
     private String description;
     private String infoJson;
+    private String mediaUrl;
+    private String externalLink;
     private String externalId;
     private String source;
     private Integer status;
