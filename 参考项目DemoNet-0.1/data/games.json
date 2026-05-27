@@ -1,0 +1,422 @@
+[
+  {
+    "id": "apex",
+    "title": "Apex Legends",
+    "cover": "img/game/apex/apex-cover.jpg",
+    "cardCover": "img/game/apex/apex-cover.jpg",
+    "swiperCover": "img/game/apex/apex1.jpg",
+    "category": "game",
+    "description": "由Respawn Entertainment开发制作，屡获殊荣的《Apex Legends》，是一款免费大逃杀英雄射击游戏。在这款革命性的新一代大逃杀英雄射击游戏中，掌控日益丰富且拥有强大技能的传奇角色，深度体验战术小队玩法及创新游戏元素。",
+    "shortDesc": "由Respawn Entertainment开发制作，屡获殊荣的《Apex Legends》，是一款免费大逃杀英雄射击游戏。",
+    "cardTitle": "Apex Legends",
+    "cardDesc": "由Respawn Entertainment开发制作，屡获殊荣的《Apex Legends》，是一款免费大逃杀英雄射击游戏。",
+    "swiperName": "Apex Legends",
+    "swiperOrder": 5,
+    "info": {
+      "发行日期": "2020.11.5",
+      "开发商": "Respawn Entertainment",
+      "发行商": "Electronic Arts",
+      "最新测评": "特别好评"
+    },
+    "about": "在《Apex Legends》这款免费*英雄射击游戏中脱颖而出，掌控角色，征服群雄，集结技艺超群的强大传奇角色，组队在边境之地为名利而战。掌控丰富传奇角色、深度战术小队玩法以及大胆革新元素，获得前所未有的新一代大逃杀竞技射击游戏体验——在崎岖世界，一切皆有可能。欢迎来到新一代英雄射击游戏。",
+    "minSpec": {
+      "操作系统": "64-bit Windows 7",
+      "处理器": "AMD FX 4350 or Equivalent, Intel Core i3 6300 or Equivalent",
+      "内存": "6 GB RAM",
+      "显卡": "AMD Radeon™ HD 7730, NVIDIA GeForce® GT 640",
+      "存储空间": "需要 56 GB 可用空间"
+    },
+    "recSpec": {
+      "操作系统": "64-bit Windows 7",
+      "处理器": "Ryzen 5 CPU or Equivalent",
+      "内存": "8 GB RAM",
+      "显卡": "AMD Radeon™ R9 290, NVIDIA GeForce® GTX 970",
+      "存储空间": "需要 56 GB 可用空间"
+    }
+  },
+  {
+    "id": "gta5",
+    "title": "Grand Theft Auto V",
+    "cover": "img/game/gta5/gta-cover.jpg",
+    "cardCover": "img/game/gta5/gta-cover.jpg",
+    "swiperCover": "img/game/gta5/gta-cover.jpg",
+    "category": "game",
+    "description": "一个初涉江湖的街头新丁、一个洗手多年的银行劫匪和一个丧心病狂的杀人狂魔，误打误撞中深陷犯罪集团、美国政府和娱乐产业之间盘根错杂的恐怖困境。他们必须齐心协力，接连完成九死一生的惊天劫案，才能在这个冷血无情的城市中苟延残喘。不要相信任何人，尤其是你的同伙！",
+    "shortDesc": "一个初涉江湖的街头新丁、一个洗手多年的银行劫匪和一个丧心病狂的杀人狂魔，误打误撞中深陷犯罪集团、美国政府和娱乐产业之间盘根错杂的恐怖困境。",
+    "cardTitle": "Grand Theft Auto V",
+    "cardDesc": "一个初涉江湖的街头新丁、一个洗手多年的银行劫匪和一个丧心病狂的杀人狂魔，误打误撞中深陷犯罪集团、美国政府和娱乐产业之间盘根错杂的恐怖困境。",
+    "swiperName": "GTA V",
+    "swiperOrder": 0,
+    "info": {
+      "发行日期": "2015.4.14",
+      "开发商": "Rockstar North",
+      "发行商": "Rockstar Game",
+      "最新测评": "特别好评"
+    },
+    "about": "PC 版Grand Theft Auto V 能够以超越 4K 的最高分辨率和 60 帧每秒的帧率，为您呈现屡获殊荣、令人痴迷的游戏世界——洛桑托斯市和布雷恩郡。游戏为 PC 玩家提供了巨细无遗的独享自定义选项，包括纹理质量、着色器、曲面细分、反锯齿等超过 25 种不同设定，还有支持键鼠操控的广泛自定义功能。其他选项包括可控制车辆和行人流量的人口密度滑杆，以及对双屏、三屏、3D 和即插即用手柄的支持。",
+    "minSpec": {
+      "操作系统": "Windows 8.1 64 位、Windows 8 64 位",
+      "处理器": "Intel Core 2 Quad CPU Q6600 @ 2.40GHz (4 个 CPU) / AMD Phenom 9850 Quad-Core 处理器 (4 个 CPU) @ 2.5GHz",
+      "内存": "4 GB RAM",
+      "显卡": "NVIDIA 9800 GT 1GB / AMD HD 4870 1GB (DX 10、10.1、11) 声卡：100% DirectX 10 兼容",
+      "存储空间": "需要 72 GB 可用空间"
+    },
+    "recSpec": {
+      "操作系统": "Windows 8.1 64 位、Windows 8 64 位、Windows 7 64 位 Service Pack 1",
+      "处理器": "Intel Core i5 3470 @ 3.2GHZ (4 个 CPU) / AMD X8 FX-8350 @ 4GHZ (8 个 CPU)",
+      "内存": "8 GB RAM",
+      "显卡": "NVIDIA GTX 660 2GB / AMD HD7870 2GB",
+      "存储空间": "需要 72 GB 可用空间"
+    }
+  },
+  {
+    "id": "starve",
+    "title": "饥荒 (Don't Starve)",
+    "cover": "img/game/starve/starve-cover.jpg",
+    "cardCover": "img/game/starve/starve-cover.jpg",
+    "swiperCover": "img/game/starve/starve1.jpg",
+    "category": "game",
+    "description": "《饥荒》是由Klei Entertainment开发的一款动作冒险类求生游戏，于2013年4月23日在PC上发行，2015年7月9日在iOS发布口袋版。",
+    "shortDesc": "《饥荒》是由Klei Entertainment开发的一款动作冒险类求生游戏。",
+    "cardTitle": "Starve",
+    "cardDesc": "《饥荒》是由Klei Entertainment开发的一款动作冒险类求生游戏。",
+    "swiperName": "Don't Starve",
+    "swiperOrder": 0,
+    "info": {
+      "发行日期": "2013.4.23",
+      "开发商": "Klei Entertainment",
+      "发行商": "Klei Entertainment",
+      "最新测评": "特别好评"
+    },
+    "about": "Don't Starve 是一款充满科学和魔法的硬派野外生存游戏。你扮演 Wilson ，一位被恶魔困住而且被传送到神秘荒野的既勇敢又绅士的科学家。如果 Wilson 想逃出生天并找到回家的路，那就必须学会利用这里的环境和各种生物。进入这样一个充满奇特生物，危险和惊奇的未知世界。收集资源并打造出符合你的生存方式的物品。用你的方式来揭开这谜一般的大陆的神秘面纱吧！",
+    "minSpec": {
+      "操作系统": "64-bit Windows 7",
+      "处理器": "AMD FX 4350 or Equivalent, Intel Core i3 6300 or Equivalent",
+      "内存": "6 GB RAM",
+      "显卡": "AMD Radeon™ HD 7730, NVIDIA GeForce® GT 640",
+      "存储空间": "需要 56 GB 可用空间"
+    },
+    "recSpec": {
+      "操作系统": "64-bit Windows 7",
+      "处理器": "Ryzen 5 CPU or Equivalent",
+      "内存": "8 GB RAM",
+      "显卡": "AMD Radeon™ R9 290, NVIDIA GeForce® GTX 970",
+      "存储空间": "需要 56 GB 可用空间"
+    }
+  },
+  {
+    "id": "nba2k21",
+    "title": "NBA 2K21",
+    "cover": "img/game/nba2k21/nba-cover-75th.jpg",
+    "cardCover": "img/game/nba2k21/nba-cover-75th.jpg",
+    "swiperCover": "img/game/nba2k21/nba-poster.png",
+    "category": "game",
+    "description": "《NBA 2K21》是篮球体育游戏《NBA 2K》系列的续作。",
+    "shortDesc": "《NBA 2K21》是篮球体育游戏《NBA 2K》系列的续作。",
+    "cardTitle": "NBA2K21",
+    "cardDesc": "《NBA 2K21》是篮球体育游戏《NBA 2K》系列的续作。",
+    "swiperName": "NBA2K21",
+    "swiperOrder": 4,
+    "info": {
+      "发行日期": "2021 年 9 月 10 日",
+      "开发商": "Visual Concepts",
+      "发行商": "2K",
+      "最新测评": "褒贬不一"
+    },
+    "about": "NBA 2K22将整个篮球世界放到了你手中。开始“快速比赛”，在宛如真实的NBA和WNBA环境中与现实球队和球员展开交手。用现役球星和昔日传奇在“梦幻球队”中构建你专属的梦之队。在“辉煌生涯”中开始你个人的职业生涯，体验从草根到NBA的旅程。还能在“传奇经理”和“终极联盟”中过把高层瘾，展示你的管理水准。《NBA 2K22》：随心所欲。焕然一新的进攻战术，外加全面升级的防御体系，塑造出更富竞争性和沉浸感的《NBA 2K22》。将基于技能的运球、投篮、扣篮和空接动作收入囊中，并在球场的另一端用全新且凶悍的盖帽和争抢针锋相对。",
+    "minSpec": {
+      "操作系统": "64-bit Windows 7",
+      "处理器": "AMD FX 4350 or Equivalent, Intel Core i3 6300 or Equivalent",
+      "内存": "4 GB RAM",
+      "显卡": "NVIDIA® GeForce® GT 450 1GB/ ATI® Radeon™ HD 7770 1 GB or better",
+      "存储空间": "需要 110 GB 可用空间"
+    },
+    "recSpec": {
+      "操作系统": "64-bit Windows 7",
+      "处理器": "Intel® Core™ i5-4430 @ 3 GHz/ AMD FX-8370 @ 3.4 GHz or better",
+      "内存": "8 GB RAM",
+      "显卡": "AMD Radeon™ R9 290, NVIDIA GeForce® GTX 970",
+      "存储空间": "需要 110 GB 可用空间"
+    }
+  },
+  {
+    "id": "cyberpunk",
+    "title": "赛博朋克2077 (Cyberpunk 2077)",
+    "cover": "img/game/cyberpunk/cyberpunk-cover.jfif",
+    "cardCover": "img/game/cyberpunk/cyberpunk-cover.jfif",
+    "swiperCover": "img/game/cyberpunk/cyberpunk1.jpg",
+    "category": "game",
+    "description": "《赛博朋克2077》是一款由CD Projekt RED开发的动作角色类游戏，于2020年12月10日登陆PC、Xbox 和PS4等平台。",
+    "shortDesc": "《赛博朋克2077》是一款由CD Projekt RED开发的动作角色类游戏。",
+    "cardTitle": "赛博朋克2077",
+    "cardDesc": "《赛博朋克2077》是一款由CD Projekt RED开发的动作角色类游戏。",
+    "swiperName": "Cyberpunk 2077",
+    "swiperOrder": 0,
+    "info": {
+      "发行日期": "2020年12月10日",
+      "开发商": "CD PROJEKT RED",
+      "发行商": "CD PROJEKT RED",
+      "最新测评": "多半好评"
+    },
+    "about": "在《赛博朋克2077》的架空世界观中，美国在经历了20世纪末的一系列战争和恐怖袭击后分崩离析，联邦政府变得极其弱势。各大跨国高科技公司则趁机崛起，控制了人们生活的方方面面，社会贫富差距由此开始空前拉大。农民因为大企业的收购和兼并纷纷失去土地，最后不得不以家族为单位流浪在各大城市之间成为准军事化组织；城市中下阶层则因为大规模失业妻离子散、家庭破碎，最终组成了街头帮派互相割据；在大企业的打工人虽然外表过着光鲜亮丽的生活，但毕竟是千军万马争抢少得可怜的晋升通道，职场环境尔虞我诈、人人自危。而玩家将从以上三种背景当中选择其一，开始这趟旅程。",
+    "minSpec": {
+      "操作系统": "Windows 7 or 10",
+      "处理器": "Intel Core i5-3570K or AMD FX-8310",
+      "内存": "8 GB RAM",
+      "显卡": "NVIDIA GeForce GTX 780 or AMD Radeon RX 470",
+      "存储空间": "需要70GB空间"
+    },
+    "recSpec": {
+      "操作系统": "Windows 10",
+      "处理器": "Intel Core i7-4790 or AMD Ryzen 3 3200G",
+      "内存": "12GB RAM",
+      "显卡": "GTX 1060 6GB / GTX 1660 Super or Radeon RX 590",
+      "存储空间": "需要70GB空间"
+    }
+  },
+  {
+    "id": "witcher3",
+    "title": "巫师3：狂猎",
+    "cover": "img/game/witcher3/witcher3-cover.jfif",
+    "cardCover": "img/game/witcher3/witcher3-cover.jfif",
+    "swiperCover": "img/game/witcher3/witcher3-wide.jpg",
+    "category": "game",
+    "description": "《巫师3：狂猎》是由CD Projekt RED制作，WB Games（北美地区）、Spike Chunsoft（日本地区）发行的一款角色扮演类游戏，游戏于2015年5月19日在Windows、Playstation 4、Xbox One平台发行，2019年10月13日登录Nintendo Switch平台。游戏改编自小说《猎魔人》系列，为《巫师》系列游戏作品的第三部，同时也是杰洛特冒险的终曲。",
+    "shortDesc": "《巫师3：狂猎》是由CD Projekt RED制作的一款角色扮演类游戏。",
+    "cardTitle": "巫师3：狂猎",
+    "cardDesc": "《巫师3：狂猎》是由CD Projekt RED制作的一款角色扮演类游戏。",
+    "swiperName": "Witcher 3",
+    "swiperOrder": 1,
+    "info": {
+      "发行日期": "2015年5月19日",
+      "开发商": "CD PROJEKT RED",
+      "发行商": "CD PROJEKT RED",
+      "最新测评": "好评如潮"
+    },
+    "about": "《巫师：狂猎》是一款情节驱动的开放世界角色扮演游戏。本作的故事发生在一个令人目眩神迷的奇幻宇宙里，玩家做出的每一个选择都意义重大，同时也要面对影响深远的后果。在《巫师》这个广袤的开放世界中，您可以尽情探索商业都市、海盗岛屿、危险的山隘和被遗忘的洞窟。",
+    "minSpec": {
+      "操作系统": "64-bit Windows 7, 64-bit Windows 8 (8.1) or 64-bit Windows 10",
+      "处理器": "Intel CPU Core i5-2500K 3.3GHz / AMD CPU Phenom II X4 940",
+      "内存": "6 GB RAM",
+      "显卡": "Nvidia GPU GeForce GTX 660 / AMD GPU Radeon HD 7870",
+      "存储空间": "需要35GB空间"
+    },
+    "recSpec": {
+      "操作系统": "64-bit Windows 7, 64-bit Windows 8 (8.1) or 64-bit Windows 10",
+      "处理器": "Intel CPU Core i7 3770 3.4 GHz / AMD CPU AMD FX-8350 4 GHz",
+      "内存": "8GB RAM",
+      "显卡": "Nvidia GPU GeForce GTX 770 / AMD GPU Radeon R9 290",
+      "存储空间": "需要35GB空间"
+    }
+  },
+  {
+    "id": "dyinglight",
+    "title": "消逝的光芒",
+    "cover": "img/game/dyinglight/dying1.jpg",
+    "cardCover": "img/game/dyinglight/dying1.jpg",
+    "swiperCover": "img/game/dyinglight/dying2.jfif",
+    "category": "game",
+    "description": "《消逝的光芒2》是一款丧尸题材动作角色扮演游戏，由来自波兰开发商Techland制作，《消逝的光芒2》依旧延续了前作跑酷与战斗的内容。",
+    "shortDesc": "《消逝的光芒2》是一款丧尸题材动作角色扮演游戏。",
+    "cardTitle": "消逝的光芒2",
+    "cardDesc": "《消逝的光芒2》是一款丧尸题材动作角色扮演游戏。",
+    "swiperName": "Dying Light",
+    "swiperOrder": 6,
+    "info": {
+      "发行日期": "2022年2月5日",
+      "开发商": "Techland",
+      "发行商": "Techland",
+      "最新测评": "暂无"
+    },
+    "about": "二十几年前，我们在哈兰和病毒抗争，但失败了。现在，我们即将再次面临失败。作为人类最后一处大型定居点之一，“都市”正因冲突而四分五裂。文明退回了黑暗时代。不过，我们仍有希望。你是一名有力量改变城市命运的游荡者。但你的卓越才能是有代价的。无法理解的回忆一直困扰着你，于是你出发寻求真相……结果发现自己来到了战区。磨炼你的技艺。你需要武勇与智慧才能击败敌人以及结交盟友。揭露掌权者幕后见不得人的秘密，选择阵营，并决定你的命运。但无论做出怎样的选择，你绝不能忘记一件事——保留自己的人性。",
+    "minSpec": {
+      "操作系统": "TBC",
+      "处理器": "TBC",
+      "内存": "8 GB RAM",
+      "显卡": "TBC",
+      "存储空间": "无"
+    },
+    "recSpec": {
+      "操作系统": "TBC",
+      "处理器": "TBC",
+      "内存": "16GB RAM",
+      "显卡": "TBC",
+      "存储空间": "无"
+    }
+  },
+  {
+    "id": "fnaf",
+    "title": "玩具熊的午夜后宫",
+    "cover": "img/game/fivenights/fnaf-cover.jfif",
+    "cardCover": "img/game/fivenights/fnaf-cover.jfif",
+    "swiperCover": "img/game/fivenights/fnaf-wide.png",
+    "category": "game",
+    "description": "《玩具熊的五夜后宫》（Five Nights at Freddy's）是一款由Scott Cawthon 开发制作的惊悚冒险类游戏，第一部已于2014年8月18日发行。",
+    "shortDesc": "《玩具熊的五夜后宫》是一款由Scott Cawthon开发制作的惊悚冒险类游戏。",
+    "cardTitle": "玩具熊的午夜后宫",
+    "cardDesc": "《玩具熊的五夜后宫》是一款由Scott Cawthon开发制作的惊悚冒险类游戏。",
+    "swiperName": "FNAF",
+    "swiperOrder": 3,
+    "info": {
+      "发行日期": "2021 年 9 月 10 日",
+      "开发商": "Scott Cawthons",
+      "发行商": "Scott Cawthon",
+      "最新测评": "特别好评"
+    },
+    "about": "《玩具熊的五夜后宫》是一款从 PC 端移植至移动端的惊悚冒险游戏，此前在 PC 端上非常有人气。游戏中，玩家将扮演“Freddy Fazbear's Pizza”这家比萨店的一位保安，负责店内的一切财物安全。这家比萨店为了吸引更多的孩子到来，在店里摆设了许多机器玩偶。但其实这些都是死去的孩子们灵魂所控制的机器人，每当午夜时分就会活动起来，寂静深夜竟有如此异端恐怖的事情发生，而且作为主人公的玩家，还要在店内安全度过五个晚上。",
+    "minSpec": {
+      "操作系统": "Windows XP,Vista,7",
+      "处理器": "2 GHz Intel Pentium 4 or AMD Athlon or equivalent",
+      "内存": "1 GB RAM",
+      "显卡": "NVIDIA® GeForce® GT 450 1GB/ ATI® Radeon™ HD 7770 1 GB or better",
+      "存储空间": "需要 250MB 可用空间"
+    },
+    "recSpec": {
+      "操作系统": "Win XP, 7, 8, Vista, 10",
+      "处理器": "2 GHz Intel Pentium 4 or AMD Athlon or equivalent",
+      "内存": "2 GB RAM",
+      "显卡": "AMD Radeon™ R9 290, NVIDIA GeForce® GTX 970",
+      "存储空间": "需要 250MB可用空间"
+    }
+  },
+  {
+    "id": "ittakes2",
+    "title": "双人成行",
+    "cover": "img/game/ittakes2/ittakes2-1.jfif",
+    "cardCover": "img/game/ittakes2/ittakes2-1.jfif",
+    "swiperCover": "img/game/ittakes2/ittakes2-2.jfif",
+    "category": "game",
+    "description": "《双人成行》是一款由Hazelight开发的动作冒险游戏，于2021年3月25日发布了游戏开场演示，并在steam上正式发行。",
+    "shortDesc": "《双人成行》是一款由Hazelight开发的动作冒险游戏。",
+    "cardTitle": "双人成行",
+    "cardDesc": "《双人成行》是一款由Hazelight开发的动作冒险游戏。",
+    "swiperName": "It Takes 2",
+    "swiperOrder": 2,
+    "info": {
+      "发行日期": "2021年3月25日",
+      "开发商": "Hazelight",
+      "发行商": "Electronic Arts",
+      "最新测评": "好评如潮"
+    },
+    "about": "游玩《双人成行》，踏上生命中最疯狂的旅程，这是一款别开生面的平台冒险游戏，完全为合作模式而设计。利用好友通行证*邀请一位好友免费游玩，共同体验多种多样的乐趣，享受颠覆性的玩法挑战。扮演相互看不顺眼的科迪和小梅夫妇，这两个人被魔咒变成了玩偶。他们一起被困在一个奇幻世界里，每个角落都隐藏着意想不到的东西，他们不得不一起克服挑战，同时挽救他们破裂的关系。",
+    "minSpec": {
+      "操作系统": "Windows 8.1 64-bit or Windows 10 64-bit",
+      "处理器": "Intel Core i3-2100T or AMD FX 6100",
+      "内存": "8 GB RAM",
+      "显卡": "Nvidia GeForce GTX 660 or AMD R7 260x",
+      "存储空间": "需要 50GB 可用空间"
+    },
+    "recSpec": {
+      "操作系统": "Windows 8.1 64-bit or Windows 10 64-bit",
+      "处理器": "Intel Core i5 3570K or AMD Ryzen 3 1300x",
+      "内存": "16GB RAM",
+      "显卡": "Nvidia GeForce GTX 980 or AMD R9 290X",
+      "存储空间": "需要 50GB可用空间"
+    }
+  },
+  {
+    "id": "skyrim",
+    "title": "上古卷轴5：天际",
+    "cover": "img/game/skyrim/skyrim-cover.jpg",
+    "cardCover": "img/game/skyrim/skyrim-cover.jpg",
+    "swiperCover": "img/game/skyrim/skyrim1.jfif",
+    "category": "game",
+    "description": "《上古卷轴5：天际》是由Bethesda开发制作的角色扮演类单机游戏。游戏于2011年11月11日登陆PC、PS3、Xbox 360等平台。之后的重制版《上古卷轴5：天际 特别版》于2016年10月28日登陆PC、PS4、Xbox One等平台， Nintendo Switch版《上古卷轴5 天际》，美版于17年11月17日发售，日版在2018年早期发售。",
+    "shortDesc": "《上古卷轴5：天际》是由Bethesda开发制作的角色扮演类单机游戏。",
+    "cardTitle": "上古卷轴5：天际",
+    "cardDesc": "《上古卷轴5：天际》是由Bethesda开发制作的角色扮演类单机游戏。",
+    "swiperName": "Skyrim",
+    "swiperOrder": 0,
+    "info": {
+      "发行日期": "2016 年 10 月 28 日",
+      "开发商": "Bethesda Game Studios",
+      "发行商": "Bethesda Softworks",
+      "最新测评": "特别好评"
+    },
+    "about": "《游戏的背景时间设定在《上古卷轴4：湮没》的200年之后，地点为人类帝国的天际省。玩家将扮演传说中的龙裔，踏上对抗世界吞噬者巨龙奥杜因的征途。另外，还有天际内战、魔神器、地下遗迹、组织势力等各类支线和隐藏任务，具有庞大的世界观和高自由度。",
+    "minSpec": {
+      "操作系统": "Windows 7/8.1/10 (64-bit Version)",
+      "处理器": "Intel i5-750/AMD Phenom II X4-945",
+      "内存": "8 GB RAM",
+      "显卡": "NVIDIA GTX 470 1GB /AMD HD 7870 2GB",
+      "存储空间": "需要12GB空间"
+    },
+    "recSpec": {
+      "操作系统": "Windows 7/8.1/10 (64-bit Version)",
+      "处理器": "Intel i5-2400/AMD FX-8320",
+      "内存": "8GB RAM",
+      "显卡": "NVIDIA GTX 780 3GB /AMD R9 290 4GB",
+      "存储空间": "需要12GB空间"
+    }
+  },
+  {
+    "id": "csgo",
+    "title": "反恐精英：全球攻势 (CS:GO)",
+    "cover": "img/game/csgo/csgo1.jfif",
+    "cardCover": "img/game/csgo/csgo1.jfif",
+    "swiperCover": "img/game/csgo/csgo2.jfif",
+    "category": "game",
+    "description": "《反恐精英：全球攻势》，原名Counter-Strike: Global Offensive，是一款由VALVE与Hidden Path Entertainment合作开发、Valve Software发行的第一人称射击游戏，于2012年8月21日在欧美地区正式发售，国服发布会于2017年4月11日在北京召开。游戏为《反恐精英》系列游戏的第四款作品（不包括Neo和Online等衍生作品）。",
+    "shortDesc": "《反恐精英：全球攻势》是一款由VALVE与Hidden Path Entertainment合作开发的第一人称射击游戏。",
+    "cardTitle": "反恐精英：全球攻势",
+    "cardDesc": "《反恐精英：全球攻势》是一款由VALVE与Hidden Path Entertainment合作开发的第一人称射击游戏。",
+    "swiperName": "CS:GO",
+    "swiperOrder": 0,
+    "info": {
+      "发行日期": "2017年9月16日",
+      "开发商": "Valve, Hidden Path Entertainment",
+      "发行商": "Valve",
+      "最新测评": "特别好评"
+    },
+    "about": "游戏是以1999年的“CS”为原型制作的新作，该作在团队竞技游戏模式的基础上加以开发。游戏将玩家分为反恐精英（Counter Terrorists/CT）阵营与恐怖份子（Terrorists/T）阵营两队，每个队伍必须在一个地图上进行多回合的战斗。赢得回合的方法是达到该地图要求的目标，或者是完全消灭敌方玩家。",
+    "minSpec": {
+      "操作系统": "Windows® 7/Vista/XP 或更新版本",
+      "处理器": "英特尔® 酷睿™2 双核处理器 E6600 或超威羿龙™ X3 8750 以上",
+      "内存": "2 GB RAM",
+      "显卡": "显卡须为 256 MB 以上，且应兼容 DirectX 9 并支持 Pixel Shader 3.0",
+      "存储空间": "需要 15GB空间"
+    },
+    "recSpec": {
+      "操作系统": "Windows® 7/8/10/Vista/XP",
+      "处理器": "英特尔酷睿i7-7700K",
+      "内存": "8GBRAM",
+      "显卡": "推荐GTX 1060 或者同等级NVIDIA显卡",
+      "存储空间": "15GB"
+    }
+  },
+  {
+    "id": "assassins-creed",
+    "title": "刺客信条：奥德赛",
+    "cover": "img/game/assassins-creed/assassins-creed-cover.jpg",
+    "cardCover": "img/game/assassins-creed/assassins-creed-cover.jpg",
+    "swiperCover": "img/game/assassins-creed/assassins-creed1.jfif",
+    "category": "game",
+    "description": "《刺客信条：奥德赛》（Assassin's Creed Odyssey）是一款由育碧魁北克工作室开发，育碧发行的动作扮演类游戏，于2018年10月5日发行并登陆PC、PS4、XboxOne平台。该作是《刺客信条》的第十一部作品，也是2017年游戏《刺客信条：起源》的续作。",
+    "shortDesc": "《刺客信条：奥德赛》是一款由育碧魁北克工作室开发的动作扮演类游戏。",
+    "cardTitle": "刺客信条：奥德赛",
+    "cardDesc": "《刺客信条：奥德赛》是一款由育碧魁北克工作室开发的动作扮演类游戏。",
+    "swiperName": "Assassin's Creed",
+    "swiperOrder": 0,
+    "info": {
+      "发行日期": "2018年10月5日",
+      "开发商": "育碧魁北克，育碧上海工作室等",
+      "发行商": "Ubisoft",
+      "最新测评": "特别好评"
+    },
+    "about": "时间回溯到公元前432年，故事从凯法隆尼亚的小岛上展开，主角是岛上小有名气的驯鹰人雇佣兵，他的朋友马库斯为了兴办葡萄园从绰号“独眼人”的地头蛇借了一大笔钱，主角帮助马库斯还清债务，为此踏上了讨债的道路，也因此卷入了伯罗奔尼撒战争的纷争，探寻过往的身世谜团。",
+    "minSpec": {
+      "操作系统": "Windows 7 SP1, Windows 8.1, Windows 10 (64bit versions only)",
+      "处理器": "AMD FX 6300 @ 3.8 GHz, Ryzen 3 - 1200, Intel Core i5 2400 @ 3.1 GHz",
+      "内存": "8 GB RAM",
+      "显卡": "AMD Radeon R9 285, NVIDIA GeForce GTX 660 (2GB VRAM with Shader Model 5.0)",
+      "存储空间": "需要46+GB空间"
+    },
+    "recSpec": {
+      "操作系统": "Windows 7 SP1, Windows 8.1, Windows 10 (64bit versions only)",
+      "处理器": "AMD FX-8350 @ 4.0 GHz, Ryzen 5 - 1400, Intel Core i7-3770 @ 3.5 GHz or better",
+      "内存": "8GB RAM",
+      "显卡": "AMD Radeon R9 290, NVIDIA GeForce GTX 970 (4GB VRAM with Shader Model 5.0) or better",
+      "存储空间": "需要46+GB空间"
+    }
+  }
+]
