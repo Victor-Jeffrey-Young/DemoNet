@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: DemoNet
+  datasource:
+    url: jdbc:mysql://localhost:3306/demonet?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: root
+    password: changeme
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: localhost
+    port: 6379
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: changeme
+
+server:
+  port: 8080
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  jwt:
+    secret: changeme
+    expiration: 86400000
+  steam:
+    api-key: ''
+  tmdb:
+    api-key: ''
