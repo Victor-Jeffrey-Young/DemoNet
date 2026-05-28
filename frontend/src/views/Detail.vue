@@ -30,6 +30,8 @@ const typeMetaMap = {
   book:      { label: '书籍', emoji: '📖', color: 'text-amber-400 bg-amber-900/50' },
   music:     { label: '音乐', emoji: '🎵', color: 'text-pink-400 bg-pink-900/50' },
   digital:   { label: '数码', emoji: '📱', color: 'text-cyan-400 bg-cyan-900/50' },
+  coffee:    { label: '咖啡', emoji: '☕', color: 'text-orange-400 bg-orange-900/50' },
+  offline:   { label: '线下', emoji: '🏛️', color: 'text-indigo-400 bg-indigo-900/50' },
 }
 
 const statusOptions = [
@@ -64,7 +66,21 @@ function goBack() { router.push(item.value?.type ? `/list/${item.value.type}` : 
 function isEmbed(url) { return url && (url.includes('youtube.com/embed') || url.includes('player.bilibili.com')) }
 
 const isBook = computed(() => item.value?.type === 'book')
+const isMusic = computed(() => item.value?.type === 'music')
 const isPdf = computed(() => readerUrl.value?.endsWith('.pdf'))
+const musicEmbedUrl = computed(() => {
+  if (!isMusic.value || !item.value?.externalLink) return ''
+  const link = item.value.externalLink
+  if (link.includes('music.apple.com')) return link.replace('music.apple.com', 'embed.music.apple.com')
+  return ''
+})
+const musicPreviewActive = computed(() => isMusic.value && !!info.value.preview_url && !activeVideoUrl.value && !musicEmbedUrl.value)
+const heroAspectClass = computed(() => {
+  if (activeVideoUrl.value || readerUrl.value) return 'aspect-video'
+  if (musicEmbedUrl.value) return 'h-[450px]'
+  if (musicPreviewActive.value) return ''
+  return 'aspect-video'
+})
 const pdfViewerUrl = computed(() => {
   if (!isPdf.value) return ''
   try {
@@ -149,8 +165,19 @@ const infoFields = computed(() => {
     book:      [['作者', i.author], ['页数', i.pages], ['年份', i.year], ['分类', i.category]],
     music:     [['艺人', i.artist], ['年份', i.year], ['风格', i.genre], ['曲目', i.tracks]],
     digital:   [['品牌', i.brand], ['类别', i.category], ['年份', i.year], ['特性', i.features]],
+    coffee:    [['产地', i.origin], ['烘焙度', i.roast], ['处理法', i.process], ['品种', i.variety]],
+    offline:   [['类型', i.event_type], ['地点', i.venue], ['日期', i.date], ['时间', i.time]],
   }
   return (map[t] || []).filter(f => f[1] != null && f[1] !== '')
+})
+
+const isCoffee = computed(() => item.value?.type === 'coffee')
+const isOffline = computed(() => item.value?.type === 'offline')
+const coffeeFlavors = computed(() => {
+  if (!isCoffee.value) return []
+  const raw = info.value.flavor || ''
+  if (!raw) return []
+  return raw.split(',').map(f => f.trim()).filter(Boolean)
 })
 </script>
 
@@ -162,7 +189,7 @@ const infoFields = computed(() => {
         <button @click="goBack" class="text-gray-400 hover:text-white text-sm mb-6 transition">← 返回</button>
 
         <div class="bg-gray-900 rounded-2xl border border-gray-800 overflow-visible">
-          <div class="aspect-video rounded-t-2xl overflow-hidden relative" :class="(!activeVideoUrl && !readerUrl) ? 'bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : ''">
+          <div class="rounded-t-2xl overflow-hidden relative" :class="[heroAspectClass, (!activeVideoUrl && !readerUrl && !musicEmbedUrl && !musicPreviewActive) ? 'bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : '']">
             <!-- Book reader: EPUB -->
             <template v-if="isEpub">
               <div ref="bookReaderRef" class="w-full h-full bg-white" v-show="epubReady" />
@@ -183,9 +210,27 @@ const infoFields = computed(() => {
             <!-- Video player -->
             <iframe v-else-if="activeVideoUrl" :src="activeVideoUrl" class="w-full h-full" frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen />
+            <!-- Apple Music embed -->
+            <iframe v-else-if="musicEmbedUrl" :src="musicEmbedUrl" class="w-full h-full" frameborder="0"
+              allow="autoplay *; encrypted-media *; fullscreen *" />
+            <!-- Music album art + audio player -->
+            <div v-else-if="musicPreviewActive" class="w-full py-12 bg-gradient-to-br from-fuchsia-950 via-gray-900 to-gray-950 flex items-center justify-center relative overflow-hidden">
+              <img v-if="item.coverUrl" :src="item.coverUrl" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-2xl scale-110" alt="" />
+              <div class="relative z-10 flex flex-col items-center gap-5">
+                <div class="w-36 h-36 rounded-xl overflow-hidden shadow-2xl shadow-fuchsia-900/30 ring-1 ring-white/10">
+                  <img v-if="item.coverUrl" :src="item.coverUrl" class="w-full h-full object-cover" alt="" />
+                  <div v-else class="w-full h-full bg-fuchsia-900/50 flex items-center justify-center text-5xl">🎵</div>
+                </div>
+                <div class="text-center">
+                  <p class="text-lg font-semibold text-white/90">{{ item.title }}</p>
+                  <p class="text-sm text-fuchsia-300/80">{{ info.artist || '' }}</p>
+                </div>
+                <audio controls :src="info.preview_url" class="w-64 h-8" style="accent-color: #d946ef" />
+              </div>
+            </div>
             <!-- Empty state -->
             <span v-else>{{ typeMeta.emoji }}</span>
-            <div v-if="videoSources.length > 1 && !readerUrl" class="absolute top-3 right-3 flex gap-1 z-10">
+            <div v-if="videoSources.length > 1 && !readerUrl && !isMusic" class="absolute top-3 right-3 flex gap-1 z-10">
               <button v-for="src in videoSources" :key="src.key" @click="switchVideo(src.url)"
                 :class="activeVideoUrl===src.url ? 'bg-white/20 text-white' : 'bg-black/40 text-white/60 hover:bg-black/60'"
                 class="text-[10px] px-2 py-1 rounded backdrop-blur-sm transition">
@@ -228,10 +273,52 @@ const infoFields = computed(() => {
               </a>
             </div>
 
+            <div v-if="isMusic && item.externalLink" class="flex gap-3 mb-6">
+              <a :href="item.externalLink" target="_blank"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-fuchsia-900/20">
+                🎵 在 Apple Music 中打开
+              </a>
+            </div>
+
             <div v-if="infoFields.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-gray-800/50 rounded-lg">
               <div v-for="f in infoFields" :key="f[0]" class="text-center">
                 <div class="text-xs text-gray-500 mb-0.5">{{ f[0] }}</div>
                 <div class="text-sm font-medium text-gray-200">{{ f[1] }}</div>
+              </div>
+            </div>
+
+            <!-- Music: Audio preview -->
+            <div v-if="item.type==='music' && info.preview_url" class="mt-4 p-4 bg-fuchsia-900/10 border border-fuchsia-500/10 rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-fuchsia-400 font-medium">🎵 试听预览</span>
+                <audio controls :src="info.preview_url" class="h-8 w-full max-w-md" style="accent-color: #d946ef" />
+              </div>
+            </div>
+
+            <!-- Coffee: Flavor notes -->
+            <div v-if="isCoffee && coffeeFlavors.length" class="mt-4 p-4 bg-amber-900/10 border border-amber-500/10 rounded-lg">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-amber-400 font-medium mr-2">☕ 风味</span>
+                <span v-for="f in coffeeFlavors" :key="f" class="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">{{ f }}</span>
+              </div>
+            </div>
+
+            <!-- Offline: Event detail card -->
+            <div v-if="isOffline" class="mt-4 p-4 bg-indigo-900/10 border border-indigo-500/10 rounded-lg">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-xs text-indigo-400 font-medium">📋 活动详情</span>
+              </div>
+              <div class="space-y-2">
+                <p v-if="info.venue" class="text-xs text-gray-300 flex items-center gap-2"><span class="text-indigo-400">📍</span> {{ info.venue }}</p>
+                <p v-if="info.date" class="text-xs text-gray-300 flex items-center gap-2"><span class="text-indigo-400">📅</span> {{ info.date }}</p>
+                <p v-if="info.time" class="text-xs text-gray-300 flex items-center gap-2"><span class="text-indigo-400">🕐</span> {{ info.time }}</p>
+                <p v-if="info.price" class="text-xs text-gray-300 flex items-center gap-2"><span class="text-indigo-400">💰</span> {{ info.price }}</p>
+                <p v-if="info.capacity" class="text-xs text-gray-300 flex items-center gap-2"><span class="text-indigo-400">👥</span> {{ info.capacity }}</p>
+                <p v-if="info.difficulty" class="text-xs text-gray-300 flex items-center gap-2"><span class="text-indigo-400">⭐</span> {{ info.difficulty }}</p>
+              </div>
+              <div v-if="info.highlights" class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-indigo-500/10">
+                <span class="text-[10px] text-indigo-400">✨</span>
+                <span v-for="h in info.highlights.split(',').map(s=>s.trim()).filter(Boolean)" :key="h" class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">{{ h }}</span>
               </div>
             </div>
 

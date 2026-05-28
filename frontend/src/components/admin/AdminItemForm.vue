@@ -6,6 +6,10 @@ import { TYPE_LIST, getMeta } from '../../constants/types'
 import GameEditorFields from './GameEditorFields.vue'
 import MovieEditorFields from './MovieEditorFields.vue'
 import BookEditorFields from './BookEditorFields.vue'
+import MusicEditorFields from './MusicEditorFields.vue'
+import DigitalEditorFields from './DigitalEditorFields.vue'
+import CoffeeEditorFields from './CoffeeEditorFields.vue'
+import OfflineEditorFields from './OfflineEditorFields.vue'
 import GenericEditorFields from './GenericEditorFields.vue'
 
 const props = defineProps({
@@ -68,6 +72,10 @@ const editorComponent = computed(() => {
   if (isGameType.value) return GameEditorFields
   if (isMovieType.value) return MovieEditorFields
   if (form.value.type === 'book') return BookEditorFields
+  if (form.value.type === 'music') return MusicEditorFields
+  if (form.value.type === 'digital') return DigitalEditorFields
+  if (form.value.type === 'coffee') return CoffeeEditorFields
+  if (form.value.type === 'offline') return OfflineEditorFields
   return GenericEditorFields
 })
 
@@ -97,6 +105,44 @@ function initInfoFields() {
       pages: info.pages || '',
       category: info.category || '',
       reader_url: info.reader_url || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'music') {
+    form.value.infoJson = stringifyInfoJson({
+      artist: info.artist || '',
+      year: info.year || '',
+      genre: info.genre || '',
+      tracks: info.tracks || '',
+      preview_url: info.preview_url || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'digital') {
+    form.value.infoJson = stringifyInfoJson({
+      brand: info.brand || '',
+      category: info.category || '',
+      year: info.year || '',
+      features: info.features || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'coffee') {
+    form.value.infoJson = stringifyInfoJson({
+      origin: info.origin || '',
+      roast: info.roast || '',
+      process: info.process || '',
+      variety: info.variety || '',
+      flavor: info.flavor || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'offline') {
+    form.value.infoJson = stringifyInfoJson({
+      event_type: info.event_type || '',
+      venue: info.venue || '',
+      date: info.date || '',
+      time: info.time || '',
+      price: info.price || '',
+      capacity: info.capacity || '',
+      difficulty: info.difficulty || '',
+      highlights: info.highlights || '',
       videos: info.videos || { bilibili: '', youtube: '' },
     })
   }

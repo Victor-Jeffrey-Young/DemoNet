@@ -66,7 +66,26 @@ public class DataImportService implements CommandLineRunner {
         Map.entry("hi-nu-gundam-rg", List.of("gunpla", "rg", "char-counterattack")),
         Map.entry("three-body-problem", List.of("scifi", "chinese", "award-winning")),
         Map.entry("sapiens", List.of("history", "nonfiction", "anthropology")),
-        Map.entry("neon-genesis-evangelion-manga", List.of("manga", "mecha", "psychological"))
+        Map.entry("neon-genesis-evangelion-manga", List.of("manga", "mecha", "psychological")),
+        Map.entry("sony-wh1000xm5", List.of("audio", "anc", "headphone", "sony")),
+        Map.entry("airpods-pro-2", List.of("audio", "anc", "earbuds", "apple")),
+        Map.entry("cherry-mx-board", List.of("keyboard", "mechanical", "cherry", "rgb")),
+        Map.entry("ethiopia-yirgacheffe", List.of("coffee", "ethiopia", "washed", "light-roast", "fruity")),
+        Map.entry("colombia-huila", List.of("coffee", "colombia", "washed", "medium-roast", "caramel")),
+        Map.entry("guatemala-antigua", List.of("coffee", "guatemala", "washed", "dark-roast", "chocolate")),
+        Map.entry("kenya-aa", List.of("coffee", "kenya", "washed", "light-roast", "floral")),
+        Map.entry("indonesia-mandheling", List.of("coffee", "indonesia", "wet-hulled", "dark-roast", "herbal")),
+        Map.entry("costa-rica-tarrazu", List.of("coffee", "costa-rica", "honey", "medium-roast", "sweet")),
+        Map.entry("panama-geisha", List.of("coffee", "panama", "washed", "light-roast", "floral")),
+        Map.entry("yunnan-arabica", List.of("coffee", "china", "natural", "dark-roast", "winey")),
+        Map.entry("teamlab-borderless", List.of("offline", "exhibition", "immersive", "shanghai")),
+        Map.entry("sleep-no-more", List.of("offline", "theater", "immersive", "shanghai")),
+        Map.entry("misen-escape", List.of("offline", "escape-room", "horror", "beijing")),
+        Map.entry("common-rare-market", List.of("offline", "market", "design", "shanghai")),
+        Map.entry("omnipotent-youth-live", List.of("offline", "live", "rock", "tour")),
+        Map.entry("pottery-workshop", List.of("offline", "workshop", "ceramics", "handmade")),
+        Map.entry("wukang-road-citywalk", List.of("offline", "citywalk", "architecture", "walking")),
+        Map.entry("ando-exhibition", List.of("offline", "exhibition", "architecture", "beijing"))
     );
 
     private static final List<String> ALL_TAGS = ITEM_TAGS.values().stream()
@@ -80,6 +99,8 @@ public class DataImportService implements CommandLineRunner {
         if (itemMapper.selectCount(new LambdaQueryWrapper<>()) > 0) {
             log.info("Data already exists, skipping seed import.");
             seedAnimeIfMissing();
+            seedCoffeeIfMissing();
+            seedOfflineIfMissing();
             return;
         }
 
@@ -245,6 +266,27 @@ public class DataImportService implements CommandLineRunner {
         insert("music", "Uta no Prince-sama", "uta-no-prince",
                 "歌之王子殿下。Julian 与一众声优带来的梦幻音乐盛宴。",
                 "{\"artist\":\"Various\",\"year\":2011,\"genre\":\"J-POP\",\"tracks\":12}");
+        insert("music", "七里香", "qilixiang",
+                "周杰伦经典专辑。中国风与 R&B 的完美融合，《七里香》《借口》《将军》首首金曲。",
+                "{\"artist\":\"周杰伦\",\"year\":2004,\"genre\":\"流行, R&B\",\"tracks\":10}");
+        insert("music", "范特西", "fantasy-jay",
+                "周杰伦封神之作。双截棍、爱在西元前、安静，华语乐坛里程碑。",
+                "{\"artist\":\"周杰伦\",\"year\":2001,\"genre\":\"流行, Hip-Hop\",\"tracks\":10}");
+        insert("music", "伟大的渺小", "great-small",
+                "林俊杰沉淀之作。黑夜中寻找光明的温柔力量，编曲极致细腻。",
+                "{\"artist\":\"林俊杰\",\"year\":2017,\"genre\":\"流行\",\"tracks\":11}");
+        insert("music", "Faye Best", "faye-best",
+                "王菲精选集。天空、红豆、光之翼，空灵嗓音的永恒记录。",
+                "{\"artist\":\"王菲\",\"year\":2002,\"genre\":\"流行\",\"tracks\":16}");
+        insert("music", "黑色柳丁", "black-tangerine",
+                "陶喆 R&B 巅峰。黑色柳丁、Angel、Dear God，华语 R&B 圣经。",
+                "{\"artist\":\"陶喆\",\"year\":2002,\"genre\":\"R&B, 摇滚\",\"tracks\":13}");
+        insert("music", "第二人生", "second-life",
+                "五月天概念专辑。如果世界末日，你要怎么度过你的第二人生？",
+                "{\"artist\":\"五月天\",\"year\":2011,\"genre\":\"摇滚, 流行\",\"tracks\":12}");
+        insert("music", "1989", "taylor-1989",
+                "Taylor Swift 正式转型流行之作。Shake It Off、Blank Space、Style，流行乐教科书。",
+                "{\"artist\":\"Taylor Swift\",\"year\":2014,\"genre\":\"流行, Synth-pop\",\"tracks\":13}");
 
         insert("digital", "Sony WH-1000XM5", "sony-wh1000xm5",
                 "Sony 旗舰降噪耳机。自适应降噪、30 小时续航，通勤与专注的终极伴侣。",
@@ -255,6 +297,78 @@ public class DataImportService implements CommandLineRunner {
         insert("digital", "Cherry MX Board 3.0S", "cherry-mx-board",
                 "Cherry MX 红轴，无钢板设计回归纯粹机械手感。办公游戏兼备。",
                 "{\"brand\":\"Cherry\",\"category\":\"键盘\",\"year\":2021,\"features\":\"MX红轴,RGB背光,109键\"}");
+
+        insert("digital", "小米14 Ultra", "xiaomi-14-ultra",
+                "小米影像旗舰。徕卡光学 Summilux 镜头，1 英寸 LYT-900 主摄，骁龙 8 Gen 3 旗舰平台。",
+                "{\"brand\":\"小米\",\"category\":\"手机\",\"year\":2024,\"features\":\"徕卡光学,骁龙8Gen3,1英寸主摄,120W快充\"}");
+        insert("digital", "iPad Pro M4", "ipad-pro-m4",
+                "Apple M4 芯片首发，双层 OLED 超精视网膜 XDR 屏，5.1mm 极致轻薄。",
+                "{\"brand\":\"Apple\",\"category\":\"平板\",\"year\":2024,\"features\":\"M4芯片,OLED屏,超薄5.1mm,Apple Pencil Pro\"}");
+        insert("digital", "Galaxy Watch Ultra", "galaxy-watch-ultra",
+                "三星腕上旗舰。钛金属表壳，3nm 处理器，100m 防水，AI 健康监测。",
+                "{\"brand\":\"Samsung\",\"category\":\"手表\",\"year\":2024,\"features\":\"钛金属,Ti芯片,100m防水,AI健康\"}");
+        insert("digital", "Kindle Scribe", "kindle-scribe",
+                "首款带手写笔的 Kindle。10.2 英寸 300ppi 墨水屏，即读即写，数周续航。",
+                "{\"brand\":\"Amazon\",\"category\":\"平板\",\"year\":2023,\"features\":\"10.2寸墨水屏,手写笔,300ppi,数周续航\"}");
+        insert("digital", "ROG Ally X", "rog-ally-x",
+                "华硕掌机升级版。Ryzen Z1 Extreme + 80Wh 超大电池，7 英寸 120Hz VRR 屏。",
+                "{\"brand\":\"ASUS\",\"category\":\"掌机\",\"year\":2024,\"features\":\"Ryzen Z1E,80Wh电池,7寸120Hz,VRR\"}");
+        insert("digital", "Logitech MX Master 3S", "mx-master-3s",
+                "罗技旗舰办公鼠标。8K DPI 暗场追踪，MagSpeed 电磁滚轮一秒千行，静音按键。",
+                "{\"brand\":\"Logitech\",\"category\":\"鼠标\",\"year\":2022,\"features\":\"8K DPI,电磁滚轮,静音按键,MagSpeed\"}");
+        insert("digital", "华为MateBook X Pro", "matebook-x-pro",
+                "华为旗舰轻薄本。酷睿 Ultra 处理器，OLED 原色屏，980g 轻至极致。",
+                "{\"brand\":\"华为\",\"category\":\"笔记本\",\"year\":2024,\"features\":\"酷睿Ultra,OLED触屏,980g,40Gbps雷电4\"}");
+
+        insert("coffee", "埃塞俄比亚 耶加雪菲", "ethiopia-yirgacheffe",
+                "柑橘与茉莉的经典组合，柠檬酸明亮活泼。每一次手冲都是对埃塞高原的致敬。",
+                "{\"origin\":\"埃塞俄比亚\",\"roast\":\"浅烘\",\"process\":\"水洗\",\"variety\":\"原生种\",\"flavor\":\"柑橘,茉莉,蜂蜜,柠檬酸\"}");
+        insert("coffee", "哥伦比亚 蕙兰", "colombia-huila",
+                "焦糖与坚果的温暖香气，柔和果酸。南美高原的平衡之作，每天早晨的第一杯。",
+                "{\"origin\":\"哥伦比亚\",\"roast\":\"中烘\",\"process\":\"水洗\",\"variety\":\"铁皮卡\",\"flavor\":\"焦糖,坚果,可可,柔酸\"}");
+        insert("coffee", "危地马拉 安提瓜", "guatemala-antigua",
+                "火山土壤孕育的浓郁巧克力韵，烟熏尾调。三座火山环绕的传奇产区。",
+                "{\"origin\":\"危地马拉\",\"roast\":\"中深烘\",\"process\":\"水洗\",\"variety\":\"波旁\",\"flavor\":\"巧克力,烟熏,香料,醇厚\"}");
+        insert("coffee", "肯尼亚 AA", "kenya-aa",
+                "乌梅与黑加仑的爆炸果酸，明亮如肯尼亚的阳光。SL28/SL34 的完美演绎。",
+                "{\"origin\":\"肯尼亚\",\"roast\":\"浅烘\",\"process\":\"水洗\",\"variety\":\"SL28\",\"flavor\":\"乌梅,番茄,黑加仑,明亮酸\"}");
+        insert("coffee", "印尼 曼特宁", "indonesia-mandheling",
+                "草药与黑巧的厚重底蕴，焦糖回甘。苏门答腊湿刨法的独特魅力。",
+                "{\"origin\":\"印尼\",\"roast\":\"深烘\",\"process\":\"湿刨法\",\"variety\":\"曼特宁\",\"flavor\":\"草药,黑巧,焦糖,厚重\"}");
+        insert("coffee", "哥斯达黎加 塔拉珠", "costa-rica-tarrazu",
+                "蜂蜜与太妃糖的甜蜜拥抱，顺滑如丝。蜜处理带来的惊人甜感。",
+                "{\"origin\":\"哥斯达黎加\",\"roast\":\"中烘\",\"process\":\"蜜处理\",\"variety\":\"卡杜艾\",\"flavor\":\"蜂蜜,杏桃,太妃糖,顺滑\"}");
+        insert("coffee", "巴拿马 瑰夏", "panama-geisha",
+                "花香与佛手柑的优雅交响，蜜桃茶感。竞标级别的传奇咖啡，一生必尝。",
+                "{\"origin\":\"巴拿马\",\"roast\":\"浅烘\",\"process\":\"水洗\",\"variety\":\"瑰夏\",\"flavor\":\"花香,佛手柑,蜜桃,茶感\"}");
+        insert("coffee", "中国云南 小粒咖啡", "yunnan-arabica",
+                "红酒与菠萝蜜的热带风情，黑糖甜醇。云南高海拔日晒的惊喜之作。",
+                "{\"origin\":\"中国云南\",\"roast\":\"中深烘\",\"process\":\"日晒\",\"variety\":\"卡蒂姆\",\"flavor\":\"红酒,菠萝蜜,黑糖,热带果\"}");
+
+        insert("offline", "teamLab 无界美术馆", "teamlab-borderless",
+                "全球必看十大展览之一。6600㎡ 的光影宇宙，没有地图、没有路线，沉浸式探索无界艺术。",
+                "{\"event_type\":\"展览\",\"venue\":\"上海·黄浦滨江\",\"date\":\"常设展（长期）\",\"time\":\"10:30-20:30（周一闭馆）\",\"price\":\"¥229/人\",\"capacity\":\"\",\"difficulty\":\"\",\"highlights\":\"互动装置,沉浸式,适合拍照,亲子友好\"}");
+        insert("offline", "不眠之夜 Sleep No More", "sleep-no-more",
+                "纽约爆红至今的浸入式戏剧。戴着白色面具，在 90 个房间里跟随演员跑上跑下 3 小时。",
+                "{\"event_type\":\"沉浸式剧场\",\"venue\":\"上海·麦金侬酒店\",\"date\":\"常驻演出（长期）\",\"time\":\"19:00/19:20/19:40 三场\",\"price\":\"¥590/人起\",\"capacity\":\"\",\"difficulty\":\"\",\"highlights\":\"浸入式,莎剧改编,3小时,面具,酒店探险\"}");
+        insert("offline", "弥生·日式沉浸密室", "misen-escape",
+                "X先生金牌密室。日式惊悚氛围拉满，实景搭建超过 200㎡，剧情反转令人头皮发麻。",
+                "{\"event_type\":\"密室逃脱\",\"venue\":\"北京·朝阳大悦城\",\"date\":\"常驻（需预约）\",\"time\":\"10:00-22:00\",\"price\":\"¥198/人\",\"capacity\":\"4-6人/场\",\"difficulty\":\"★★★★☆\",\"highlights\":\"日式惊悚,实景,剧情反转,多结局\"}");
+        insert("offline", "凡几 Common Rare 市集", "common-rare-market",
+                "国内最好的设计市集之一。70+ 独立品牌、插画、手作、咖啡美食，每次主题都不同。",
+                "{\"event_type\":\"市集\",\"venue\":\"上海·现所/其他场地\",\"date\":\"不定期举办（关注官方）\",\"time\":\"11:00-19:00\",\"price\":\"¥49/人（早鸟）\",\"capacity\":\"\",\"difficulty\":\"\",\"highlights\":\"设计,手作,插画,美食,独立品牌\"}");
+        insert("offline", "万能青年旅店 全国巡演", "omnipotent-youth-live",
+                "万青十年磨一剑，《冀西南林路行》巡演。万人合唱《杀死那个石家庄人》的夜晚。",
+                "{\"event_type\":\"Live\",\"venue\":\"多城市巡演\",\"date\":\"2024-2025 巡演季\",\"time\":\"19:30 开场\",\"price\":\"¥380/580/880\",\"capacity\":\"\",\"difficulty\":\"\",\"highlights\":\"摇滚,独立,全场大合唱,必看现场\"}");
+        insert("offline", "陶艺拉坯体验课", "pottery-workshop",
+                "零基础友好。2 小时从揉泥到拉坯成型，每人带走 2 件作品，老师全程指导。",
+                "{\"event_type\":\"工作坊\",\"venue\":\"上海·永康路\",\"date\":\"每周六/日（需预约）\",\"time\":\"14:00-16:00\",\"price\":\"¥268/人\",\"capacity\":\"6人/班\",\"difficulty\":\"\",\"highlights\":\"手作,零基础,2小时,带走成品,解压\"}");
+        insert("offline", "武康路历史建筑 Citywalk", "wukang-road-citywalk",
+                "2 小时步行探索上海最优雅的街道。武康大楼、巴金故居、罗密欧阳台、密丹公寓。",
+                "{\"event_type\":\"城市探索\",\"venue\":\"上海·武康路（集合：武康大楼）\",\"date\":\"每周六/日\",\"time\":\"09:30-11:30\",\"price\":\"¥128/人\",\"capacity\":\"15人/团\",\"difficulty\":\"\",\"highlights\":\"历史建筑,步行2h,专业讲解,适合拍照\"}");
+        insert("offline", "安藤忠雄 回顾展", "ando-exhibition",
+                "普利兹克奖得主安藤忠雄大型回顾展。光之教堂 1:1 再现，200+ 手稿与模型。",
+                "{\"event_type\":\"展览\",\"venue\":\"北京·UCCA 尤伦斯当代艺术中心\",\"date\":\"2024.10.01 - 2025.01.19\",\"time\":\"10:00-18:30（周一闭馆）\",\"price\":\"¥150/人\",\"capacity\":\"\",\"difficulty\":\"\",\"highlights\":\"建筑模型,手稿,光之教堂,清水混凝土,大师\"}");
 
         seedTags();
 
@@ -347,6 +461,84 @@ public class DataImportService implements CommandLineRunner {
         item.setSource("manual");
         item.setStatus(1);
         itemMapper.insert(item);
+    }
+
+    private void seedCoffeeIfMissing() {
+        Long count = itemMapper.selectCount(new LambdaQueryWrapper<Item>().eq(Item::getType, "coffee"));
+        if (count != null && count > 0) return;
+        log.info("Coffee data missing, seeding...");
+        i("coffee", "埃塞俄比亚 耶加雪菲", "ethiopia-yirgacheffe",
+                "柑橘与茉莉的经典组合，柠檬酸明亮活泼。每一次手冲都是对埃塞高原的致敬。",
+                "{\"origin\":\"埃塞俄比亚\",\"roast\":\"浅烘\",\"process\":\"水洗\",\"variety\":\"原生种\",\"flavor\":\"柑橘,茉莉,蜂蜜,柠檬酸\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/yirgacheffe/600/400", null);
+        i("coffee", "哥伦比亚 蕙兰", "colombia-huila",
+                "焦糖与坚果的温暖香气，柔和果酸。南美高原的平衡之作，每天早晨的第一杯。",
+                "{\"origin\":\"哥伦比亚\",\"roast\":\"中烘\",\"process\":\"水洗\",\"variety\":\"铁皮卡\",\"flavor\":\"焦糖,坚果,可可,柔酸\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/colombia/600/400", null);
+        i("coffee", "危地马拉 安提瓜", "guatemala-antigua",
+                "火山土壤孕育的浓郁巧克力韵，烟熏尾调。三座火山环绕的传奇产区。",
+                "{\"origin\":\"危地马拉\",\"roast\":\"中深烘\",\"process\":\"水洗\",\"variety\":\"波旁\",\"flavor\":\"巧克力,烟熏,香料,醇厚\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/guatemala/600/400", null);
+        i("coffee", "肯尼亚 AA", "kenya-aa",
+                "乌梅与黑加仑的爆炸果酸，明亮如肯尼亚的阳光。SL28/SL34 的完美演绎。",
+                "{\"origin\":\"肯尼亚\",\"roast\":\"浅烘\",\"process\":\"水洗\",\"variety\":\"SL28\",\"flavor\":\"乌梅,番茄,黑加仑,明亮酸\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/kenya/600/400", null);
+        i("coffee", "印尼 曼特宁", "indonesia-mandheling",
+                "草药与黑巧的厚重底蕴，焦糖回甘。苏门答腊湿刨法的独特魅力。",
+                "{\"origin\":\"印尼\",\"roast\":\"深烘\",\"process\":\"湿刨法\",\"variety\":\"曼特宁\",\"flavor\":\"草药,黑巧,焦糖,厚重\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/mandheling/600/400", null);
+        i("coffee", "哥斯达黎加 塔拉珠", "costa-rica-tarrazu",
+                "蜂蜜与太妃糖的甜蜜拥抱，顺滑如丝。蜜处理带来的惊人甜感。",
+                "{\"origin\":\"哥斯达黎加\",\"roast\":\"中烘\",\"process\":\"蜜处理\",\"variety\":\"卡杜艾\",\"flavor\":\"蜂蜜,杏桃,太妃糖,顺滑\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/costarica/600/400", null);
+        i("coffee", "巴拿马 瑰夏", "panama-geisha",
+                "花香与佛手柑的优雅交响，蜜桃茶感。竞标级别的传奇咖啡，一生必尝。",
+                "{\"origin\":\"巴拿马\",\"roast\":\"浅烘\",\"process\":\"水洗\",\"variety\":\"瑰夏\",\"flavor\":\"花香,佛手柑,蜜桃,茶感\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/geisha/600/400", null);
+        i("coffee", "中国云南 小粒咖啡", "yunnan-arabica",
+                "红酒与菠萝蜜的热带风情，黑糖甜醇。云南高海拔日晒的惊喜之作。",
+                "{\"origin\":\"中国云南\",\"roast\":\"中深烘\",\"process\":\"日晒\",\"variety\":\"卡蒂姆\",\"flavor\":\"红酒,菠萝蜜,黑糖,热带果\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/yunnan/600/400", null);
+        log.info("Coffee seed: {} items", 8);
+    }
+
+    private void seedOfflineIfMissing() {
+        Long count = itemMapper.selectCount(new LambdaQueryWrapper<Item>().eq(Item::getType, "offline"));
+        if (count != null && count > 0) return;
+        log.info("Offline data missing, seeding...");
+        i("offline", "teamLab 无界美术馆", "teamlab-borderless",
+                "全球必看十大展览之一。6600㎡ 的光影宇宙，没有地图、没有路线，沉浸式探索无界艺术。",
+                "{\"event_type\":\"展览\",\"venue\":\"上海·黄浦滨江\",\"date\":\"常设展（长期）\",\"time\":\"10:30-20:30（周一闭馆）\",\"price\":\"¥229/人\",\"highlights\":\"互动装置,沉浸式,适合拍照,亲子友好\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/teamlab/600/400", null);
+        i("offline", "不眠之夜 Sleep No More", "sleep-no-more",
+                "纽约爆红至今的浸入式戏剧。戴着白色面具，在 90 个房间里跟随演员跑上跑下 3 小时。",
+                "{\"event_type\":\"沉浸式剧场\",\"venue\":\"上海·麦金侬酒店\",\"date\":\"常驻演出（长期）\",\"time\":\"19:00/19:20/19:40 三场\",\"price\":\"¥590/人起\",\"highlights\":\"浸入式,莎剧改编,3小时,面具,酒店探险\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/sleepnomore/600/400", null);
+        i("offline", "弥生·日式沉浸密室", "misen-escape",
+                "X先生金牌密室。日式惊悚氛围拉满，实景搭建超过 200㎡，剧情反转令人头皮发麻。",
+                "{\"event_type\":\"密室逃脱\",\"venue\":\"北京·朝阳大悦城\",\"date\":\"常驻（需预约）\",\"time\":\"10:00-22:00\",\"price\":\"¥198/人\",\"capacity\":\"4-6人/场\",\"difficulty\":\"★★★★☆\",\"highlights\":\"日式惊悚,实景,剧情反转,多结局\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/misen/600/400", null);
+        i("offline", "凡几 Common Rare 市集", "common-rare-market",
+                "国内最好的设计市集之一。70+ 独立品牌、插画、手作、咖啡美食，每次主题都不同。",
+                "{\"event_type\":\"市集\",\"venue\":\"上海·现所/其他场地\",\"date\":\"不定期举办（关注官方）\",\"time\":\"11:00-19:00\",\"price\":\"¥49/人（早鸟）\",\"highlights\":\"设计,手作,插画,美食,独立品牌\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/market/600/400", null);
+        i("offline", "万能青年旅店 全国巡演", "omnipotent-youth-live",
+                "万青十年磨一剑，《冀西南林路行》巡演。万人合唱《杀死那个石家庄人》的夜晚。",
+                "{\"event_type\":\"Live\",\"venue\":\"多城市巡演\",\"date\":\"2024-2025 巡演季\",\"time\":\"19:30 开场\",\"price\":\"¥380/580/880\",\"highlights\":\"摇滚,独立,全场大合唱,必看现场\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/wanqing/600/400", null);
+        i("offline", "陶艺拉坯体验课", "pottery-workshop",
+                "零基础友好。2 小时从揉泥到拉坯成型，每人带走 2 件作品，老师全程指导。",
+                "{\"event_type\":\"工作坊\",\"venue\":\"上海·永康路\",\"date\":\"每周六/日（需预约）\",\"time\":\"14:00-16:00\",\"price\":\"¥268/人\",\"capacity\":\"6人/班\",\"highlights\":\"手作,零基础,2小时,带走成品,解压\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/pottery/600/400", null);
+        i("offline", "武康路历史建筑 Citywalk", "wukang-road-citywalk",
+                "2 小时步行探索上海最优雅的街道。武康大楼、巴金故居、罗密欧阳台、密丹公寓。",
+                "{\"event_type\":\"城市探索\",\"venue\":\"上海·武康路（集合：武康大楼）\",\"date\":\"每周六/日\",\"time\":\"09:30-11:30\",\"price\":\"¥128/人\",\"capacity\":\"15人/团\",\"highlights\":\"历史建筑,步行2h,专业讲解,适合拍照\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/citywalk/600/400", null);
+        i("offline", "安藤忠雄 回顾展", "ando-exhibition",
+                "普利兹克奖得主安藤忠雄大型回顾展。光之教堂 1:1 再现，200+ 手稿与模型。",
+                "{\"event_type\":\"展览\",\"venue\":\"北京·UCCA 尤伦斯当代艺术中心\",\"date\":\"2024.10.01 - 2025.01.19\",\"time\":\"10:00-18:30（周一闭馆）\",\"price\":\"¥150/人\",\"highlights\":\"建筑模型,手稿,光之教堂,清水混凝土,大师\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
+                "https://picsum.photos/seed/ando/600/400", null);
+        log.info("Offline seed: {} items", 8);
     }
 
     private void seedUser() {

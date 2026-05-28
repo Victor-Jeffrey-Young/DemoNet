@@ -17,6 +17,14 @@ import BoardgameHero from '../components/category/BoardgameHero.vue'
 import BoardgameCard from '../components/category/BoardgameCard.vue'
 import BookHero from '../components/category/BookHero.vue'
 import BookCard from '../components/category/BookCard.vue'
+import MusicHero from '../components/category/MusicHero.vue'
+import MusicCard from '../components/category/MusicCard.vue'
+import DigitalHero from '../components/category/DigitalHero.vue'
+import DigitalCard from '../components/category/DigitalCard.vue'
+import CoffeeHero from '../components/category/CoffeeHero.vue'
+import CoffeeCard from '../components/category/CoffeeCard.vue'
+import OfflineHero from '../components/category/OfflineHero.vue'
+import OfflineCard from '../components/category/OfflineCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,6 +68,10 @@ const isAnime = computed(() => activeType.value === 'anime')
 const isModel = computed(() => activeType.value === 'model')
 const isBoardgame = computed(() => activeType.value === 'boardgame')
 const isBook = computed(() => activeType.value === 'book')
+const isMusic = computed(() => activeType.value === 'music')
+const isDigital = computed(() => activeType.value === 'digital')
+const isCoffee = computed(() => activeType.value === 'coffee')
+const isOffline = computed(() => activeType.value === 'offline')
 const CardComponent = computed(() => {
   if (isGame.value) return GameCard
   if (isMovie.value) return movieViewMode.value === 'poster' ? MoviePosterCard : MovieCard
@@ -67,6 +79,10 @@ const CardComponent = computed(() => {
   if (isModel.value) return ModelCard
   if (isBoardgame.value) return BoardgameCard
   if (isBook.value) return BookCard
+  if (isMusic.value) return MusicCard
+  if (isDigital.value) return DigitalCard
+  if (isCoffee.value) return CoffeeCard
+  if (isOffline.value) return OfflineCard
   return AppCard
 })
 </script>
@@ -75,7 +91,8 @@ const CardComponent = computed(() => {
   <div class="min-h-screen text-white" :class="[
     meta.light ? 'bg-gray-100 text-gray-900' : '',
     isBoardgame ? 'bg-[#1a1206]' : '',
-    !meta.light && !isBoardgame ? 'bg-gray-950' : '',
+    isAnime ? 'bg-[#0c0a1a]' : '',
+    !meta.light && !isBoardgame && !isAnime ? 'bg-gray-950' : '',
   ]">
     <GameHero v-if="isGame && showHero" />
     <MovieHero v-if="isMovie && showHero" />
@@ -83,6 +100,10 @@ const CardComponent = computed(() => {
     <ModelHero v-if="isModel && showHero" />
     <BoardgameHero v-if="isBoardgame && showHero" />
     <BookHero v-if="isBook && showHero" />
+    <MusicHero v-if="isMusic && showHero" />
+    <DigitalHero v-if="isDigital && showHero" />
+    <CoffeeHero v-if="isCoffee && showHero" />
+    <OfflineHero v-if="isOffline && showHero" />
 
     <main class="max-w-7xl mx-auto px-6 py-10">
       <div class="flex items-center justify-between mb-6">
@@ -109,7 +130,11 @@ const CardComponent = computed(() => {
           isModel ? 'space-y-4' : '',
           isBoardgame ? 'grid grid-cols-1 lg:grid-cols-2 gap-5' : '',
           isBook ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5' : '',
-          !isMovie && !isAnime && !isModel && !isBoardgame && !isBook ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : '',
+          isMusic ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4' : '',
+          isDigital ? 'grid grid-cols-1 lg:grid-cols-2 gap-5' : '',
+          isCoffee ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5' : '',
+          isOffline ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5' : '',
+          !isMovie && !isAnime && !isModel && !isBoardgame && !isBook && !isMusic && !isDigital && !isCoffee && !isOffline ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : '',
         ]"
         class="mb-10">
         <component :is="CardComponent" v-for="item in items" :key="item.id" :item="item" />

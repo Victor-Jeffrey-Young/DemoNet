@@ -19,6 +19,8 @@ const categories = [
   { key: 'book', label: '书籍', emoji: '📖', desc: '试读 & 书评' },
   { key: 'music', label: '音乐', emoji: '🎵', desc: '30s试听 & 测评' },
   { key: 'digital', label: '数码', emoji: '📱', desc: '开箱 & 评测' },
+  { key: 'coffee', label: '咖啡', emoji: '☕', desc: '风味 & 冲泡指南' },
+  { key: 'offline', label: '线下', emoji: '🏛️', desc: '展览 & 活动预览' },
 ]
 
 const mainBanner = ref(null)

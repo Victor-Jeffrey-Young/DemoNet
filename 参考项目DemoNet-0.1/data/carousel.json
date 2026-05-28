@@ -1,7 +1,0 @@
-[
-  {"type": "movie", "id": "no-time-to-die", "image": "img/movie/no-time-to-die/notime-poster.webp", "title": "007：无暇赴死", "desc": "新邦女郎？"},
-  {"type": "game", "id": "apex", "image": "img/game/apex/apex3.jpg", "title": "APEX", "desc": "免费的不香吗？"},
-  {"type": "anime", "id": "arcane", "image": "img/anime/arcane/arcane1.jfif", "title": "英雄联盟：双城之战", "desc": "神片热播中！"},
-  {"type": "game", "id": "witcher3", "image": "img/game/witcher3/witcher3-home.jpg", "title": "巫师3：狂猎", "desc": "重温经典"},
-  {"type": "movie", "id": "darkness-scanner", "image": "img/movie/darkness-scanner/darkness-cover.jpg", "title": "扫黑：决战", "desc": "你敢横向霸道，我必斩草除根！"}
-]

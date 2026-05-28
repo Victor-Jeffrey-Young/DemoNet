@@ -14,6 +14,7 @@ public class RabbitMQConfig {
     public static final String QUEUE_ANILIST = "demonet.fetch.anilist";
     public static final String QUEUE_BANGUMI = "demonet.fetch.bangumi";
     public static final String QUEUE_TMDB_TV = "demonet.fetch.tmdb-tv";
+    public static final String QUEUE_ITUNES = "demonet.fetch.itunes";
 
     @Bean
     public Queue steamFetchQueue() {
@@ -38,6 +39,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue tmdbTVFetchQueue() {
         return new Queue(QUEUE_TMDB_TV, true);
+    }
+
+    @Bean
+    public Queue itunesFetchQueue() {
+        return new Queue(QUEUE_ITUNES, true);
     }
 
     @Bean

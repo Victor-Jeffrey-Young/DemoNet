@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import {
   triggerSteamFetch, triggerTMDBFetch, triggerAniListFetch,
-  triggerBangumiFetch, triggerTMDBTVFetch,
+  triggerBangumiFetch, triggerTMDBTVFetch, triggerItunesFetch,
   getPendingItems, approveItem, rejectItem,
 } from '../../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -18,6 +18,8 @@ const bangumiQuery = ref('')
 const bangumiTarget = ref('anime')
 const tmdbTVQuery = ref('')
 const tmdbTVTarget = ref('anime')
+const itunesQuery = ref('')
+const itunesTarget = ref('music')
 const pendingList = ref([])
 const pendingTotal = ref(0)
 const pendingPage = ref(1)
@@ -49,6 +51,10 @@ async function handleTMDBTVFetch() {
   if (!tmdbTVQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
   try { const r = await triggerTMDBTVFetch(tmdbTVQuery.value.trim(), tmdbTVTarget.value); ElMessage.success(r.message); tmdbTVQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
 }
+async function handleItunesFetch() {
+  if (!itunesQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
+  try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value); ElMessage.success(r.message); itunesQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+}
 
 async function loadPending() {
   loading.value = true
@@ -70,7 +76,7 @@ defineExpose({ refresh: loadPending })
 <template>
   <div>
     <!-- Fetch Panels -->
-    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
       <!-- Steam -->
       <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
         <h4 class="text-xs font-semibold text-gray-200 mb-2">🎮 Steam</h4>
@@ -115,6 +121,15 @@ defineExpose({ refresh: loadPending })
         </el-select>
         <el-input v-model="bangumiQuery" placeholder="动漫关键词(中文)" size="small" class="mb-1" @keyup.enter="handleBangumiFetch" />
         <el-button type="primary" size="small" @click="handleBangumiFetch" style="width:100%">提交</el-button>
+      </div>
+      <!-- iTunes -->
+      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+        <h4 class="text-xs font-semibold text-gray-200 mb-2">🎵 iTunes</h4>
+        <el-select v-model="itunesTarget" size="small" style="width:100%" :teleported="false" popper-class="admin-select-drop" class="mb-1">
+          <el-option v-for="t in ['music','anime']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
+        </el-select>
+        <el-input v-model="itunesQuery" placeholder="专辑/艺人关键词" size="small" class="mb-1" @keyup.enter="handleItunesFetch" />
+        <el-button type="primary" size="small" @click="handleItunesFetch" style="width:100%">提交</el-button>
       </div>
     </div>
 

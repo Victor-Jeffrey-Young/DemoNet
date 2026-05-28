@@ -106,6 +106,10 @@ export function triggerTMDBTVFetch(query, targetType = 'anime') {
   return request.post('/admin/fetch/tmdb-tv', { query, targetType })
 }
 
+export function triggerItunesFetch(query, targetType = 'music') {
+  return request.post('/admin/fetch/itunes', { query, targetType })
+}
+
 export function getPendingItems(params) {
   return request.get('/admin/pending', { params })
 }
