@@ -31,3 +31,7 @@ export function getItemsByType(type) {
 export function getRecommended(params) {
   return request.get('/items/recommended', { params })
 }
+
+export function getFeatured(params) {
+  return request.get('/items/featured', { params })
+}

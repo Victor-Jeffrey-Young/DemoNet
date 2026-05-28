@@ -72,6 +72,17 @@ public class ItemService {
         return itemMapper.selectPage(p, wrapper).getRecords();
     }
 
+    public List<Item> listFeatured(String type) {
+        LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Item::getStatus, 1);
+        wrapper.isNotNull(Item::getCarouselOrder);
+        if (type != null && !type.isBlank()) {
+            wrapper.eq(Item::getType, type);
+        }
+        wrapper.orderByAsc(Item::getCarouselOrder);
+        return itemMapper.selectList(wrapper);
+    }
+
     public List<Item> listByType(String type) {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);

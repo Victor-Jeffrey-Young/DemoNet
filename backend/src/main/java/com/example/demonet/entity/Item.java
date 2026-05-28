@@ -22,10 +22,12 @@ public class Item {
     private String description;
     private String infoJson;
     private String mediaUrl;
+    private String posterUrl;
     private String externalLink;
     private String externalId;
     private String source;
     private Integer status;
+    private Integer carouselOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -30,21 +30,6 @@ public class ItemController {
         return itemService.getBySlug(slug);
     }
 
-    @PostMapping
-    public Item create(@RequestBody Item item) {
-        return itemService.createItem(item);
-    }
-
-    @PutMapping("/{id}")
-    public Item update(@PathVariable Long id, @RequestBody Item item) {
-        return itemService.updateItem(id, item);
-    }
-
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        itemService.deleteItem(id);
-    }
-
     @GetMapping("/hot")
     public List<Item> hot(
             @RequestParam(required = false) String type,
@@ -62,5 +47,11 @@ public class ItemController {
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "6") Integer limit) {
         return itemService.listRecommended(type, limit);
+    }
+
+    @GetMapping("/featured")
+    public List<Item> featured(
+            @RequestParam(required = false) String type) {
+        return itemService.listFeatured(type);
     }
 }

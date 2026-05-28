@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getHotItems } from '../../api/item'
+import { getFeatured } from '../../api/item'
 import { getMeta } from '../../constants/types'
 
 const router = useRouter()
@@ -17,7 +17,7 @@ const displayCards = computed(() => {
 })
 
 onMounted(async () => {
-  try { games.value = await getHotItems({ type:'game', limit:8 }) || [] } catch {}
+  try { games.value = await getFeatured({ type: 'game' }) || [] } catch {}
   if (games.value.length) { activeIdx.value = realCount.value; startAutoplay() }
 })
 onUnmounted(() => clearInterval(autoplayTimer))
@@ -45,7 +45,13 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
 </script>
 
 <template>
-  <div class="relative w-full overflow-hidden" style="background: radial-gradient(ellipse at 30% 20%, #064e3b 0%, #022c22 30%, #0a0a0a 70%)">
+  <div v-if="games.length === 0" class="relative w-full overflow-hidden" style="background: radial-gradient(ellipse at 30% 20%, #064e3b 0%, #022c22 30%, #0a0a0a 70%)">
+    <div class="flex flex-col items-center justify-center py-28 gap-3">
+      <span class="text-gray-500 text-5xl">🎮</span>
+      <span class="text-gray-400 text-sm">管理员尚未配置轮播作品</span>
+    </div>
+  </div>
+  <div v-else class="relative w-full overflow-hidden" style="background: radial-gradient(ellipse at 30% 20%, #064e3b 0%, #022c22 30%, #0a0a0a 70%)">
     <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #34d399 2px, #34d399 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, #34d399 2px, #34d399 4px)" />
 
     <div class="relative max-w-7xl mx-auto px-6 pt-10 pb-8">

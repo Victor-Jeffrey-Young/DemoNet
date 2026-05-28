@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getHotItems } from '../../api/item'
+import { getFeatured } from '../../api/item'
 import { getMeta } from '../../constants/types'
 
 const router = useRouter()
@@ -10,7 +10,7 @@ const movies = ref([])
 const active = ref(0)
 
 onMounted(async () => {
-  try { movies.value = await getHotItems({ type:'movie', limit:5 }) || [] } catch {}
+  try { movies.value = await getFeatured({ type: 'movie' }) || [] } catch {}
   autoplayTimer = setInterval(() => {
     if (movies.value.length) active.value = (active.value + 1) % movies.value.length
   }, 5000)
@@ -22,15 +22,27 @@ let autoplayTimer = null
 
 function next() { active.value = (active.value + 1) % movies.value.length }
 function goDetail(slug) { router.push({ name:'Detail', params:{ slug } }) }
+
+function watchTrailer(movie) {
+  try {
+    const info = typeof movie.infoJson === 'string' ? JSON.parse(movie.infoJson) : (movie.infoJson || {})
+    const trailer = info.trailer || ''
+    if (trailer) { window.open(trailer, '_blank'); return }
+  } catch {}
+  if (movie.externalLink) window.open(movie.externalLink, '_blank')
+}
 </script>
 
 <template>
-  <div class="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black" v-if="movies[active]">
-    <div class="absolute inset-0 z-0 transition-all duration-[900ms]"
-         :style="{ backgroundImage: `url(${movies[active].coverUrl||movies[active].wideCoverUrl||''})`, backgroundSize:'cover', backgroundPosition:'center 30%' }">
-      <div class="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/70 to-transparent" />
-      <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent" />
-    </div>
+  <div class="relative w-full h-[calc(100vh-4rem)] overflow-hidden bg-black" v-if="movies.length">
+    <!-- Background crossfade via Vue Transition -->
+    <Transition name="hero-crossfade" mode="out-in">
+      <div :key="active" class="absolute inset-0 z-0"
+           :style="{ backgroundImage: `url(${movies[active].wideCoverUrl||movies[active].coverUrl||''})`, backgroundSize:'cover', backgroundPosition:'center' }">
+        <div class="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/70 to-transparent" />
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent" />
+      </div>
+    </Transition>
 
     <div class="relative z-10 h-full flex flex-col justify-center px-12 max-w-4xl">
       <span class="text-red-400 text-xs tracking-widest uppercase mb-4">{{ meta.label }}</span>
@@ -41,7 +53,7 @@ function goDetail(slug) { router.push({ name:'Detail', params:{ slug } }) }
           class="px-6 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-red-900/30">
           查看详情
         </button>
-        <button v-if="movies[active].externalLink" @click="window.open(movies[active].externalLink,'_blank')"
+        <button @click="watchTrailer(movies[active])"
           class="px-6 py-3 border border-white/20 hover:border-white/40 rounded-xl text-sm transition-all">
           ▶ 观看预告
         </button>
@@ -62,7 +74,19 @@ function goDetail(slug) { router.push({ name:'Detail', params:{ slug } }) }
       </button>
     </div>
   </div>
-  <div v-else class="w-full h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-b from-red-950 to-gray-950">
-    <span class="text-gray-500">暂无电影数据</span>
+  <div v-else class="w-full h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-gradient-to-b from-red-950 to-gray-950 gap-3">
+    <span class="text-gray-500 text-4xl">🎬</span>
+    <span class="text-gray-400 text-sm">管理员尚未配置轮播作品</span>
   </div>
 </template>
+
+<style scoped>
+.hero-crossfade-enter-active,
+.hero-crossfade-leave-active {
+  transition: opacity 0.8s ease;
+}
+.hero-crossfade-enter-from,
+.hero-crossfade-leave-to {
+  opacity: 0;
+}
+</style>

@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,11 +26,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/items/**").permitAll()
-                .requestMatchers("/api/tags/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tags").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tags/items/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/items/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/items/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/tags/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/tags/**").hasRole("ADMIN")
+                .requestMatchers("/uploads/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

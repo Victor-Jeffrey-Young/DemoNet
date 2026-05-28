@@ -24,11 +24,11 @@ function goDetail() {
   <div @click.stop="goDetail"
     class="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-gray-600 transition cursor-pointer group">
     <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-4xl relative overflow-hidden">
-      <div v-if="item.coverUrl" class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
-        :style="{ backgroundImage: 'url('+item.coverUrl+')' }" />
+      <div v-if="item.wideCoverUrl || item.coverUrl" class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
+        :style="{ backgroundImage: 'url('+(item.wideCoverUrl || item.coverUrl)+')' }" />
       <div v-else class="absolute inset-0" />
       <div class="absolute inset-0 bg-black/20 group-hover:opacity-0 transition-opacity pointer-events-none" />
-      <span v-if="!item.coverUrl" class="relative z-10">{{ (meta[item.type]||{}).emoji || '📦' }}</span>
+      <span v-if="!item.wideCoverUrl && !item.coverUrl" class="relative z-10">{{ (meta[item.type]||{}).emoji || '📦' }}</span>
     </div>
     <div class="p-4">
       <span :class="(meta[item.type]||{}).color || 'bg-gray-800 text-gray-400'" class="text-xs px-2 py-0.5 rounded">
