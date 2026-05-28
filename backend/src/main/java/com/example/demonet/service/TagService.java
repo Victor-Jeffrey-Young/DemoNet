@@ -1,6 +1,8 @@
 package com.example.demonet.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Tag;
 import com.example.demonet.mapper.TagMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,25 @@ public class TagService {
         return tagMapper.selectList(new LambdaQueryWrapper<Tag>().orderByAsc(Tag::getId));
     }
 
+    public IPage<Tag> listPaginated(int page, int size, String keyword) {
+        Page<Tag> p = new Page<>(page, size);
+        LambdaQueryWrapper<Tag> wrapper = new LambdaQueryWrapper<Tag>();
+        if (keyword != null && !keyword.isBlank()) {
+            wrapper.like(Tag::getName, keyword);
+        }
+        wrapper.orderByAsc(Tag::getId);
+        return tagMapper.selectPage(p, wrapper);
+    }
+
     public Tag create(String name) {
+        if (name == null || name.isBlank()) {
+            throw new RuntimeException("标签名不能为空");
+        }
+        Long exists = tagMapper.selectCount(
+                new LambdaQueryWrapper<Tag>().eq(Tag::getName, name));
+        if (exists != null && exists > 0) {
+            throw new RuntimeException("标签「" + name + "」已存在");
+        }
         Tag tag = new Tag();
         tag.setName(name);
         tagMapper.insert(tag);
@@ -40,6 +60,10 @@ public class TagService {
                     "INSERT IGNORE INTO item_tag_mapping (item_id, tag_id) VALUES (?, ?)",
                     itemId, tagId);
         }
+    }
+
+    public void removeItemTag(Long itemId, Long tagId) {
+        jdbcTemplate.update("DELETE FROM item_tag_mapping WHERE item_id = ? AND tag_id = ?", itemId, tagId);
     }
 
     public List<Long> getItemIdsByTagNames(List<String> tagNames) {

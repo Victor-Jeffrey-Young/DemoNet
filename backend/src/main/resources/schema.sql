@@ -5,11 +5,15 @@ CREATE TABLE IF NOT EXISTS items (
     slug VARCHAR(255) NOT NULL UNIQUE,
     cover_url VARCHAR(512),
     wide_cover_url VARCHAR(512),
+    poster_url VARCHAR(512) COMMENT 'vertical poster image',
+    media_url VARCHAR(512),
+    external_link VARCHAR(512),
     description TEXT,
     info_json JSON COMMENT 'elastic attributes',
     external_id VARCHAR(100) COMMENT 'Steam AppID, TMDB ID',
     source VARCHAR(30) DEFAULT 'manual' COMMENT 'manual, steam, tmdb, itch',
     status TINYINT DEFAULT 1 COMMENT '1-online 0-offline',
+    carousel_order INT NULL COMMENT 'NULL=not in carousel, 0,1,2...=display order',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_type (type),
@@ -22,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     avatar VARCHAR(255),
+    role VARCHAR(20) DEFAULT 'USER' COMMENT 'USER, ADMIN',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -42,6 +42,7 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: () => import('../views/Admin.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
 ]
 
@@ -50,10 +51,22 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
+
+  // Ensure user data is loaded for authenticated routes
+  if (auth.isLoggedIn && !auth.user) {
+    try {
+      await auth.fetchUser()
+    } catch (e) {
+      // fetchUser already calls logout on failure
+    }
+  }
+
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
+  } else if (to.meta.requiresAdmin && !auth.isAdmin) {
+    next({ name: 'Home' })
   } else {
     next()
   }

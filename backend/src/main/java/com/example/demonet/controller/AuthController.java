@@ -1,6 +1,6 @@
 package com.example.demonet.controller;
 
-import com.example.demonet.entity.User;
+import com.example.demonet.dto.UserDTO;
 import com.example.demonet.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public User me(Authentication auth) {
+    public UserDTO me(Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
         return authService.getProfile(userId);
     }

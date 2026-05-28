@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItemBySlug, getHotItems } from '../api/item'
 import { useAuthStore } from '../stores/auth'
@@ -63,6 +63,61 @@ const currentStatusLabel = computed(() => statusOptions.find(s => s.key === mySt
 function goBack() { router.push(item.value?.type ? `/list/${item.value.type}` : '/') }
 function isEmbed(url) { return url && (url.includes('youtube.com/embed') || url.includes('player.bilibili.com')) }
 
+const isBook = computed(() => item.value?.type === 'book')
+const isPdf = computed(() => readerUrl.value?.endsWith('.pdf'))
+const pdfViewerUrl = computed(() => {
+  if (!isPdf.value) return ''
+  try {
+    return 'https://docs.google.com/viewer?url=' + encodeURIComponent(
+      window.location.origin + readerUrl.value
+    ) + '&embedded=true'
+  } catch { return readerUrl.value }
+})
+const readerUrl = computed(() => {
+  if (!isBook.value) return ''
+  const i = info.value
+  const url = i.reader_url || item.value?.mediaUrl || ''
+  if (!url) return ''
+  if (url.endsWith('.pdf')) return url + '#view=FitH&toolbar=0'
+  if (url.includes('books.google')) return url + '&printsec=frontcover&output=embed'
+  return url
+})
+const isEpub = computed(() => readerUrl.value?.endsWith('.epub'))
+const bookReaderRef = ref(null)
+const epubReady = ref(false)
+let epubRendition = null
+
+function destroyEpub() {
+  if (epubRendition) { epubRendition.destroy(); epubRendition = null }
+  epubReady.value = false
+}
+
+onUnmounted(() => { destroyEpub() })
+
+async function startEpub() {
+  if (epubRendition) { destroyEpub(); return }
+  if (!readerUrl.value || !bookReaderRef.value) return
+  epubReady.value = true
+  await nextTick()
+  try {
+    if (!window.ePub) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script')
+        s.src = 'https://unpkg.com/epubjs@0.3/dist/epub.min.js'
+        s.onload = resolve; s.onerror = reject
+        document.head.appendChild(s)
+      })
+    }
+    if (!window.ePub) { epubReady.value = false; return }
+    const book = window.ePub(readerUrl.value)
+    epubRendition = book.renderTo(bookReaderRef.value, {
+      width: '100%', height: '100%',
+      spread: 'none', flow: 'paginated',
+    })
+    epubRendition.display()
+  } catch (e) { console.warn('EPUB load failed:', e.message); destroyEpub() }
+}
+
 const videos = computed(() => info.value.videos || {})
 const videoSources = computed(() => Object.entries(videos.value).map(([k,v])=>({key:k,url:v})))
 const activeVideoUrl = ref('')
@@ -107,11 +162,30 @@ const infoFields = computed(() => {
         <button @click="goBack" class="text-gray-400 hover:text-white text-sm mb-6 transition">← 返回</button>
 
         <div class="bg-gray-900 rounded-2xl border border-gray-800 overflow-visible">
-          <div class="aspect-video rounded-t-2xl overflow-hidden relative" :class="!activeVideoUrl ? 'bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : ''">
-            <iframe v-if="activeVideoUrl" :src="activeVideoUrl" class="w-full h-full" frameborder="0"
+          <div class="aspect-video rounded-t-2xl overflow-hidden relative" :class="(!activeVideoUrl && !readerUrl) ? 'bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : ''">
+            <!-- Book reader: EPUB -->
+            <template v-if="isEpub">
+              <div ref="bookReaderRef" class="w-full h-full bg-white" v-show="epubReady" />
+              <div v-if="!epubReady" class="w-full h-full bg-gradient-to-br from-amber-100 to-amber-50 flex flex-col items-center justify-center gap-3">
+                <span class="text-5xl">📖</span>
+                <span class="text-amber-800 text-sm font-medium">{{ item.title }}</span>
+                <button @click="startEpub" class="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg">
+                  开始阅读
+                </button>
+              </div>
+            </template>
+            <!-- Book reader: PDF -->
+            <template v-else-if="isPdf">
+              <embed :src="readerUrl" type="application/pdf" class="w-full h-full" />
+            </template>
+            <!-- Book reader: web link -->
+            <iframe v-else-if="readerUrl" :src="readerUrl" class="w-full h-full" frameborder="0" />
+            <!-- Video player -->
+            <iframe v-else-if="activeVideoUrl" :src="activeVideoUrl" class="w-full h-full" frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen />
+            <!-- Empty state -->
             <span v-else>{{ typeMeta.emoji }}</span>
-            <div v-if="videoSources.length > 1" class="absolute top-3 right-3 flex gap-1 z-10">
+            <div v-if="videoSources.length > 1 && !readerUrl" class="absolute top-3 right-3 flex gap-1 z-10">
               <button v-for="src in videoSources" :key="src.key" @click="switchVideo(src.url)"
                 :class="activeVideoUrl===src.url ? 'bg-white/20 text-white' : 'bg-black/40 text-white/60 hover:bg-black/60'"
                 class="text-[10px] px-2 py-1 rounded backdrop-blur-sm transition">
@@ -174,6 +248,11 @@ const infoFields = computed(() => {
           </div>
         </section>
       </template>
+      <div v-else class="text-center text-gray-500 py-20">
+        <div class="text-4xl mb-3">📭</div>
+        <p>内容未找到</p>
+        <button @click="goBack" class="mt-4 text-sm text-blue-400 hover:text-blue-300 transition">← 返回列表</button>
+      </div>
     </main>
   </div>
 </template>

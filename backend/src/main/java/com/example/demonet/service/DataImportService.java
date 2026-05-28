@@ -69,6 +69,9 @@ public class DataImportService implements CommandLineRunner {
         Map.entry("neon-genesis-evangelion-manga", List.of("manga", "mecha", "psychological"))
     );
 
+    private static final List<String> ALL_TAGS = ITEM_TAGS.values().stream()
+            .flatMap(List::stream).distinct().sorted().toList();
+
     @Override
     @Transactional
     public void run(String... args) {
@@ -76,6 +79,7 @@ public class DataImportService implements CommandLineRunner {
 
         if (itemMapper.selectCount(new LambdaQueryWrapper<>()) > 0) {
             log.info("Data already exists, skipping seed import.");
+            seedAnimeIfMissing();
             return;
         }
 
@@ -203,7 +207,7 @@ public class DataImportService implements CommandLineRunner {
 
         insert("book", "三体", "three-body-problem",
                 "刘慈欣雨果奖获奖科幻巨作。文化大革命中人类向宇宙发出第一声啼鸣，引发星际文明的三体危机。",
-                "{\"author\":\"刘慈欣\",\"pages\":312,\"year\":2008,\"category\":\"科幻\"}");
+                "{\"author\":\"刘慈欣\",\"pages\":312,\"year\":2008,\"category\":\"科幻\",\"reader_url\":\"\"}");
         insert("book", "人类简史", "sapiens",
                 "尤瓦尔·赫拉利的人类史诗。从认知革命到科学革命，讲述智人如何征服世界。",
                 "{\"author\":\"Yuval Noah Harari\",\"pages\":464,\"year\":2014,\"category\":\"历史\"}");
@@ -213,6 +217,24 @@ public class DataImportService implements CommandLineRunner {
         insert("book", "沙丘", "dune-book",
                 "弗兰克·赫伯特的科幻史诗。香料、沙漠行星、预知能力，沙丘宇宙的宏伟开篇。",
                 "{\"author\":\"Frank Herbert\",\"pages\":688,\"year\":1965,\"category\":\"科幻\"}");
+        insert("book", "活着", "huozhe",
+                "余华代表作。地主少爷福贵的一生，历经内战、土改、文革，讲述人对苦难的承受能力。",
+                "{\"author\":\"余华\",\"pages\":192,\"year\":1992,\"category\":\"文学\"}");
+        insert("book", "百年孤独", "cien-anos-de-soledad",
+                "马尔克斯魔幻现实主义巅峰。布恩迪亚家族七代兴衰，马孔多的雨下了四年。",
+                "{\"author\":\"Gabriel García Márquez\",\"pages\":360,\"year\":1967,\"category\":\"文学\"}");
+        insert("book", "1984", "nineteen-eighty-four",
+                "乔治·奥威尔的反乌托邦经典。老大哥在看着你。思想警察、新话、双重思想。",
+                "{\"author\":\"George Orwell\",\"pages\":328,\"year\":1949,\"category\":\"反乌托邦\"}");
+        insert("book", "挪威的森林", "norwegian-wood",
+                "村上春树青春小说。渡边在直子与绿子之间的青春迷惘，披头士旋律贯穿始终。",
+                "{\"author\":\"村上春树\",\"pages\":384,\"year\":1987,\"category\":\"文学\"}");
+        insert("book", "银河帝国：基地", "foundation",
+                "阿西莫夫科幻史诗。心理史学预言银河帝国覆灭，基地计划为文明保存火种。",
+                "{\"author\":\"Isaac Asimov\",\"pages\":296,\"year\":1951,\"category\":\"科幻\"}");
+        insert("book", "小王子", "le-petit-prince",
+                "圣-埃克苏佩里童话。来自B-612星球的小王子游历宇宙，驯服与爱的永恒寓言。",
+                "{\"author\":\"Antoine de Saint-Exupéry\",\"pages\":96,\"year\":1943,\"category\":\"童话\",\"reader_url\":\"\"}");
 
         insert("music", "Interstellar Soundtrack", "interstellar-ost",
                 "Hans Zimmer 为诺兰《星际穿越》打造的史诗配乐。管风琴与弦乐的磅礴交织，穿越维度。",
@@ -242,23 +264,64 @@ public class DataImportService implements CommandLineRunner {
     }
 
     private void seedTags() {
-        for (var entry : ITEM_TAGS.entrySet()) {
-            List<Long> ids = jdbcTemplate.queryForList(
-                    "SELECT id FROM items WHERE slug = ?", Long.class, entry.getKey());
-            if (ids.isEmpty()) continue;
-            Long itemId = ids.get(0);
+        jdbcTemplate.update("INSERT IGNORE INTO tags (name) VALUES " + String.join(",", ALL_TAGS.stream().map(t -> "('" + t + "')").toList()));
+    }
 
-            for (String tagName : entry.getValue()) {
-                jdbcTemplate.update("INSERT IGNORE INTO tags (name) VALUES (?)", tagName);
-                Long tagId = jdbcTemplate.queryForObject(
-                        "SELECT id FROM tags WHERE name = ?", Long.class, tagName);
-                if (tagId != null) {
-                    jdbcTemplate.update(
-                            "INSERT IGNORE INTO item_tag_mapping (item_id, tag_id) VALUES (?, ?)",
-                            itemId, tagId);
-                }
-            }
-        }
+    private void seedAnimeIfMissing() {
+        Long count = itemMapper.selectCount(new LambdaQueryWrapper<Item>().eq(Item::getType, "anime"));
+        if (count != null && count > 0) return;
+        log.info("Anime data missing, seeding...");
+        i("anime", "葬送的芙莉莲", "sousou-no-frieren",
+                "勇者一行击败魔王后，精灵魔法使芙莉莲踏上理解人类情感的旅程。2023 年度动画天花板，温柔而深沉。",
+                "{\"studio\":\"MADHOUSE\",\"year\":2023,\"genre\":\"奇幻, 治愈\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1uN411n7zt\"}}",
+                "https://picsum.photos/seed/frieren/600/400", "//player.bilibili.com/player.html?bvid=BV1uN411n7zt");
+        i("anime", "鬼灭之刃 柱训练篇", "kimetsu-no-yaiba-hashira",
+                "炭治郎一行参加鬼杀队柱级训练，为最终决战做准备。飞碟社顶级作画，水之呼吸视觉盛宴。",
+                "{\"studio\":\"ufotable\",\"year\":2024,\"genre\":\"热血, 战斗\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1Ff421m7TF\"}}",
+                "https://picsum.photos/seed/kimetsu/600/400", "//player.bilibili.com/player.html?bvid=BV1Ff421m7TF");
+        i("anime", "咒术回战 第二季", "jujutsu-kaisen-s2",
+                "涩谷事变篇。五条悟被封印，虎杖一行人面对前所未有的危机。MAPPA 巅峰作画水准。",
+                "{\"studio\":\"MAPPA\",\"year\":2023,\"genre\":\"战斗, 黑暗奇幻\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1tG41167bs\"}}",
+                "https://picsum.photos/seed/jujutsu/600/400", "//player.bilibili.com/player.html?bvid=BV1tG41167bs");
+        i("anime", "迷宫饭", "dungeon-meshi",
+                "在迷宫中把魔物做成美食！冒险者小队没钱吃饭？那就把史莱姆炖了。Trigger 出品的美食冒险喜剧。",
+                "{\"studio\":\"Trigger\",\"year\":2024,\"genre\":\"美食, 冒险, 喜剧\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1HC411h7RZ\"}}",
+                "https://picsum.photos/seed/dungeon-meshi/600/400", "//player.bilibili.com/player.html?bvid=BV1HC411h7RZ");
+        i("anime", "药屋少女的呢喃", "kusuriya-no-hitorigoto",
+                "后宫试毒少女猫猫靠药理知识破解宫廷谜案。中国风宫廷悬疑 + 独特女主魅力。",
+                "{\"studio\":\"TOHO animation STUDIO×OLM\",\"year\":2023,\"genre\":\"悬疑, 宫廷, 历史\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1xH4y1y7HK\"}}",
+                "https://picsum.photos/seed/kusuriya/600/400", "//player.bilibili.com/player.html?bvid=BV1xH4y1y7HK");
+        i("anime", "【我推的孩子】", "oshi-no-ko",
+                "偶像×转生×娱乐圈悬疑。星野爱被刺杀后，她的双胞胎踏上真相之路。第一集 90 分钟封神。",
+                "{\"studio\":\"动画工房\",\"year\":2023,\"genre\":\"悬疑, 偶像, 剧情\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1Bs4y1X7gS\"}}",
+                "https://picsum.photos/seed/oshinoko/600/400", "//player.bilibili.com/player.html?bvid=BV1Bs4y1X7gS");
+        i("anime", "中国奇谭", "chinese-folktales",
+                "上美影 × B站联合出品。8 个中国妖怪故事，水墨剪纸黏土定格多元风格，浪浪山小猪妖刷屏全网。",
+                "{\"studio\":\"上海美术电影制片厂\",\"year\":2023,\"genre\":\"奇幻, 中国风, 短片集\",\"origin\":\"国漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1t24y1r7dN\"}}",
+                "https://picsum.photos/seed/folktales/600/400", "//player.bilibili.com/player.html?bvid=BV1t24y1r7dN");
+        i("anime", "雾山五行", "wushan-wuxing",
+                "林魂导演的水墨战斗神作。五行家族与妖兽的宿命对决，每一帧都是国画壁纸。",
+                "{\"studio\":\"六道无鱼\",\"year\":2023,\"genre\":\"战斗, 中国风, 热血\",\"origin\":\"国漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV14V4y1m7LV\"}}",
+                "https://picsum.photos/seed/wushan/600/400", "//player.bilibili.com/player.html?bvid=BV14V4y1m7LV");
+        i("anime", "拾荒者统治", "scavengers-reign",
+                "外星坠毁幸存者的超现实求生之旅。诡异又美丽的生态系统，年度最佳科幻动画之一。",
+                "{\"studio\":\"Titmouse×Max\",\"year\":2023,\"genre\":\"科幻, 生存, 奇幻\",\"origin\":\"美漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1yC4y1K7GM\"}}",
+                "https://picsum.photos/seed/scavengers/600/400", "//player.bilibili.com/player.html?bvid=BV1yC4y1K7GM");
+        i("anime", "蓝色监狱", "blue-lock",
+                "300 名前锋被关进蓝色监狱，淘汰到只剩一人。最狂足球动画，利己主义者的生存游戏。",
+                "{\"studio\":\"8bit\",\"year\":2022,\"genre\":\"运动, 竞技, 热血\",\"origin\":\"日漫\",\"videos\":{\"bilibili\":\"//player.bilibili.com/player.html?bvid=BV1CG4y1f7nR\"}}",
+                "https://picsum.photos/seed/bluelock/600/400", "//player.bilibili.com/player.html?bvid=BV1CG4y1f7nR");
+        log.info("Anime seed: {} items", 10);
+    }
+
+    // Placeholder for inline insert in seedAnimeIfMissing
+    private void i(String type, String title, String slug, String desc, String infoJson, String cover, String media) {
+        Item item = new Item();
+        item.setType(type); item.setTitle(title); item.setSlug(slug);
+        item.setDescription(desc); item.setInfoJson(infoJson);
+        item.setCoverUrl(cover); item.setMediaUrl(media);
+        item.setSource("manual"); item.setStatus(1);
+        itemMapper.insert(item);
     }
 
     private void insert(String type, String title, String slug, String description, String infoJson) {
@@ -291,8 +354,8 @@ public class DataImportService implements CommandLineRunner {
         if (count != null && count > 0) return;
 
         jdbcTemplate.update(
-                "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-                "admin", "admin@demonet.local", passwordEncoder.encode("changeme"));
-        log.info("Default user created: admin / changeme");
+                "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)",
+                "admin", "admin@demonet.local", passwordEncoder.encode("changeme"), "ADMIN");
+        log.info("Default admin user created: admin / changeme");
     }
 }

@@ -10,9 +10,9 @@ function go() { router.push({ name:'Detail', params:{ slug: props.item.slug } })
   <div @click="go"
     class="flex rounded-2xl overflow-hidden h-48 cursor-pointer group border border-gray-800 hover:border-red-500/40 transition-all duration-500 bg-gray-900">
     <div class="w-1/3 shrink-0 relative overflow-hidden">
-      <div v-if="item.coverUrl"
+      <div v-if="item.wideCoverUrl || item.coverUrl"
         class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
-        :style="{ backgroundImage: `url(${item.coverUrl})` }" />
+        :style="{ backgroundImage: `url(${item.wideCoverUrl || item.coverUrl})` }" />
       <div v-else class="absolute inset-0 bg-gradient-to-br from-red-900 to-gray-900 flex items-center justify-center text-3xl">🎬</div>
       <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
     </div>

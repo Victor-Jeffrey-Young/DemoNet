@@ -22,6 +22,10 @@ const auth = useAuthStore()
           </svg>
         </router-link>
         <template v-if="auth.isLoggedIn">
+          <router-link v-if="auth.isAdmin" to="/admin"
+            class="text-xs text-amber-400 hover:text-amber-300 transition px-2 py-1 rounded-lg hover:bg-gray-800 font-medium">
+            管理后台
+          </router-link>
           <router-link to="/profile"
             class="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition px-2 py-1 rounded-lg hover:bg-gray-800">
             <span class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-xs">
