@@ -20,6 +20,7 @@ public class FetchConsumer {
     private final TMDBService tmdbService;
     private final AniListService aniListService;
     private final BangumiService bangumiService;
+    private final ItunesService itunesService;
     private final ItemService itemService;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_STEAM)
@@ -66,6 +67,15 @@ public class FetchConsumer {
         log.info("TMDB TV fetch: '{}' → type={}", query, targetType);
         List<Item> items = tmdbService.searchTV(query);
         saveItems(items, targetType, "TMDB-TV");
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_ITUNES)
+    public void handleItunesFetch(Map<String, Object> payload) {
+        String query = (String) payload.get("query");
+        String targetType = (String) payload.getOrDefault("targetType", "music");
+        log.info("iTunes fetch: '{}' → type={}", query, targetType);
+        List<Item> items = itunesService.searchAlbums(query, targetType);
+        saveItems(items, targetType, "iTunes");
     }
 
     private void saveItems(List<Item> items, String targetType, String source) {

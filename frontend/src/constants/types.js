@@ -6,7 +6,7 @@ export const TYPE_META = {
   model:     { label:'模型', emoji:'🧩', heroColor:'from-slate-950 via-blue-950 to-gray-950', accent:'sky', desc:'开箱 & 360°展示' },
   book:      { label:'书籍', emoji:'📖', heroColor:'from-stone-100 via-amber-50 to-white', accent:'amber', desc:'试读 & 书评' },
   music:     { label:'音乐', emoji:'🎵', heroColor:'from-fuchsia-950 via-pink-950 to-gray-950', accent:'fuchsia', desc:'30s试听 & 测评' },
-  digital:   { label:'数码', emoji:'📱', heroColor:'from-white via-gray-50 to-gray-100', accent:'cyan', desc:'开箱 & 评测', light:true },
+  digital:   { label:'数码', emoji:'📱', heroColor:'from-cyan-950 via-slate-950 to-gray-950', accent:'cyan', desc:'开箱 & 评测' },
   coffee:    { label:'咖啡', emoji:'☕', heroColor:'from-amber-900 via-orange-950 to-gray-950', accent:'orange', desc:'风味 & 冲泡指南' },
   offline:   { label:'线下', emoji:'🏛️', heroColor:'from-indigo-950 via-slate-950 to-gray-950', accent:'indigo', desc:'展览 & 活动' },
 }

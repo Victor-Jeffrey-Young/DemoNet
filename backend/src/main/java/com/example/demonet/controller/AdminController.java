@@ -258,6 +258,15 @@ public class AdminController {
         return Map.of("message", "TMDB TV fetch queued: " + query + " → " + targetType);
     }
 
+    @PostMapping("/fetch/itunes")
+    public Map<String, String> triggerItunes(@RequestBody Map<String, Object> body) {
+        String query = (String) body.get("query");
+        String targetType = (String) body.getOrDefault("targetType", "music");
+        Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
+        rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_ITUNES, payload);
+        return Map.of("message", "iTunes fetch queued: " + query + " → " + targetType);
+    }
+
     @GetMapping("/pending")
     public IPage<Item> listPending(
             @RequestParam(defaultValue = "1") Integer page,

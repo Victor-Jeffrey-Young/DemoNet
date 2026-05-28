@@ -13,6 +13,8 @@ const meta = {
   book:      { label:'书籍', color:'bg-amber-900/50 text-amber-400', emoji:'📖' },
   music:     { label:'音乐', color:'bg-pink-900/50 text-pink-400', emoji:'🎵' },
   digital:   { label:'数码', color:'bg-cyan-900/50 text-cyan-400', emoji:'📱' },
+  coffee:    { label:'咖啡', color:'bg-orange-900/50 text-orange-400', emoji:'☕' },
+  offline:   { label:'线下', color:'bg-indigo-900/50 text-indigo-400', emoji:'🏛️' },
 }
 
 function goDetail() {
