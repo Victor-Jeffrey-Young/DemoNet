@@ -5,6 +5,9 @@ import { ElMessage } from 'element-plus'
 import { TYPE_LIST, getMeta } from '../../constants/types'
 import GameEditorFields from './GameEditorFields.vue'
 import MovieEditorFields from './MovieEditorFields.vue'
+import AnimeEditorFields from './AnimeEditorFields.vue'
+import BoardgameEditorFields from './BoardgameEditorFields.vue'
+import ModelEditorFields from './ModelEditorFields.vue'
 import BookEditorFields from './BookEditorFields.vue'
 import MusicEditorFields from './MusicEditorFields.vue'
 import DigitalEditorFields from './DigitalEditorFields.vue'
@@ -71,6 +74,9 @@ const isOtherType = computed(() => !isGameType.value && !isMovieType.value)
 const editorComponent = computed(() => {
   if (isGameType.value) return GameEditorFields
   if (isMovieType.value) return MovieEditorFields
+  if (form.value.type === 'anime') return AnimeEditorFields
+  if (form.value.type === 'boardgame') return BoardgameEditorFields
+  if (form.value.type === 'model') return ModelEditorFields
   if (form.value.type === 'book') return BookEditorFields
   if (form.value.type === 'music') return MusicEditorFields
   if (form.value.type === 'digital') return DigitalEditorFields
@@ -143,6 +149,32 @@ function initInfoFields() {
       capacity: info.capacity || '',
       difficulty: info.difficulty || '',
       highlights: info.highlights || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'anime') {
+    form.value.infoJson = stringifyInfoJson({
+      studio: info.studio || '',
+      year: info.year || '',
+      genre: info.genre || '',
+      origin: info.origin || '',
+      episodes: info.episodes || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'boardgame') {
+    form.value.infoJson = stringifyInfoJson({
+      players: info.players || '',
+      playtime: info.playtime || '',
+      weight: info.weight || '',
+      rule_text: info.rule_text || '',
+      rule_images: info.rule_images || '',
+      videos: info.videos || { bilibili: '', youtube: '' },
+    })
+  } else if (form.value.type === 'model') {
+    form.value.infoJson = stringifyInfoJson({
+      grade: info.grade || '',
+      scale: info.scale || '',
+      material: info.material || '',
+      series: info.series || '',
       videos: info.videos || { bilibili: '', youtube: '' },
     })
   }
@@ -339,9 +371,6 @@ watch(() => form.value.type, () => {
           <el-form-item label="外部链接">
             <el-input v-model="form.externalLink" placeholder="https://..." />
           </el-form-item>
-          <el-form-item label="外部 ID">
-            <el-input v-model="form.externalId" placeholder="Steam AppID / TMDB ID" />
-          </el-form-item>
           <el-form-item label="来源">
             <el-input v-model="form.source" placeholder="manual, steam, tmdb..." />
           </el-form-item>
@@ -374,7 +403,7 @@ watch(() => form.value.type, () => {
           </el-form-item>
 
           <!-- Dynamic per-category editor -->
-        <component :is="editorComponent" v-model="infoObj" :type="form.type" />
+        <component :is="editorComponent" v-model="infoObj" :type="form.type" :item-id="currentId" />
       </el-form>
     </div>
 

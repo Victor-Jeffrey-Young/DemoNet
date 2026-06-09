@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Item;
 import com.example.demonet.mapper.ItemMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -46,21 +48,25 @@ public class ItemService {
         );
     }
 
+    @CacheEvict(value = {"hotItems", "featured", "recommended"}, allEntries = true)
     public Item createItem(Item item) {
         itemMapper.insert(item);
         return item;
     }
 
+    @CacheEvict(value = {"hotItems", "featured", "recommended"}, allEntries = true)
     public Item updateItem(Long id, Item item) {
         item.setId(id);
         itemMapper.updateById(item);
         return itemMapper.selectById(id);
     }
 
+    @CacheEvict(value = {"hotItems", "featured", "recommended"}, allEntries = true)
     public void deleteItem(Long id) {
         itemMapper.deleteById(id);
     }
 
+    @Cacheable(value = "hotItems", key = "#type + '_' + #limit")
     public List<Item> listHotItems(String type, Integer limit) {
         Page<Item> p = new Page<>(1, limit != null ? limit : 6);
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
@@ -72,6 +78,7 @@ public class ItemService {
         return itemMapper.selectPage(p, wrapper).getRecords();
     }
 
+    @Cacheable(value = "featured", key = "#type != null ? #type : 'all'")
     public List<Item> listFeatured(String type) {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);
@@ -93,16 +100,20 @@ public class ItemService {
         return itemMapper.selectList(wrapper);
     }
 
+    @Cacheable(value = "recommended", key = "#type + '_' + #limit")
     public List<Item> listRecommended(String type, Integer limit) {
-        String sql = "SELECT i.* FROM items i LEFT JOIN " +
-                     "(SELECT item_id, COUNT(*) AS cnt FROM user_items GROUP BY item_id) ui " +
-                     "ON i.id = ui.item_id WHERE i.status = 1";
-        if (type != null && !type.isBlank()) {
-            sql += " AND i.type = '" + type.replace("'", "''") + "'";
-        }
-        sql += " ORDER BY IFNULL(ui.cnt, 0) DESC, i.created_at DESC LIMIT " +
-               (limit != null ? limit : 6);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+        StringBuilder sql = new StringBuilder(
+                "SELECT i.* FROM items i LEFT JOIN " +
+                "(SELECT item_id, COUNT(*) AS cnt FROM user_items GROUP BY item_id) ui " +
+                "ON i.id = ui.item_id WHERE i.status = 1");
+        boolean hasType = type != null && !type.isBlank();
+        if (hasType) sql.append(" AND i.type = ?");
+        sql.append(" ORDER BY IFNULL(ui.cnt, 0) DESC, i.created_at DESC LIMIT ?");
+        return jdbcTemplate.query(sql.toString(), ps -> {
+            int idx = 1;
+            if (hasType) ps.setString(idx++, type);
+            ps.setInt(idx, limit != null ? limit : 6);
+        }, (rs, rowNum) -> {
             Item item = new Item();
             item.setId(rs.getLong("id"));
             item.setType(rs.getString("type"));
@@ -125,9 +136,9 @@ public class ItemService {
 
     private List<Long> getItemIdsByTags(List<String> tagNames) {
         if (tagNames.isEmpty()) return Collections.emptyList();
-        String placeholders = String.join(",", tagNames.stream().map(s -> "'" + s.replace("'", "''") + "'").toList());
+        String placeholders = String.join(",", Collections.nCopies(tagNames.size(), "?"));
         String sql = "SELECT DISTINCT itm.item_id FROM item_tag_mapping itm " +
                      "JOIN tags t ON t.id = itm.tag_id WHERE t.name IN (" + placeholders + ")";
-        return jdbcTemplate.queryForList(sql, Long.class);
+        return jdbcTemplate.queryForList(sql, Long.class, tagNames.toArray());
     }
 }

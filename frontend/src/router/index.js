@@ -54,6 +54,10 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
 
+  if (!localStorage.getItem('token') && auth.isLoggedIn) {
+    auth.logout()
+  }
+
   // Ensure user data is loaded for authenticated routes
   if (auth.isLoggedIn && !auth.user) {
     try {
@@ -63,7 +67,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+  if (to.meta.requiresAuth && !localStorage.getItem('token')) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
   } else if (to.meta.requiresAdmin && !auth.isAdmin) {
     next({ name: 'Home' })

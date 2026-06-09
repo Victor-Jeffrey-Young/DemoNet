@@ -23,12 +23,13 @@ public class AuthService {
         if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, username)) > 0) {
             throw new RuntimeException("用户名已存在");
         }
-        if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, email)) > 0) {
+        String finalEmail = (email != null && !email.isBlank()) ? email : username + "@demo.local";
+        if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, finalEmail)) > 0) {
             throw new RuntimeException("邮箱已被注册");
         }
         User user = new User();
         user.setUsername(username);
-        user.setEmail(email);
+        user.setEmail(finalEmail);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole("USER");
         userMapper.insert(user);

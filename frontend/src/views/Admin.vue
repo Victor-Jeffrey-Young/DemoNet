@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
 import AdminItemList from '../components/admin/AdminItemList.vue'
@@ -8,6 +9,7 @@ import AdminCarouselManager from '../components/admin/AdminCarouselManager.vue'
 import AdminFetchPanel from '../components/admin/AdminFetchPanel.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
 const activeTab = ref('dashboard')
 
 const dashboardRef = ref(null)
@@ -25,6 +27,13 @@ function handleTabChange(tab) {
     case 'fetch': fetchPanelRef.value?.refresh(); break
   }
 }
+
+onMounted(() => {
+  if (route.query.edit) {
+    sessionStorage.setItem('adminEditId', route.query.edit)
+    activeTab.value = 'items'
+  }
+})
 </script>
 
 <template>

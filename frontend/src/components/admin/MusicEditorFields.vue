@@ -2,9 +2,29 @@
 const props = defineProps({ modelValue: Object })
 const emit = defineEmits(['update:modelValue'])
 
+function normalizeVideo(raw, platform) {
+  if (!raw || !raw.trim()) return raw; raw = raw.trim()
+  if (platform === 'bilibili') return raw.includes('player.bilibili.com') ? raw : '//player.bilibili.com/player.html?bvid=' + raw
+  if (platform === 'youtube') {
+    if (raw.includes('youtube.com/embed/')) return raw
+    const m = raw.match(/[?&]v=([a-zA-Z0-9_-]{11})/); if (m) return 'https://www.youtube.com/embed/' + m[1]
+    const m2 = raw.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/); if (m2) return 'https://www.youtube.com/embed/' + m2[1]
+    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return 'https://www.youtube.com/embed/' + raw
+    return raw
+  }
+  return raw
+}
+
 function set(k, v) {
   const obj = JSON.parse(JSON.stringify(props.modelValue || {}))
-  obj[k] = v
+  if (k.startsWith('videos.')) {
+    const platform = k.split('.')[1]
+    v = normalizeVideo(v, platform)
+    if (!obj.videos) obj.videos = {}
+    obj.videos[platform] = v
+  } else {
+    obj[k] = v
+  }
   emit('update:modelValue', obj)
 }
 </script>

@@ -146,7 +146,7 @@ const CardComponent = computed(() => {
 
       <div v-if="totalPages>1" class="flex justify-center gap-2">
         <button v-for="p in totalPages" :key="p" @click="goPage(p)"
-          :class="p===current ? `bg-${meta.accent}-600` : 'bg-gray-800 hover:bg-gray-700'"
+          :class="p===current ? meta.pagBg : 'bg-gray-800 hover:bg-gray-700'"
           class="w-10 h-10 rounded-lg text-sm font-medium transition">{{ p }}</button>
       </div>
     </main>

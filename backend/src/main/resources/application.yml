@@ -2,22 +2,22 @@ spring:
   application:
     name: DemoNet
   datasource:
-    url: jdbc:mysql://localhost:3306/demonet?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-    username: root
-    password: changeme
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/demonet?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:changeme}
     driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
   redis:
-    host: localhost
+    host: ${REDIS_HOST:localhost}
     port: 6379
   rabbitmq:
-    host: localhost
+    host: ${RABBITMQ_HOST:localhost}
     port: 5672
-    username: admin
-    password: changeme
+    username: ${RABBITMQ_USER:admin}
+    password: ${RABBITMQ_PASS:changeme}
 
 server:
   port: 8080
@@ -28,11 +28,11 @@ mybatis-plus:
 
 app:
   jwt:
-    secret: changeme
+    secret: ${JWT_SECRET:changeme}
     expiration: 86400000
   upload:
-    dir: ./uploads
+    dir: ${UPLOAD_DIR:./uploads}
   steam:
-    api-key: ''
+    api-key: ${STEAM_API_KEY:}
   tmdb:
-    api-key: ''
+    api-key: ${TMDB_API_KEY:}
