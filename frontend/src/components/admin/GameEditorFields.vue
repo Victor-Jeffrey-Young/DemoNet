@@ -71,8 +71,5 @@ function handleVideoInput(platform, value) {
       <el-input :model-value="modelValue?.videos?.bilibili || ''" @update:model-value="handleVideoInput('bilibili', $event)"
         placeholder="粘贴 BV 号或 B站链接" />
     </el-form-item>
-    <el-form-item label="Bilibili 视频" class="col-span-2">
-      <el-input :model-value="modelValue?.videos?.bilibili || ''" @input="set('videos.bilibili', $event)" placeholder="//player.bilibili.com/player.html?bvid=..." />
-    </el-form-item>
   </div>
 </template>

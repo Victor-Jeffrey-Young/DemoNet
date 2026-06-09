@@ -8,10 +8,23 @@ function set(k, v) {
   emit('update:modelValue', obj)
 }
 
+function normalizeVideo(raw, platform) {
+  if (!raw || !raw.trim()) return raw; raw = raw.trim()
+  if (platform === 'bilibili') return raw.includes('player.bilibili.com') ? raw : '//player.bilibili.com/player.html?bvid=' + raw
+  if (platform === 'youtube') {
+    if (raw.includes('youtube.com/embed/')) return raw
+    const m = raw.match(/[?&]v=([a-zA-Z0-9_-]{11})/); if (m) return 'https://www.youtube.com/embed/' + m[1]
+    const m2 = raw.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/); if (m2) return 'https://www.youtube.com/embed/' + m2[1]
+    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return 'https://www.youtube.com/embed/' + raw
+    return raw
+  }
+  return raw
+}
+
 function setVideo(k, v) {
   const obj = JSON.parse(JSON.stringify(props.modelValue || {}))
   if (!obj.videos) obj.videos = {}
-  obj.videos[k] = v
+  obj.videos[k] = normalizeVideo(v, k)
   emit('update:modelValue', obj)
 }
 

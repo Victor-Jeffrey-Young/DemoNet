@@ -14,5 +14,21 @@ export const TYPE_META = {
 export const TYPE_LIST = Object.keys(TYPE_META)
 
 export function getMeta(type) {
-  return TYPE_META[type] || { label:type, emoji:'📦', heroColor:'from-gray-950 to-gray-900', accent:'gray', desc:'' }
+  const defaults = {
+    game:      'bg-emerald-600',
+    movie:     'bg-red-600',
+    anime:     'bg-violet-600',
+    boardgame: 'bg-amber-600',
+    model:     'bg-sky-600',
+    book:      'bg-amber-600',
+    music:     'bg-fuchsia-600',
+    digital:   'bg-cyan-600',
+    coffee:    'bg-orange-600',
+    offline:   'bg-indigo-600',
+  }
+  return {
+    ...TYPE_META[type],
+    pagBg: defaults[type] || 'bg-gray-600',
+    ...(TYPE_META[type] ? {} : { label:type, emoji:'📦', heroColor:'from-gray-950 to-gray-900', accent:'gray', desc:'' })
+  }
 }
