@@ -20,7 +20,7 @@ fi
 echo "🔧 正在生成 .env 文件..."
 
 # 生成随机 JWT 密钥（256 位以上）
-JWT_KEY=$(openssl rand -base64 64)
+JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
 
 cp .env.example .env
 
