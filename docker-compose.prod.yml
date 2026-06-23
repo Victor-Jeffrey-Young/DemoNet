@@ -47,6 +47,8 @@ services:
       APP_JWT_SECRET: ${JWT_SECRET:-changeme}
       APP_TMDB_API_KEY: ${TMDB_API_KEY:-}
       APP_STEAM_API_KEY: ${STEAM_API_KEY:-}
+      APP_IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:-}
+      APP_IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:-}
 
   frontend:
     build: ./frontend

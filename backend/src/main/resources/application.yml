@@ -36,3 +36,6 @@ app:
     api-key: ${STEAM_API_KEY:}
   tmdb:
     api-key: ${TMDB_API_KEY:}
+  igdb:
+    client-id: ${IGDB_CLIENT_ID:}
+    client-secret: ${IGDB_CLIENT_SECRET:}

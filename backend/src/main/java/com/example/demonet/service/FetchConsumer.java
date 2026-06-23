@@ -21,6 +21,7 @@ public class FetchConsumer {
     private final AniListService aniListService;
     private final BangumiService bangumiService;
     private final ItunesService itunesService;
+    private final IGDBService igdbService;
     private final ItemService itemService;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_STEAM)
@@ -76,6 +77,27 @@ public class FetchConsumer {
         log.info("iTunes fetch: '{}' → type={}", query, targetType);
         List<Item> items = itunesService.searchAlbums(query, targetType);
         saveItems(items, targetType, "iTunes");
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_IGDB)
+    public void handleIGDBFetch(Map<String, Object> payload) {
+        String endpoint = (String) payload.getOrDefault("endpoint", "search");
+        String query = (String) payload.get("query");
+        Integer limit = payload.get("limit") != null ? ((Number) payload.get("limit")).intValue() : 10;
+        String targetType = (String) payload.getOrDefault("targetType", "game");
+        log.info("IGDB fetch: endpoint={} query={} limit={} → type={}", endpoint, query, limit, targetType);
+        List<Item> items;
+        switch (endpoint) {
+            case "popular":
+                items = igdbService.fetchPopularGames(limit);
+                break;
+            case "recent":
+                items = igdbService.fetchRecentGames(limit);
+                break;
+            default:
+                items = igdbService.searchGames(query != null ? query : "", limit);
+        }
+        saveItems(items, targetType, "IGDB");
     }
 
     private void saveItems(List<Item> items, String targetType, String source) {

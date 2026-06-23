@@ -30,6 +30,8 @@
 | POST | `/api/admin/fetch/tmdb-tv` | 触发 TMDB 剧集抓取 |
 | POST | `/api/admin/fetch/anilist` | 触发 AniList 动漫抓取 |
 | POST | `/api/admin/fetch/bangumi` | 触发 Bangumi 中文动漫抓取 |
+| POST | `/api/admin/fetch/itunes` | 触发 iTunes 音乐抓取 |
+| POST | `/api/admin/fetch/igdb` | 触发 IGDB 游戏抓取（支持 search/popular/recent） |
 | GET | `/api/admin/pending` | 待审核列表 |
 | PUT | `/api/admin/approve/{id}` | 审核通过 |
 | PUT | `/api/admin/reject/{id}` | 审核拒绝 |
