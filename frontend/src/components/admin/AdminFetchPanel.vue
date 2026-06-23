@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import {
   triggerSteamFetch, triggerTMDBFetch, triggerAniListFetch,
-  triggerBangumiFetch, triggerTMDBTVFetch, triggerItunesFetch,
+  triggerBangumiFetch, triggerTMDBTVFetch, triggerItunesFetch, triggerIGDBFetch,
   getPendingItems, approveItem, rejectItem,
 } from '../../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -20,6 +20,10 @@ const tmdbTVQuery = ref('')
 const tmdbTVTarget = ref('anime')
 const itunesQuery = ref('')
 const itunesTarget = ref('music')
+const igdbQuery = ref('')
+const igdbEndpoint = ref('search')
+const igdbLimit = ref(10)
+const igdbTarget = ref('game')
 const pendingList = ref([])
 const pendingTotal = ref(0)
 const pendingPage = ref(1)
@@ -54,6 +58,20 @@ async function handleTMDBTVFetch() {
 async function handleItunesFetch() {
   if (!itunesQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
   try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value); ElMessage.success(r.message); itunesQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+}
+// IGDB
+async function handleIGDBFetch(endpoint) {
+  try {
+    const payload = { endpoint, limit: igdbLimit.value, targetType: igdbTarget.value }
+    if (endpoint === 'search') {
+      if (!igdbQuery.value.trim()) { ElMessage.warning('请输入游戏名'); return }
+      payload.query = igdbQuery.value.trim()
+    }
+    const r = await triggerIGDBFetch(endpoint, payload)
+    ElMessage.success(r.message)
+    igdbQuery.value = ''
+    setTimeout(loadPending, 2000)
+  } catch { ElMessage.error('提交失败') }
 }
 
 async function loadPending() {
@@ -130,6 +148,27 @@ defineExpose({ refresh: loadPending })
         </el-select>
         <el-input v-model="itunesQuery" placeholder="专辑/艺人关键词" size="small" class="mb-1" @keyup.enter="handleItunesFetch" />
         <el-button type="primary" size="small" @click="handleItunesFetch" style="width:100%">提交</el-button>
+      </div>
+      <!-- IGDB -->
+      <div class="bg-gray-800 rounded-lg p-3 border border-emerald-700 md:col-span-2 lg:col-span-3">
+        <h4 class="text-xs font-semibold text-emerald-400 mb-2">🎮 IGDB 游戏数据库</h4>
+        <div class="flex gap-2 mb-1">
+          <el-select v-model="igdbEndpoint" size="small" style="width:120px" :teleported="false" popper-class="admin-select-drop">
+            <el-option label="🔍 搜索" value="search" />
+            <el-option label="🔥 热门" value="popular" />
+            <el-option label="🆕 新品" value="recent" />
+          </el-select>
+          <el-select v-model="igdbLimit" size="small" style="width:90px" :teleported="false" popper-class="admin-select-drop">
+            <el-option v-for="n in [5,10,20,50]" :key="n" :label="'上限 '+n" :value="n" />
+          </el-select>
+          <el-select v-model="igdbTarget" size="small" style="width:100px" :teleported="false" popper-class="admin-select-drop">
+            <el-option v-for="t in ['game','anime']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
+          </el-select>
+          <el-button type="primary" size="small" @click="handleIGDBFetch(igdbEndpoint)" style="width:100%">
+            {{ igdbEndpoint === 'search' ? '搜索' : igdbEndpoint === 'popular' ? '拉取热门' : '拉取新品' }}
+          </el-button>
+        </div>
+        <el-input v-if="igdbEndpoint === 'search'" v-model="igdbQuery" placeholder="游戏名（英文更准，如 Hades / GTA V）" size="small" @keyup.enter="handleIGDBFetch('search')" />
       </div>
     </div>
 

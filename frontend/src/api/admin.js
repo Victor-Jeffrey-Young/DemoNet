@@ -110,6 +110,10 @@ export function triggerItunesFetch(query, targetType = 'music') {
   return request.post('/admin/fetch/itunes', { query, targetType })
 }
 
+export function triggerIGDBFetch(endpoint, { query, limit, targetType } = {}) {
+  return request.post('/admin/fetch/igdb', { endpoint, query, limit, targetType })
+}
+
 export function getPendingItems(params) {
   return request.get('/admin/pending', { params })
 }
