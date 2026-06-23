@@ -4,7 +4,7 @@ services:
     container_name: demonet-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       MYSQL_DATABASE: demonet
     ports:
       - "3306:3306"
@@ -25,6 +25,6 @@ services:
       - "15672:15672"  # 管理界面
     environment:
       RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: changeme
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-changeme}
 volumes:
   mysql_data:
