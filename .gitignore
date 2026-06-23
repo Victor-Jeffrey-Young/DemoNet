@@ -13,3 +13,5 @@ dist/
 *.log
 .env
 .env.local
+.reasonix/
+uploads/
