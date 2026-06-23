@@ -29,46 +29,31 @@ cd DemoNet_1.0
 
 ---
 
-## 2. 配置敏感信息
-
-### 2.1 恢复后端配置文件
-
-项目提供了模板文件，复制并填写你自己的配置：
+## 2. 一键初始化 + 启动
 
 ```bash
-cp backend/src/main/resources/application-example.yml backend/src/main/resources/application.yml
+# 首次运行：生成 .env 并填入随机密钥（仅需一次）
+bash scripts/setup-env.sh
+
+# 编辑 .env 填入你的 TMDB_API_KEY（可选，不用 TMDB 抓取功能可跳过）
+# vim .env
+
+# 一键启动全栈
+bash scripts/start-dev.sh
 ```
 
-编辑 `backend/src/main/resources/application.yml`，将以下 `changeme` 占位符替换为真实值：
+启动后：
+- 🌐 **前端**: http://localhost:5173
+- 🔌 **后端**: http://localhost:8080
+- 📨 **RabbitMQ 管理**: http://localhost:15672
 
-| 配置项 | 说明 | 获取方式 |
-|--------|------|----------|
-| `app.jwt.secret` | JWT 签名密钥，至少 256 位随机字符串 | 用 `openssl rand -base64 64` 生成 |
-| `spring.datasource.password` | MySQL root 密码 | 与 docker-compose 中保持一致即可 |
-| `spring.rabbitmq.password` | RabbitMQ 密码 | 与 docker-compose 中保持一致即可 |
-| `app.tmdb.api-key` | TMDB API Key（电影/电视剧抓取） | [TMDB Settings → API](https://www.themoviedb.org/settings/api) 免费注册获取 |
-| `app.steam.api-key` | Steam API Key（可选，游戏抓取） | [Steam 开发者页面](https://steamcommunity.com/dev/apikey) |
-
-> 💡 **不想每次改配置文件？** 也可以创建 `.env` 文件用环境变量注入（见下方 2.2）。
-
-### 2.2 （可选）创建 .env 文件管理密码
-
-在项目根目录创建 `.env` 文件（已被 `.gitignore` 忽略）：
-
-```bash
-# .env — 开发环境变量（不会被提交到 Git）
-MYSQL_ROOT_PASSWORD=你选择的密码
-RABBITMQ_PASS=你选择的密码
-JWT_SECRET=$(openssl rand -base64 64)
-TMDB_API_KEY=你的tmdb_api_key
-STEAM_API_KEY=你的steam_api_key
-```
-
-然后使用 `docker compose --env-file .env up -d` 启动。
+**以后每次开发只需**：`bash scripts/start-dev.sh`，什么清理都不需要，直接 `git push`。
 
 ---
 
-## 3. 启动开发基础设施
+## 3. 手动启动（如果需要分别控制各服务）
+
+### 3.1 启动 Docker 基础设施
 
 项目依赖 MySQL、Redis、RabbitMQ，使用 Docker Compose 一键启动：
 
@@ -89,7 +74,7 @@ docker compose ps
 
 ---
 
-## 4. 初始化数据库
+### 3.2 初始化数据库
 
 首次启动后，MySQL 容器会自动创建 `demonet` 数据库。然后执行建表脚本：
 
@@ -101,7 +86,7 @@ docker exec -i demonet-mysql mysql -uroot -p<你的密码> demonet < backend/src
 
 ---
 
-## 5. 启动后端
+### 3.3 启动后端
 
 ```bash
 cd backend
@@ -118,7 +103,7 @@ curl http://localhost:8080/api/items
 
 ---
 
-## 6. 启动前端
+### 3.4 启动前端
 
 另开一个终端：
 
@@ -132,7 +117,7 @@ npm run dev
 
 ---
 
-## 7. 导入种子数据（可选）
+### 3.5 导入种子数据
 
 项目包含少量示例数据用于开发测试：
 
@@ -150,7 +135,7 @@ seed.sql 中包含的示例数据：
 
 ---
 
-## 8. 默认管理员账号
+## 4. 默认管理员账号
 
 种子数据中包含默认管理员账号：
 
@@ -165,7 +150,7 @@ seed.sql 中包含的示例数据：
 
 ---
 
-## 9. 生产环境部署
+## 5. 生产环境部署
 
 使用 `docker-compose.prod.yml` 一键部署全栈：
 
@@ -202,7 +187,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ---
 
-## 10. TMDB API Key 获取步骤
+## 6. TMDB API Key 获取步骤
 
 1. 注册 [TMDB](https://www.themoviedb.org/signup) 账号
 2. 进入 [API 设置页面](https://www.themoviedb.org/settings/api)

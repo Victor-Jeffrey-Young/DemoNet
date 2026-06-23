@@ -28,7 +28,7 @@ mybatis-plus:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:changeme}
+    secret: ${JWT_SECRET:T6KWuFG5rTmj5H1VD8sTqDrxn520O4Xqc83KYR5lTNP+IKt+BaeXpaDcp+3kbzslBdB5EjZ/cqXOxkFS4QvnvA==}
     expiration: 86400000
   upload:
     dir: ${UPLOAD_DIR:./uploads}
