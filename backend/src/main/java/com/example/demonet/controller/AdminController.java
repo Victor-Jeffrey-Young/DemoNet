@@ -267,6 +267,22 @@ public class AdminController {
         return Map.of("message", "iTunes fetch queued: " + query + " → " + targetType);
     }
 
+    @PostMapping("/fetch/igdb")
+    public Map<String, String> triggerIGDB(@RequestBody Map<String, Object> body) {
+        String query = (String) body.get("query");
+        String endpoint = (String) body.getOrDefault("endpoint", "search");
+        int limit = body.get("limit") != null ? ((Number) body.get("limit")).intValue() : 10;
+        String targetType = (String) body.getOrDefault("targetType", "game");
+        Map<String, Object> payload = Map.of(
+                "query", query != null ? query : "",
+                "endpoint", endpoint,
+                "limit", limit,
+                "targetType", targetType
+        );
+        rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_IGDB, payload);
+        return Map.of("message", "IGDB fetch queued: " + endpoint + " limit=" + limit + " → " + targetType);
+    }
+
     @GetMapping("/pending")
     public IPage<Item> listPending(
             @RequestParam(defaultValue = "1") Integer page,
