@@ -244,8 +244,7 @@ public class IGDBService {
             info.append(",").append("\"year\":").append(year);
             info.append(",").append("\"rating\":").append(rating != null ? String.format("%.1f", rating) : "0");
             info.append(",").append("\"rating_count\":").append(ratingCount != null ? ratingCount : 0);
-            info.append(",").append(escJsonKV("bilibili", ""));
-            info.append(",").append(escJsonKV("youtube", trailer));
+            info.append(",").append("\"videos\":{\"bilibili\":\"\",\"youtube\":\"" + esc(trailer) + "\"}");
             info.append("}");
             item.setInfoJson(info.toString());
 
