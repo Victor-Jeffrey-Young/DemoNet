@@ -11,7 +11,13 @@ onMounted(() => { if (auth.isLoggedIn) auth.fetchUser() })
 <template>
   <div class="bg-gray-950 text-white min-h-screen flex flex-col">
     <AppNavbar />
-    <div class="flex-1"><router-view /></div>
+    <div class="flex-1">
+      <router-view v-slot="{ Component }">
+        <Transition name="page" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </router-view>
+    </div>
     <AppFooter />
   </div>
 </template>
