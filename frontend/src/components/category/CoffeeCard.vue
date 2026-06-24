@@ -12,8 +12,9 @@ const info = computed(() => {
 const origin = computed(() => info.value.origin || '')
 const roast = computed(() => info.value.roast || '')
 const process = computed(() => info.value.process || '')
+const scaScore = computed(() => info.value.total_cup_points || null)
 const flavor = computed(() => {
-  const raw = info.value.flavor || ''
+  const raw = info.value.flavor_notes || info.value.flavor || ''
   if (!raw) return []
   return raw.split(',').map(f => f.trim()).filter(Boolean)
 })
@@ -43,6 +44,10 @@ function flavorEmoji(f) {
       <!-- Roast indicator -->
       <div v-if="roast" class="absolute top-2 right-2 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1 text-[11px] text-amber-200 font-medium">
         {{ roastDots[roast] || '○' }} {{ roast }}
+      </div>
+      <!-- SCA score badge -->
+      <div v-if="scaScore" class="absolute top-2 left-2 bg-amber-500/90 backdrop-blur-sm rounded-full px-2 py-0.5 text-[11px] text-amber-950 font-bold">
+        ⭐ {{ scaScore }}
       </div>
       <!-- Hover label tear -->
       <div class="absolute inset-0 bg-gradient-to-t from-amber-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">

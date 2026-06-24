@@ -7,6 +7,7 @@ import { saveUserItem, getUserItemStatus } from "../api/auth";
 import AppCard from "../components/AppCard.vue";
 import ReviewSection from "../components/ReviewSection.vue";
 import AdminItemForm from "../components/admin/AdminItemForm.vue";
+import * as echarts from "echarts/dist/echarts.esm.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -216,6 +217,10 @@ function destroyEpub() {
 
 onUnmounted(() => {
     destroyEpub();
+    if (radarChartRef.value) {
+        const c = echarts.getInstanceByDom(radarChartRef.value);
+        if (c) c.dispose();
+    }
 });
 
 async function startEpub() {
@@ -367,6 +372,82 @@ const showEditDialog = ref(false);
 const editTags = ref([]);
 const lightboxPage = ref(null);
 
+// Coffee radar chart
+const radarChartRef = ref(null);
+const scaDimensions = ['aroma','flavor','aftertaste','acidity','body','balance','uniformity','clean_cup','sweetness'];
+const scaLabels = ['香气','风味','余韵','酸质','醇厚度','平衡感','一致性','干净度','甜度'];
+const hasScaScores = computed(() => {
+  if (!isCoffee.value) return false;
+  return typeof info.value.total_cup_points === 'number' && info.value.total_cup_points > 0;
+});
+
+// Brew guide calculator
+const brewDose = ref(15);
+const brewRatio = ref('1:15');
+const brewTemp = ref('92°C');
+const brewRatioNum = computed(() => {
+  const parts = brewRatio.value.split(':');
+  return parts.length === 2 ? parseFloat(parts[1]) : 15;
+});
+const brewTime = computed(() => {
+  const dose = brewDose.value;
+  if (dose <= 15) return '2:00-2:30';
+  if (dose <= 20) return '2:30-3:00';
+  return '3:00-3:30';
+});
+
+function renderRadarChart() {
+  if (!radarChartRef.value || !hasScaScores.value) return;
+  try {
+    const el = radarChartRef.value;
+    const existing = echarts.getInstanceByDom(el);
+    if (existing) existing.dispose();
+    const chart = echarts.init(el);
+    const values = scaDimensions.map(d => Number(info.value[d]) || 0);
+    chart.setOption({
+      backgroundColor: '#1a120a',
+      title: { text: 'SCA 评分', left: 'center', textStyle: { color: '#fbbf24', fontSize: 14 } },
+      radar: {
+        indicator: scaDimensions.map((d, i) => ({ name: scaLabels[i], max: 10 })),
+        center: ['50%', '55%'],
+        radius: '60%',
+        axisName: { fontSize: 9, color: '#fbbf24' },
+        splitArea: { areaStyle: { color: ['rgba(251,191,36,0.04)', 'rgba(251,191,36,0.1)'] } },
+        axisLine: { lineStyle: { color: 'rgba(251,191,36,0.3)' } },
+        splitLine: { lineStyle: { color: 'rgba(251,191,36,0.15)' } }
+      },
+      series: [{
+        type: 'radar',
+        data: [{ value: values, name: 'SCA', areaStyle: { color: 'rgba(251,191,36,0.35)' } }],
+        lineStyle: { color: '#fbbf24', width: 2.5 },
+        itemStyle: { color: '#fbbf24', borderColor: '#fff', borderWidth: 1 },
+        symbol: 'circle',
+        symbolSize: 5,
+        label: { show: true, formatter: '{c}', color: '#fbbf24', fontSize: 10, distance: 8 }
+      }]
+    });
+    setTimeout(() => chart.resize(), 100);
+  } catch(e) {
+    console.error('radar:', e);
+  }
+}
+
+// watch for radar chart readiness
+watch([hasScaScores, () => route.params.slug], ([show]) => {
+  if (show) {
+    // retry until ref is bound
+    let attempts = 0;
+    const tryRender = () => {
+      if (radarChartRef.value) {
+        renderRadarChart();
+      } else if (attempts++ < 20) {
+        setTimeout(tryRender, 100);
+      }
+    };
+    tryRender();
+  }
+}, { immediate: true });
+
 function openLightbox(idx) { lightboxPage.value = idx; }
 function closeLightbox() { lightboxPage.value = null; }
 function lightboxPrev() { if (lightboxPage.value > 0) lightboxPage.value--; }
@@ -400,7 +481,7 @@ function scrollThumb() {
 }
 const coffeeFlavors = computed(() => {
     if (!isCoffee.value) return [];
-    const raw = info.value.flavor || "";
+    const raw = info.value.flavor_notes || info.value.flavor || "";
     if (!raw) return [];
     return raw
         .split(",")
@@ -731,6 +812,66 @@ const coffeeFlavors = computed(() => {
                                     class="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20"
                                     >{{ f }}</span
                                 >
+                            </div>
+                        </div>
+
+                        <!-- Coffee: SCA Radar Chart -->
+                        <div
+                            v-if="hasScaScores"
+                            class="mt-4 p-4 bg-amber-900/10 border border-amber-500/10 rounded-lg"
+                        >
+                            <span class="text-xs text-amber-400 font-medium">📊 SCA 品测雷达图</span>
+                            <div ref="radarChartRef" class="w-full h-[280px] mt-2"></div>
+                        </div>
+
+                        <!-- Coffee: Brew Guide & Calculator -->
+                        <div
+                            v-if="isCoffee"
+                            class="mt-4 p-4 bg-amber-900/10 border border-amber-500/10 rounded-lg"
+                        >
+                            <span class="text-xs text-amber-400 font-medium mb-3 block">☕ 冲煮参数计算器</span>
+                            <div class="flex flex-wrap items-end gap-3 mb-3">
+                                <div class="flex-1 min-w-[120px]">
+                                    <label class="text-[10px] text-amber-500/70 block mb-1">咖啡粉量 (g)</label>
+                                    <input v-model.number="brewDose" type="number" min="10" max="60" step="0.5"
+                                        class="w-full bg-amber-900/30 border border-amber-500/20 rounded px-2.5 py-1.5 text-sm text-amber-200 focus:outline-none focus:border-amber-400/50" />
+                                </div>
+                                <div class="flex-1 min-w-[120px]">
+                                    <label class="text-[10px] text-amber-500/70 block mb-1">粉水比</label>
+                                    <select v-model="brewRatio" class="w-full bg-amber-900/30 border border-amber-500/20 rounded px-2.5 py-1.5 text-sm text-amber-200 focus:outline-none">
+                                        <option value="1:15">1:15 (标准)</option>
+                                        <option value="1:16">1:16 (偏淡)</option>
+                                        <option value="1:14">1:14 (浓郁)</option>
+                                        <option value="1:13">1:13 (极浓)</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1 min-w-[120px]">
+                                    <label class="text-[10px] text-amber-500/70 block mb-1">水温</label>
+                                    <select v-model="brewTemp" class="w-full bg-amber-900/30 border border-amber-500/20 rounded px-2.5 py-1.5 text-sm text-amber-200 focus:outline-none">
+                                        <option value="88°C">88°C (深烘)</option>
+                                        <option value="90°C">90°C (中深烘)</option>
+                                        <option value="92°C">92°C (中烘/标准)</option>
+                                        <option value="94°C">94°C (浅烘)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="bg-amber-900/20 rounded p-2">
+                                    <span class="text-amber-500/70">注水量</span>
+                                    <span class="text-amber-200 font-semibold float-right">{{ Math.round(brewDose * brewRatioNum) }}g</span>
+                                </div>
+                                <div class="bg-amber-900/20 rounded p-2">
+                                    <span class="text-amber-500/70">水温</span>
+                                    <span class="text-amber-200 font-semibold float-right">{{ brewTemp }}</span>
+                                </div>
+                                <div class="bg-amber-900/20 rounded p-2">
+                                    <span class="text-amber-500/70">建议时间</span>
+                                    <span class="text-amber-200 font-semibold float-right">{{ brewTime }}</span>
+                                </div>
+                                <div class="bg-amber-900/20 rounded p-2">
+                                    <span class="text-amber-500/70">粉水比</span>
+                                    <span class="text-amber-200 font-semibold float-right">{{ brewRatio }}</span>
+                                </div>
                             </div>
                         </div>
 
