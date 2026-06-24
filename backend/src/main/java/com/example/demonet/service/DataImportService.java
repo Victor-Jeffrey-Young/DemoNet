@@ -11,6 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -100,6 +103,7 @@ public class DataImportService implements CommandLineRunner {
             log.info("Data already exists, skipping seed import.");
             seedAnimeIfMissing();
             seedCoffeeIfMissing();
+            seedCQICoffeeIfMissing();
             seedOfflineIfMissing();
             return;
         }
@@ -500,6 +504,176 @@ public class DataImportService implements CommandLineRunner {
                 "{\"origin\":\"中国云南\",\"roast\":\"中深烘\",\"process\":\"日晒\",\"variety\":\"卡蒂姆\",\"flavor\":\"红酒,菠萝蜜,黑糖,热带果\",\"videos\":{\"bilibili\":\"\",\"youtube\":\"\"}}",
                 "https://picsum.photos/seed/yunnan/600/400", null);
         log.info("Coffee seed: {} items", 8);
+    }
+
+    private void seedCQICoffeeIfMissing() {
+        var wrapper = new LambdaQueryWrapper<Item>()
+                .eq(Item::getType, "coffee")
+                .eq(Item::getSource, "cqi");
+        if (itemMapper.selectCount(wrapper) > 0) return;
+        log.info("CQI coffee data missing, importing from CSV...");
+        int imported = 0;
+        try (var reader = new BufferedReader(new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("data/arabica_coffee.csv"),
+                StandardCharsets.UTF_8))) {
+            String header = reader.readLine(); // skip header
+            String line;
+            while ((line = reader.readLine()) != null && imported < 100) {
+                String[] cols = parseCsvLine(line);
+                if (cols.length < 44) continue;
+                double totalPoints = parseDouble(cols[30]); // Total.Cup.Points
+                if (totalPoints < 86.0) continue;
+                String country = cols[3];   // Country.of.Origin
+                String region = cols[10];   // Region
+                String farm = cols[4];      // Farm.Name
+                String variety = cols[18];  // Variety
+                String process = cols[19];  // Processing.Method
+                String altitude = cols[43]; // altitude_mean_meters
+                String harvest = cols[15];  // Harvest.Year
+                String producer = cols[11]; // Producer
+
+                String title = buildCQITitle(country, region, farm, variety);
+                String slug = buildCQISlug(country, region, farm, variety, imported);
+                String desc = buildCQIDescription(country, region, process, totalPoints);
+                String infoJson = buildCQIInfoJson(country, region, farm, producer, variety,
+                        process, altitude, harvest, cols);
+                i("coffee", title, slug, desc, infoJson,
+                        "https://picsum.photos/seed/coffee-" + imported + "/600/400", null);
+                // Mark source as CQI
+                var latest = itemMapper.selectList(new LambdaQueryWrapper<Item>()
+                        .eq(Item::getSlug, slug));
+                if (!latest.isEmpty()) {
+                    latest.get(0).setSource("cqi");
+                    itemMapper.updateById(latest.get(0));
+                }
+                imported++;
+            }
+        } catch (Exception e) {
+            log.error("Failed to import CQI coffee data: {}", e.getMessage());
+        }
+        log.info("CQI coffee imported: {} items", imported);
+    }
+
+    private String buildCQITitle(String country, String region, String farm, String variety) {
+        StringBuilder sb = new StringBuilder();
+        if (country != null && !country.isBlank()) sb.append(country);
+        if (region != null && !region.isBlank()) sb.append(" ").append(region);
+        if (farm != null && !farm.isBlank() && !farm.equalsIgnoreCase(country))
+            sb.append(" · ").append(farm);
+        if (variety != null && !variety.isBlank() && !variety.equals("Other"))
+            sb.append(" (").append(variety).append(")");
+        return sb.toString().trim();
+    }
+
+    private String buildCQISlug(String country, String region, String farm, String variety, int idx) {
+        String base = "cqi-";
+        if (country != null && !country.isBlank()) base += country.toLowerCase().replaceAll("[^a-z0-9]+", "-") + "-";
+        if (region != null && !region.isBlank()) base += region.toLowerCase().replaceAll("[^a-z0-9]+", "-") + "-";
+        base += idx;
+        return base.replaceAll("-+$", "").replaceAll("-{2,}", "-");
+    }
+
+    private String buildCQIDescription(String country, String region, String process, double score) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CQI SCA 评分 ").append(String.format("%.2f", score)).append(" 分");
+        if (country != null && !country.isBlank()) sb.append(" · 产地 ").append(country);
+        if (region != null && !region.isBlank()) sb.append(" ").append(region);
+        if (process != null && !process.isBlank()) sb.append(" · ").append(process);
+        sb.append("。经 Q-Grader 专业品测认证。");
+        return sb.toString();
+    }
+
+    private String buildCQIInfoJson(String country, String region, String farm, String producer,
+                                     String variety, String process, String altitude, String harvest,
+                                     String[] cols) {
+        StringBuilder json = new StringBuilder("{");
+        appendJsonField(json, "origin", country);
+        appendJsonField(json, "region", region);
+        appendJsonField(json, "farm", farm);
+        appendJsonField(json, "producer", producer);
+        appendJsonField(json, "variety", variety);
+        appendJsonField(json, "process", process);
+        appendJsonField(json, "altitude", altitude);
+        appendJsonField(json, "harvest", harvest);
+        // SCA scores
+        appendJsonNumber(json, "aroma", parseDouble(cols[20]));
+        appendJsonNumber(json, "flavor", parseDouble(cols[21]));
+        appendJsonNumber(json, "aftertaste", parseDouble(cols[22]));
+        appendJsonNumber(json, "acidity", parseDouble(cols[23]));
+        appendJsonNumber(json, "body", parseDouble(cols[24]));
+        appendJsonNumber(json, "balance", parseDouble(cols[25]));
+        appendJsonNumber(json, "uniformity", parseDouble(cols[26]));
+        appendJsonNumber(json, "clean_cup", parseDouble(cols[27]));
+        appendJsonNumber(json, "sweetness", parseDouble(cols[28]));
+        appendJsonNumber(json, "cupper_points", parseDouble(cols[29]));
+        appendJsonNumber(json, "total_cup_points", parseDouble(cols[30]));
+        appendJsonField(json, "flavor_notes", buildFlavorString(cols));
+        // videos last — strip trailing comma
+        json.append("\"videos\":{\"youtube\":\"\",\"bilibili\":\"\"}}");
+        // Remove trailing comma before videos if present
+        String result = json.toString();
+        if (result.endsWith(",\"videos\":")) {
+            result = result.substring(0, result.length() - 10) + "\"videos\":{\"youtube\":\"\",\"bilibili\":\"\"}}";
+        }
+        return result;
+    }
+
+    private String buildFlavorString(String[] cols) {
+        // Try to extract meaningful flavor descriptors from the scores
+        // Higher Aroma+Flavor → fruity/floral, higher Body → chocolate/nutty
+        double aroma = parseDouble(cols[20]);
+        double flavor = parseDouble(cols[21]);
+        double body = parseDouble(cols[24]);
+        StringBuilder flavors = new StringBuilder();
+        if (aroma > 8.0 && flavor > 8.0) flavors.append("花果香,明亮");
+        else if (body > 8.0) flavors.append("巧克力,坚果,醇厚");
+        else flavors.append("均衡,柔和");
+        if (body > 8.5) flavors.append(",厚重");
+        return flavors.toString();
+    }
+
+    private void appendJsonField(StringBuilder sb, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            sb.append("\"").append(key).append("\":\"").append(escapeJson(value)).append("\",");
+        }
+    }
+
+    private void appendJsonNumber(StringBuilder sb, String key, double value) {
+        if (value > 0) {
+            sb.append("\"").append(key).append("\":").append(value).append(",");
+        }
+    }
+
+    private void appendJsonRaw(StringBuilder sb, String key, String value) {
+        sb.append("\"").append(key).append("\":").append(value).append(",");
+    }
+
+    private String escapeJson(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private double parseDouble(String s) {
+        try { return Double.parseDouble(s.trim()); } catch (Exception e) { return 0; }
+    }
+
+    private String[] parseCsvLine(String line) {
+        // Simple CSV parser handling quoted fields
+        java.util.List<String> fields = new java.util.ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder current = new StringBuilder();
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                fields.add(current.toString());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        fields.add(current.toString());
+        return fields.toArray(new String[0]);
     }
 
     private void seedOfflineIfMissing() {
