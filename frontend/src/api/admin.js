@@ -1,6 +1,6 @@
 import request from './request'
 
-// ========== Item CRUD ==========
+// ========== 条目 CRUD ==========
 
 export function getAdminItems(params) {
   return request.get('/admin/items', { params })
@@ -30,7 +30,7 @@ export function toggleFeatured(id) {
   return request.put(`/admin/items/${id}/featured`)
 }
 
-// ========== Carousel Management ==========
+// ========== 轮播图管理 ==========
 
 export function getCarouselItems(type) {
   return request.get(`/admin/carousel/${type}`)
@@ -44,7 +44,7 @@ export function removeFromCarousel(type, itemId) {
   return request.delete(`/admin/carousel/${type}/${itemId}`)
 }
 
-// ========== Image Upload ==========
+// ========== 图片上传 ==========
 
 export function uploadImage(id, formData) {
   return request.post(`/admin/upload/${id}`, formData, {
@@ -52,7 +52,7 @@ export function uploadImage(id, formData) {
   })
 }
 
-// ========== Tag Management ==========
+// ========== 标签管理 ==========
 
 export function getAdminTags() {
   return request.get('/admin/tags')
@@ -78,13 +78,13 @@ export function removeItemTag(itemId, tagId) {
   return request.delete(`/admin/items/${itemId}/tags/${tagId}`)
 }
 
-// ========== Stats ==========
+// ========== 数据统计 ==========
 
 export function getAdminStats() {
   return request.get('/admin/stats')
 }
 
-// ========== Fetch & Pending (existing) ==========
+// ========== 抓取与待审核 (现有) ==========
 
 export function triggerSteamFetch(appIds, targetType = 'game') {
   return request.post('/admin/fetch/steam', { appIds, targetType })
