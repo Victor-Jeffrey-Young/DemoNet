@@ -1,4 +1,5 @@
 <script setup>
+import TypeIcon from '../TypeIcon.vue'
 const props = defineProps({ modelValue: Object })
 const emit = defineEmits(['update:modelValue'])
 
@@ -33,7 +34,7 @@ const categoryOptions = ['耳机', '键盘', '鼠标', '显示器', '手机', '�
 
 <template>
   <h4 class="text-sm font-medium text-cyan-400 mt-4 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
-    <span>📱</span> 数码信息
+    <span><TypeIcon type="digital" size="16" /></span> 数码信息
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="品牌" size="default">

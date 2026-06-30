@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { TYPE_LIST, getMeta } from '../constants/types'
+import TypeIcon from './TypeIcon.vue'
 
 const auth = useAuthStore()
 const scrolled = ref(false)
@@ -19,7 +20,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     class="bg-gray-950/95 backdrop-blur-sm border-b border-gray-800/50 sticky top-0 z-50 transition-all duration-300"
     :class="scrolled ? 'shadow-lg shadow-black/20' : ''"
   >
-    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-300"
+    <div class="max-w-[90%] mx-auto px-6 flex items-center justify-between transition-all duration-300"
       :class="scrolled ? 'h-14' : 'h-16'"
     >
       <div class="flex items-center gap-1">
@@ -28,7 +29,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         </router-link>
         <router-link v-for="t in TYPE_LIST" :key="t" :to="`/list/${t}`"
           class="text-xs text-gray-500 hover:text-white px-2 py-1 rounded transition-colors hidden lg:inline">
-          {{ getMeta(t).emoji }} {{ getMeta(t).label }}
+          {{ getMeta(t).label }}
         </router-link>
       </div>
       
@@ -76,7 +77,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
           <router-link v-for="t in TYPE_LIST" :key="t" :to="`/list/${t}`"
             @click="mobileMenuOpen = false"
             class="text-xs text-gray-400 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-lg transition text-center">
-            <div class="text-lg mb-0.5">{{ getMeta(t).emoji }}</div>
+            <TypeIcon :type="t" size="18" />
             {{ getMeta(t).label }}
           </router-link>
         </div>

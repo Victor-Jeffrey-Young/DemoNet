@@ -7,6 +7,7 @@ import {
 } from '../../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getMeta, TYPE_LIST } from '../../constants/types'
+import TypeIcon from '../../components/TypeIcon.vue'
 
 const steamIds = ref('')
 const steamTarget = ref('game')
@@ -97,7 +98,7 @@ defineExpose({ refresh: loadPending })
     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
       <!-- Steam -->
       <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2">🎮 Steam</h4>
+        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="game" size="14" /> Steam</h4>
         <el-select v-model="steamTarget" size="small" style="width:100%" :teleported="false" popper-class="admin-select-drop" class="mb-1">
           <el-option v-for="t in ['game','movie','anime']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
         </el-select>
@@ -106,7 +107,7 @@ defineExpose({ refresh: loadPending })
       </div>
       <!-- TMDB Movie -->
       <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2">🎬 TMDB 电影</h4>
+        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="movie" size="14" /> TMDB 电影</h4>
         <el-select v-model="tmdbTarget" size="small" style="width:100%" :teleported="false" popper-class="admin-select-drop" class="mb-1">
           <el-option v-for="t in ['movie','anime']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
         </el-select>
@@ -124,7 +125,7 @@ defineExpose({ refresh: loadPending })
       </div>
       <!-- AniList -->
       <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2">🎭 AniList</h4>
+        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="anime" size="14" /> AniList</h4>
         <el-select v-model="aniTarget" size="small" style="width:100%" :teleported="false" popper-class="admin-select-drop" class="mb-1">
           <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
         </el-select>
@@ -142,7 +143,7 @@ defineExpose({ refresh: loadPending })
       </div>
       <!-- iTunes -->
       <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2">🎵 iTunes</h4>
+        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="music" size="14" /> iTunes</h4>
         <el-select v-model="itunesTarget" size="small" style="width:100%" :teleported="false" popper-class="admin-select-drop" class="mb-1">
           <el-option v-for="t in ['music','anime']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
         </el-select>
@@ -151,7 +152,7 @@ defineExpose({ refresh: loadPending })
       </div>
       <!-- IGDB -->
       <div class="bg-gray-800 rounded-lg p-3 border border-emerald-700 md:col-span-2 lg:col-span-3">
-        <h4 class="text-xs font-semibold text-emerald-400 mb-2">🎮 IGDB 游戏数据库</h4>
+        <h4 class="text-xs font-semibold text-emerald-400 mb-2"><TypeIcon type="game" size="14" /> IGDB 游戏数据库</h4>
         <div class="flex gap-2 mb-1">
           <el-select v-model="igdbEndpoint" size="small" style="width:120px" :teleported="false" popper-class="admin-select-drop">
             <el-option label="🔍 搜索" value="search" />

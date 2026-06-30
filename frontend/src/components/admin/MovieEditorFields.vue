@@ -1,4 +1,5 @@
 <script setup>
+import TypeIcon from '../TypeIcon.vue'
 const props = defineProps({ modelValue: Object })
 const emit = defineEmits(['update:modelValue'])
 
@@ -45,7 +46,7 @@ function handleVideoInput(platform, value) {
 
 <template>
   <h4 class="text-sm font-medium text-red-400 mt-4 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
-    <span>🎬</span> 电影信息
+    <span><TypeIcon type="movie" size="16" /></span> 电影信息
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="导演" size="default">

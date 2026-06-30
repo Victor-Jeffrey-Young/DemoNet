@@ -9,6 +9,7 @@ import {
 } from "../../api/admin";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { TYPE_LIST, getMeta } from "../../constants/types";
+import TypeIcon from "../../components/TypeIcon.vue";
 import AdminItemForm from "./AdminItemForm.vue";
 
 const items = ref([]);
@@ -235,13 +236,13 @@ defineExpose({ refresh: loadItems });
                         v-else
                         class="w-full h-full flex items-center justify-center text-3xl opacity-40"
                     >
-                        {{ getMeta(item.type).emoji }}
+                        <TypeIcon :type="item.type" size="28" />
                     </div>
                     <!-- Type badge -->
                     <span
                         class="absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-medium bg-black/60 text-white"
                     >
-                        {{ getMeta(item.type).emoji }}
+                        <TypeIcon :type="item.type" size="14" />
                         {{ getMeta(item.type).label }}
                     </span>
                     <!-- Status badge -->

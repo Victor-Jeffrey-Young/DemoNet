@@ -5,6 +5,7 @@ import { getItems } from '../api/item'
 import { getTags } from '../api/tag'
 import { getMeta, TYPE_LIST } from '../constants/types'
 import AppCard from '../components/AppCard.vue'
+import TypeIcon from '../components/TypeIcon.vue'
 import SearchBar from '../components/SearchBar.vue'
 
 const route = useRoute()
@@ -85,7 +86,7 @@ const totalPages = computed(() => Math.ceil(total.value/12) || 1)
         <button v-for="t in types" :key="t" @click="setType(t)"
           :class="activeType===t ? `bg-${getMeta(t).accent}-600 text-white` : 'bg-gray-800 text-gray-400 hover:text-white'"
           class="text-xs px-3 py-1.5 rounded-full transition">
-          {{ getMeta(t).emoji }} {{ getMeta(t).label }}
+          <TypeIcon :type="t" size="16" /> {{ getMeta(t).label }}
         </button>
       </div>
 

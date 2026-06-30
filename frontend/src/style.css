@@ -24,6 +24,13 @@
   transform: translateY(-6px);
 }
 
+/* Hide scrollbar for corridors */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Body font */
+body { font-family: 'Inter', sans-serif; }
+
 /* Dark scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #030712; }

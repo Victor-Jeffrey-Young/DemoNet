@@ -7,6 +7,8 @@ import { saveUserItem, getUserItemStatus } from "../api/auth";
 import AppCard from "../components/AppCard.vue";
 import ReviewSection from "../components/ReviewSection.vue";
 import AdminItemForm from "../components/admin/AdminItemForm.vue";
+import TypeIcon from "../components/TypeIcon.vue";
+import { getMeta } from "../constants/types";
 import * as echarts from "echarts/dist/echarts.esm.js";
 
 const route = useRoute();
@@ -30,55 +32,6 @@ function hideDropdown() {
         dropdownOpen.value = false;
     }, 150);
 }
-
-const typeMetaMap = {
-    game: {
-        label: "游戏",
-        emoji: "🎮",
-        color: "text-green-400 bg-green-900/50",
-    },
-    movie: { label: "电影", emoji: "🎬", color: "text-red-400 bg-red-900/50" },
-    anime: {
-        label: "动漫",
-        emoji: "🎭",
-        color: "text-purple-400 bg-purple-900/50",
-    },
-    boardgame: {
-        label: "桌游",
-        emoji: "🎲",
-        color: "text-yellow-400 bg-yellow-900/50",
-    },
-    model: {
-        label: "模型",
-        emoji: "🧩",
-        color: "text-blue-400 bg-blue-900/50",
-    },
-    book: {
-        label: "书籍",
-        emoji: "📖",
-        color: "text-amber-400 bg-amber-900/50",
-    },
-    music: {
-        label: "音乐",
-        emoji: "🎵",
-        color: "text-pink-400 bg-pink-900/50",
-    },
-    digital: {
-        label: "数码",
-        emoji: "📱",
-        color: "text-cyan-400 bg-cyan-900/50",
-    },
-    coffee: {
-        label: "咖啡",
-        emoji: "☕",
-        color: "text-orange-400 bg-orange-900/50",
-    },
-    offline: {
-        label: "线下",
-        emoji: "🏛️",
-        color: "text-indigo-400 bg-indigo-900/50",
-    },
-};
 
 const statusOptions = [
     { key: "want_to_play", label: "想玩" },
@@ -118,14 +71,21 @@ async function fetchItem() {
     }
 }
 
-const typeMeta = computed(
-    () =>
-        typeMetaMap[item.value?.type] || {
-            label: item.value?.type,
-            emoji: "",
-            color: "text-gray-400 bg-gray-800",
-        },
-);
+const typeMeta = computed(() => getMeta(item.value?.type));
+
+const badgeAccentMap = {
+    emerald: 'text-emerald-400 bg-emerald-900/50',
+    red:     'text-red-400 bg-red-900/50',
+    violet:  'text-purple-400 bg-purple-900/50',
+    amber:   'text-amber-400 bg-amber-900/50',
+    sky:     'text-blue-400 bg-blue-900/50',
+    fuchsia: 'text-pink-400 bg-pink-900/50',
+    cyan:    'text-cyan-400 bg-cyan-900/50',
+    orange:  'text-orange-400 bg-orange-900/50',
+    indigo:  'text-indigo-400 bg-indigo-900/50',
+};
+const typeBadge = computed(() => badgeAccentMap[typeMeta.value?.accent] || 'text-gray-400 bg-gray-800');
+
 const info = computed(() => {
     try {
         return JSON.parse(item.value?.infoJson || "{}");
@@ -537,7 +497,7 @@ const coffeeFlavors = computed(() => {
                                 v-if="!epubReady"
                                 class="w-full h-full bg-linear-to-br from-amber-100 to-amber-50 flex flex-col items-center justify-center gap-3"
                             >
-                                <span class="text-5xl">📖</span>
+                                <TypeIcon :type="item.type" size="24" />
                                 <span
                                     class="text-amber-800 text-sm font-medium"
                                     >{{ item.title }}</span
@@ -616,7 +576,7 @@ const coffeeFlavors = computed(() => {
                                         v-else
                                         class="w-full h-full bg-fuchsia-900/50 flex items-center justify-center text-5xl"
                                     >
-                                        🎵
+                                        <TypeIcon :type="item.type" size="16" />
                                     </div>
                                 </div>
                                 <div class="text-center">
@@ -638,7 +598,7 @@ const coffeeFlavors = computed(() => {
                             </div>
                         </div>
                         <!-- Empty state -->
-                        <span v-else>{{ typeMeta.emoji }}</span>
+                        <span v-else><TypeIcon :type="item.type" size="28" /></span>
                         <div
                             v-if="
                                 videoSources.length > 1 &&
@@ -666,7 +626,7 @@ const coffeeFlavors = computed(() => {
                     <div class="p-8">
                         <div class="flex items-center gap-3 mb-4">
                             <span
-                                :class="typeMeta.color"
+                                :class="typeBadge"
                                 class="text-xs px-2 py-0.5 rounded"
                                 >{{ typeMeta.label }}</span
                             >
@@ -733,7 +693,7 @@ const coffeeFlavors = computed(() => {
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-fuchsia-900/20"
                             >
-                                🎵 在 Apple Music 中打开
+                                <TypeIcon :type="item.type" size="16" /> 在 Apple Music 中打开
                             </a>
                             <a
                                 v-else
@@ -741,7 +701,7 @@ const coffeeFlavors = computed(() => {
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white text-sm transition-all"
                             >
-                                {{ typeMeta.emoji }} 了解更多 →
+                                <TypeIcon :type="item.type" size="16" /> 了解更多 →
                             </a>
                         </div>
 
@@ -755,7 +715,7 @@ const coffeeFlavors = computed(() => {
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-emerald-900/20"
                             >
-                                🎮 免费试玩
+                                <TypeIcon :type="item.type" size="16" /> 免费试玩
                             </a>
                         </div>
 
@@ -785,7 +745,7 @@ const coffeeFlavors = computed(() => {
                             <div class="flex items-center gap-3">
                                 <span
                                     class="text-xs text-fuchsia-400 font-medium"
-                                    >🎵 试听预览</span
+                                    ><TypeIcon :type="item.type" size="14" /> 试听预览</span
                                 >
                                 <audio
                                     controls
@@ -804,7 +764,7 @@ const coffeeFlavors = computed(() => {
                             <div class="flex flex-wrap items-center gap-2">
                                 <span
                                     class="text-xs text-amber-400 font-medium mr-2"
-                                    >☕ 风味</span
+                                    <TypeIcon :type="item.type" size="14" /> 风味</span
                                 >
                                 <span
                                     v-for="f in coffeeFlavors"
@@ -829,7 +789,7 @@ const coffeeFlavors = computed(() => {
                             v-if="isCoffee"
                             class="mt-4 p-4 bg-amber-900/10 border border-amber-500/10 rounded-lg"
                         >
-                            <span class="text-xs text-amber-400 font-medium mb-3 block">☕ 冲煮参数计算器</span>
+                            <TypeIcon :type="item.type" size="14" /> 冲煮参数计算器</span>
                             <div class="flex flex-wrap items-end gap-3 mb-3">
                                 <div class="flex-1 min-w-[120px]">
                                     <label class="text-[10px] text-amber-500/70 block mb-1">咖啡粉量 (g)</label>
@@ -959,7 +919,7 @@ const coffeeFlavors = computed(() => {
                                 class="w-full flex items-center justify-between p-4 text-left hover:bg-amber-900/10 transition-colors"
                             >
                                 <span class="text-xs text-amber-400 font-medium flex items-center gap-2">
-                                    📖 规则书
+                                    <TypeIcon :type="item.type" size="16" /> 规则书
                                     <span v-if="ruleImages.length" class="text-amber-600 font-normal">({{ ruleImages.length }} 页)</span>
                                     <span class="text-amber-600 font-normal">(点击展开)</span>
                                 </span>
