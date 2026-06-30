@@ -1,4 +1,5 @@
 <script setup>
+import TypeIcon from '../TypeIcon.vue'
 const props = defineProps({ modelValue: Object })
 const emit = defineEmits(['update:modelValue'])
 
@@ -42,7 +43,7 @@ const originOptions = ['日漫', '国漫', '美漫', '韩漫', '其他']
 
 <template>
   <h4 class="text-sm font-medium text-violet-400 mt-4 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
-    <span>🎭</span> 动漫信息
+    <span><TypeIcon type="anime" size="16" /></span> 动漫信息
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="制作社" size="default">

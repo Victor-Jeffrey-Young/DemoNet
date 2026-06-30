@@ -46,7 +46,7 @@ defineExpose({ refresh: loadStats })
     <h3 class="text-sm font-semibold text-gray-200 mb-3">各品类分布</h3>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
       <div v-for="t in TYPE_LIST" :key="t" class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-        <div class="text-lg">{{ getMeta(t).emoji }}</div>
+        <div class="text-lg"><TypeIcon :type="t" size="22" /></div>
         <div class="text-sm text-white font-medium mt-1">{{ getMeta(t).label }}</div>
         <div class="text-xs text-gray-300">
           {{ stats?.byType?.find(b => b.type === t)?.count ?? 0 }} 项

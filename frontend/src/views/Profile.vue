@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { getUserItems, removeUserItem } from '../api/auth'
+import TypeIcon from '../components/TypeIcon.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -16,9 +17,7 @@ const statusLabels = {
   dropped: '弃了',
 }
 
-const typeEmojis = {
-  game: '🎮', movie: '🎬', anime: '🎭', boardgame: '🎲', model: '🧩',
-}
+
 
 onMounted(() => {
   auth.fetchUser()
@@ -77,7 +76,7 @@ function goDetail(slug) {
         class="bg-gray-900 rounded-xl border border-gray-800 p-4 flex items-center justify-between cursor-pointer hover:border-gray-600 transition"
         @click="goDetail(item.slug)">
         <div class="flex items-center gap-3 min-w-0">
-          <span class="text-lg shrink-0">{{ typeEmojis[item.type] || '📦' }}</span>
+          <span class="text-lg shrink-0"><TypeIcon :type="item.type" size="20" /></span>
           <div class="min-w-0">
             <div class="font-medium truncate">{{ item.title }}</div>
             <div class="text-xs text-gray-500 mt-0.5">{{ statusLabels[item.status] }}</div>

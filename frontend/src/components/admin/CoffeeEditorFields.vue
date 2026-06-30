@@ -1,4 +1,5 @@
 <script setup>
+import TypeIcon from '../TypeIcon.vue'
 const props = defineProps({ modelValue: Object })
 const emit = defineEmits(['update:modelValue'])
 
@@ -35,7 +36,7 @@ const processOptions = ['水洗', '日晒', '蜜处理', '湿刨法', '厌氧发
 
 <template>
   <h4 class="text-sm font-medium text-orange-400 mt-4 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
-    <span>☕</span> 咖啡信息
+    <span><TypeIcon type="coffee" size="16" /></span> 咖啡信息
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="产地" size="default">

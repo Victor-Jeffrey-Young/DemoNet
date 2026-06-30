@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { TYPE_META } from "../constants/types.js";
+import TypeIcon from "./TypeIcon.vue";
 
 const props = defineProps({ item: { type: Object, required: true } });
 const router = useRouter();
@@ -47,7 +48,7 @@ const meta = computed(() => {
     const accent = m?.accent || 'gray';
     return {
         label:  m?.label || t,
-        emoji:  m?.emoji || '📦',
+        icon:   m?.icon || 'game',
         badge:  badgeMap[accent] || 'bg-gray-800 text-gray-400',
         titleHover: titleHoverMap[accent] || 'group-hover:text-gray-400',
         shadow: shadowMap[accent] || '',
@@ -84,8 +85,9 @@ function goDetail() {
             <span
                 v-if="!item.wideCoverUrl && !item.coverUrl"
                 class="relative z-10"
-                >{{ meta.emoji }}</span
             >
+                <TypeIcon :type="meta.icon" size="28" />
+            </span>
         </div>
         <div class="p-4">
             <span class="text-xs px-2 py-0.5 rounded" :class="meta.badge">

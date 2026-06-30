@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { getCarouselItems, saveCarouselOrder, removeFromCarousel, getAdminItems } from '../../api/admin'
 import { ElMessage } from 'element-plus'
 import { TYPE_LIST, getMeta } from '../../constants/types'
+import TypeIcon from '../../components/TypeIcon.vue'
 
 const activeType = ref('game')
 const carouselItems = ref([])
@@ -90,7 +91,7 @@ defineExpose({ refresh() { loadCarousel(); loadPool() } })
         v-for="t in TYPE_LIST" :key="t"
         @click="activeType = t; handleTypeChange()"
         :class="['px-3 py-1.5 rounded text-sm font-medium transition', activeType === t ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white']"
-      >{{ getMeta(t).emoji }} {{ getMeta(t).label }}</button>
+      ><TypeIcon :type="t" size="16" /> {{ getMeta(t).label }}</button>
     </div>
 
     <!-- Current Carousel Sequence -->
@@ -109,7 +110,7 @@ defineExpose({ refresh() { loadCarousel(); loadPool() } })
             class="w-16 h-10 rounded object-cover"
           />
           <div v-else class="w-16 h-10 rounded bg-gray-700 flex items-center justify-center text-lg">
-            {{ getMeta(item.type).emoji }}
+            <TypeIcon :type="item.type" size="18" />
           </div>
           <span class="flex-1 text-sm text-white truncate">{{ item.title }}</span>
           <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
@@ -142,7 +143,7 @@ defineExpose({ refresh() { loadCarousel(); loadPool() } })
               class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-2xl opacity-30">
-              {{ getMeta(item.type).emoji }}
+              <TypeIcon :type="item.type" size="24" />
             </div>
           </div>
           <div class="p-2">
