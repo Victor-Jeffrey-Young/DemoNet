@@ -22,7 +22,7 @@ const demoUrl = computed(() => {
 
 <template>
   <div @click="go"
-    class="game-card-hover relative rounded-2xl overflow-hidden h-[380px] cursor-pointer group ring-1 ring-emerald-900/20 hover:ring-emerald-400/50 shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500">
+    class="game-card-hover relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer group ring-1 ring-emerald-900/20 hover:ring-emerald-400/50 shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500">
     <div v-if="item.coverUrl"
       class="card-bg absolute inset-0 bg-cover bg-top transition-transform duration-700"
       :style="{ backgroundImage: 'url('+item.coverUrl+')' }" />

@@ -28,7 +28,7 @@ function getInfo(item) {
     <div class="absolute inset-0 opacity-30 pointer-events-none"
       style="background: radial-gradient(ellipse at 50% 30%, rgba(251,191,36,0.15) 0%, transparent 70%)" />
 
-    <div class="relative max-w-7xl mx-auto px-6 py-10">
+    <div class="relative max-w-[90%] mx-auto px-6 py-10">
       <!-- Header with recommendation card -->
       <div class="flex items-center gap-6 mb-8">
         <div class="flex items-center gap-3">

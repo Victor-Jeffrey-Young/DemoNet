@@ -75,7 +75,7 @@ const totalPages = computed(() => Math.ceil(total.value/12) || 1)
 
 <template>
   <div class="min-h-screen bg-gray-950 text-white">
-    <main class="max-w-7xl mx-auto px-6 py-10">
+    <main class="max-w-[90%] mx-auto px-6 py-10">
       <h1 class="text-2xl font-bold mb-6">发现</h1>
 
       <div class="mb-6">

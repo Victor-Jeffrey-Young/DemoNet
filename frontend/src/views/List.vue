@@ -106,7 +106,7 @@ const CardComponent = computed(() => {
     <CoffeeHero v-if="isCoffee && showHero" />
     <OfflineHero v-if="isOffline && showHero" />
 
-    <main class="max-w-7xl mx-auto px-6 py-10">
+    <main class="max-w-[90%] mx-auto px-6 py-10">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold"><TypeIcon :type="activeType" size="24" /> {{ meta.label }}</h1>
@@ -135,7 +135,7 @@ const CardComponent = computed(() => {
           isDigital ? 'grid grid-cols-1 lg:grid-cols-2 gap-5' : '',
           isCoffee ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5' : '',
           isOffline ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5' : '',
-          !isMovie && !isAnime && !isModel && !isBoardgame && !isBook && !isMusic && !isDigital && !isCoffee && !isOffline ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : '',
+          !isMovie && !isAnime && !isModel && !isBoardgame && !isBook && !isMusic && !isDigital && !isCoffee && !isOffline ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5' : '',
         ]"
         class="mb-10">
         <component :is="CardComponent" v-for="item in items" :key="item.id" :item="item" />

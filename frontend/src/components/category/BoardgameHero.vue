@@ -28,7 +28,7 @@ function weightStars(w) {
     <div class="absolute inset-0 opacity-[0.06] pointer-events-none"
       style="background-image: repeating-linear-gradient(90deg,transparent,transparent 3px,#8B6914 3px,#8B6914 4px),repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(139,105,20,0.3) 40px,rgba(139,105,20,0.3) 41px)" />
 
-    <div class="relative max-w-7xl mx-auto px-6 py-10">
+    <div class="relative max-w-[90%] mx-auto px-6 py-10">
       <!-- Header -->
       <div class="flex items-center gap-4 mb-8">
         <div class="flex items-center gap-3">

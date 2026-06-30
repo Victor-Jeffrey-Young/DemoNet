@@ -54,7 +54,7 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
   <div v-else class="relative w-full overflow-hidden" style="background: radial-gradient(ellipse at 30% 20%, #064e3b 0%, #022c22 30%, #0a0a0a 70%)">
     <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #34d399 2px, #34d399 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, #34d399 2px, #34d399 4px)" />
 
-    <div class="relative max-w-7xl mx-auto px-6 pt-10 pb-8">
+    <div class="relative max-w-[90%] mx-auto px-6 pt-10 pb-8">
       <div class="flex items-end justify-between mb-8">
         <div>
           <div class="text-[10px] tracking-[0.3em] text-emerald-500/80 uppercase mb-2 font-mono">Featured Games</div>
