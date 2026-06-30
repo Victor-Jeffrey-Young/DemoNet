@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -81,6 +82,7 @@ public class AdminController {
     }
 
     @PutMapping("/items/{id}/featured")
+    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
     public Item toggleFeatured(@PathVariable Long id) {
         return adminService.toggleFeatured(id);
     }
@@ -93,12 +95,14 @@ public class AdminController {
     }
 
     @PostMapping("/carousel/{type}")
+    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
     public Map<String, String> saveCarousel(@PathVariable String type, @RequestBody Map<String, List<Long>> body) {
         adminService.saveCarouselOrder(type, body.get("itemIds"));
         return Map.of("message", "ok");
     }
 
     @DeleteMapping("/carousel/{type}/{itemId}")
+    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
     public Map<String, String> removeFromCarousel(@PathVariable String type, @PathVariable Long itemId) {
         adminService.removeFromCarousel(itemId);
         return Map.of("message", "ok");

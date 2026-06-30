@@ -28,7 +28,7 @@ function goDetail(slug) { router.push({ name:'Detail', params:{ slug } }) }
     <div class="h-1 bg-[repeating-linear-gradient(-45deg,#f59e0b,#f59e0b_10px,#1a1a1e_10px,#1a1a1e_20px)]" />
 
     <!-- Header row -->
-    <div class="max-w-7xl mx-auto px-6 pt-8 pb-4">
+    <div class="max-w-[90%] mx-auto px-6 pt-8 pb-4">
       <div class="flex items-center gap-3 mb-6">
         <span class="w-8 h-[2px] bg-amber-500/60" />
         <span class="text-amber-500/80 text-xs tracking-[0.25em] uppercase font-mono">精选陈列</span>

@@ -452,7 +452,7 @@ const coffeeFlavors = computed(() => {
 
 <template>
     <div class="min-h-screen bg-gray-950 text-white">
-        <main class="max-w-5xl mx-auto px-6 py-10">
+        <main class="max-w-[90%] mx-auto px-6 py-10">
             <div v-if="loading" class="text-center text-gray-500 py-20">
                 加载中...
             </div>
@@ -762,8 +762,7 @@ const coffeeFlavors = computed(() => {
                             class="mt-4 p-4 bg-amber-900/10 border border-amber-500/10 rounded-lg"
                         >
                             <div class="flex flex-wrap items-center gap-2">
-                                <span
-                                    class="text-xs text-amber-400 font-medium mr-2"
+                                <span class="text-xs text-amber-400 font-medium mr-2">
                                     <TypeIcon :type="item.type" size="14" /> 风味</span
                                 >
                                 <span
@@ -789,7 +788,7 @@ const coffeeFlavors = computed(() => {
                             v-if="isCoffee"
                             class="mt-4 p-4 bg-amber-900/10 border border-amber-500/10 rounded-lg"
                         >
-                            <TypeIcon :type="item.type" size="14" /> 冲煮参数计算器</span>
+                            <TypeIcon :type="item.type" size="14" /> 冲煮参数计算器
                             <div class="flex flex-wrap items-end gap-3 mb-3">
                                 <div class="flex-1 min-w-[120px]">
                                     <label class="text-[10px] text-amber-500/70 block mb-1">咖啡粉量 (g)</label>

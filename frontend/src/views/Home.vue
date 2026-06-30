@@ -101,10 +101,10 @@ function goItem(slug) {
         <!-- ======= Store Header & Category Circles ======= -->
         <section class="max-w-[90%] mx-auto px-6 pt-20 pb-8">
             <div class="mb-14">
-                <h1 class="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[1.05]">
+                <h1 class="text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05]">
                     试玩派对<span class="text-gray-600">.</span>
                 </h1>
-                <p class="text-xl md:text-2xl text-gray-500 mt-3 font-light tracking-tight">
+                <p class="text-xl md:text-2xl text-gray-500 mt-3 font-light">
                     聚合游戏·电影·动漫·桌游·模型·书籍·音乐·数码·咖啡·线下体验
                 </p>
                 <div class="mt-6 max-w-md">
