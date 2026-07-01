@@ -7,6 +7,7 @@ import AdminItemList from '../components/admin/AdminItemList.vue'
 import AdminTagManager from '../components/admin/AdminTagManager.vue'
 import AdminCarouselManager from '../components/admin/AdminCarouselManager.vue'
 import AdminFetchPanel from '../components/admin/AdminFetchPanel.vue'
+import AdminCategoryManager from '../components/admin/AdminCategoryManager.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -38,7 +39,7 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-gray-950 text-white">
-    <main class="max-w-6xl mx-auto px-6 py-8">
+    <main class="max-w-[90%] mx-auto px-6 py-8">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
         <div>
@@ -67,6 +68,9 @@ onMounted(() => {
         </el-tab-pane>
         <el-tab-pane label="数据抓取" name="fetch">
           <AdminFetchPanel ref="fetchPanelRef" />
+        </el-tab-pane>
+        <el-tab-pane label="频道管理" name="categories">
+          <AdminCategoryManager />
         </el-tab-pane>
       </el-tabs>
     </main>

@@ -2,16 +2,26 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { TYPE_LIST, getMeta } from '../constants/types'
+import { getVisibleCategories } from '../api/item'
 import TypeIcon from './TypeIcon.vue'
 
 const auth = useAuthStore()
 const scrolled = ref(false)
 const mobileMenuOpen = ref(false)
+const visibleTypes = ref(TYPE_LIST)
+
+onMounted(async () => {
+  try {
+    const vis = await getVisibleCategories()
+    visibleTypes.value = vis.filter(s => s.visible).map(s => s.type)
+  } catch { /* keep TYPE_LIST fallback */ }
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
 
 function onScroll() {
   scrolled.value = window.scrollY > 20
 }
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+
 onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
@@ -27,7 +37,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         <router-link to="/" class="text-lg font-black tracking-tight mr-3 hover:text-blue-400 transition flex items-center gap-1.5">
           <span class="text-blue-500">◆</span> DemoNet
         </router-link>
-        <router-link v-for="t in TYPE_LIST" :key="t" :to="`/list/${t}`"
+        <router-link v-for="t in visibleTypes" :key="t" :to="`/list/${t}`"
           class="text-xs text-gray-500 hover:text-white px-2 py-1 rounded transition-colors hidden lg:inline">
           {{ getMeta(t).label }}
         </router-link>
@@ -74,7 +84,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     <Transition name="slide">
       <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-800 bg-gray-950/98 backdrop-blur-sm">
         <div class="px-6 py-4 grid grid-cols-3 gap-2">
-          <router-link v-for="t in TYPE_LIST" :key="t" :to="`/list/${t}`"
+          <router-link v-for="t in visibleTypes" :key="t" :to="`/list/${t}`"
             @click="mobileMenuOpen = false"
             class="text-xs text-gray-400 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-lg transition text-center">
             <TypeIcon :type="t" size="18" />

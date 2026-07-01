@@ -26,8 +26,13 @@ public class FetchConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_STEAM)
     public void handleSteamFetch(Map<String, Object> payload) {
-        List<Integer> rawIds = (List<Integer>) payload.get("appIds");
-        List<Long> appIds = rawIds.stream().map(Integer::longValue).toList();
+        List<Long> appIds = new java.util.ArrayList<>();
+        Object rawIds = payload.get("appIds");
+        if (rawIds instanceof List) {
+            for (Object id : (List<?>) rawIds) {
+                if (id instanceof Number) appIds.add(((Number) id).longValue());
+            }
+        }
         String targetType = (String) payload.getOrDefault("targetType", "game");
         log.info("Steam fetch: {} appIds → type={}", appIds.size(), targetType);
         List<Item> items = steamService.fetchByAppIds(appIds);

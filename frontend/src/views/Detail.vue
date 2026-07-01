@@ -8,6 +8,7 @@ import AppCard from "../components/AppCard.vue";
 import ReviewSection from "../components/ReviewSection.vue";
 import AdminItemForm from "../components/admin/AdminItemForm.vue";
 import TypeIcon from "../components/TypeIcon.vue";
+import { ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
 import { getMeta } from "../constants/types";
 import * as echarts from "echarts/dist/echarts.esm.js";
 
@@ -116,6 +117,10 @@ function isEmbed(url) {
             url.includes("player.bilibili.com"))
     );
 }
+
+const isSteamVideo = computed(
+    () => activeVideoUrl.value && activeVideoUrl.value.includes("steamstatic.com"),
+);
 
 const isBook = computed(() => item.value?.type === "book");
 const isMusic = computed(() => item.value?.type === "music");
@@ -231,6 +236,8 @@ watch(
         if (videos.value.bilibili) activeVideoUrl.value = videos.value.bilibili;
         else if (videos.value.youtube)
             activeVideoUrl.value = videos.value.youtube;
+        else if (videos.value.steam)
+            activeVideoUrl.value = videos.value.steam;
         else if (item.value?.mediaUrl && isEmbed(item.value.mediaUrl))
             activeVideoUrl.value = item.value.mediaUrl;
         else activeVideoUrl.value = "";
@@ -322,8 +329,13 @@ const infoFields = computed(() => {
 });
 
 const isCoffee = computed(() => item.value?.type === "coffee");
+const isGame = computed(() => item.value?.type === "game");
 const isOffline = computed(() => item.value?.type === "offline");
 const isBoardgame = computed(() => item.value?.type === "boardgame");
+const screenshots = computed(() => {
+    const ss = info.value.screenshots;
+    return Array.isArray(ss) ? ss : [];
+});
 const showBoardgameRules = ref(false);
 const rulePage = ref(0);
 const ruleFlipAnim = ref('next');
@@ -331,6 +343,24 @@ const ruleThumbs = ref(null);
 const showEditDialog = ref(false);
 const editTags = ref([]);
 const lightboxPage = ref(null);
+const ssLightbox = ref(null); // screenshot index for lightbox
+const ssLightboxUrl = computed(() => ssLightbox.value != null ? screenshots.value[ssLightbox.value] : null);
+
+// Keyboard nav for screenshot lightbox
+function ssPrev() { if (ssLightbox.value > 0) ssLightbox.value--; }
+function ssNext() { if (ssLightbox.value < screenshots.value.length - 1) ssLightbox.value++; }
+watch(ssLightbox, (val) => {
+    if (val != null) {
+        const handler = (e) => {
+            if (e.key === 'ArrowLeft') { e.preventDefault(); ssPrev() }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); ssNext() }
+            else if (e.key === 'Escape') { ssLightbox.value = null }
+        }
+        window.addEventListener('keydown', handler)
+        // clean up on close
+        const unwatch = watch(ssLightbox, (newVal) => { if (newVal == null) { window.removeEventListener('keydown', handler); unwatch() } })
+    }
+})
 
 // Coffee radar chart
 const radarChartRef = ref(null);
@@ -525,9 +555,9 @@ const coffeeFlavors = computed(() => {
                             class="w-full h-full"
                             frameborder="0"
                         />
-                        <!-- Video player -->
+                        <!-- Video player (iframe) -->
                         <iframe
-                            v-else-if="activeVideoUrl"
+                            v-else-if="activeVideoUrl && !isSteamVideo"
                             :src="activeVideoUrl"
                             class="w-full h-full"
                             frameborder="0"
@@ -540,6 +570,14 @@ const coffeeFlavors = computed(() => {
                                 picture-in-picture;
                             "
                             allowfullscreen
+                        />
+                        <!-- Steam video (mp4) -->
+                        <video
+                            v-else-if="activeVideoUrl && isSteamVideo"
+                            :src="activeVideoUrl"
+                            class="w-full h-full object-cover"
+                            controls
+                            autoplay
                         />
                         <!-- Apple Music embed -->
                         <iframe
@@ -618,8 +656,22 @@ const coffeeFlavors = computed(() => {
                                 "
                                 class="text-[10px] px-2 py-1 rounded backdrop-blur-sm transition"
                             >
-                                {{ src.key === "youtube" ? "YT" : "B站" }}
+                                {{ src.key === "youtube" ? "YT" : src.key === "bilibili" ? "B站" : src.key === "steam" ? "Steam" : src.key }}
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Steam Screenshot Gallery -->
+                    <div v-if="isGame && screenshots.length" class="px-8 pt-6 pb-6">
+                        <div class="flex gap-2 overflow-x-auto hide-scrollbar py-1 pl-1">
+                            <img
+                                v-for="(ss, idx) in screenshots"
+                                :key="idx"
+                                :src="ss"
+                                @click="ssLightbox = idx"
+                                class="shrink-0 w-40 h-24 object-cover rounded-lg cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all opacity-80 hover:opacity-100"
+                                :class="ssLightbox === idx ? 'ring-2 ring-blue-400 opacity-100' : ''"
+                            />
                         </div>
                     </div>
 
@@ -1041,7 +1093,27 @@ const coffeeFlavors = computed(() => {
                 </button>
             </div>
         </main>
-    
+
+        <!-- Screenshot lightbox -->
+        <div v-if="ssLightbox != null" @click.self="ssLightbox = null"
+            class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center select-none">
+            <!-- Previous arrow -->
+            <button v-if="ssLightbox > 0" @click="ssPrev"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition z-10">
+                <el-icon :size="28" class="text-white"><ArrowLeft /></el-icon>
+            </button>
+            <!-- Image -->
+            <img :src="ssLightboxUrl" class="max-w-[90vw] max-h-[88vh] object-contain rounded shadow-2xl cursor-zoom-out" @click="ssLightbox = null" />
+            <!-- Next arrow -->
+            <button v-if="ssLightbox < screenshots.length - 1" @click="ssNext"
+                class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition z-10">
+                <el-icon :size="28" class="text-white"><ArrowRight /></el-icon>
+            </button>
+            <!-- Close hint -->
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/40">
+                {{ ssLightbox + 1 }} / {{ screenshots.length }} · 点击关闭 · 键盘 ← →
+            </div>
+        </div>
 
         <!-- Admin quick-edit dialog -->
         <div class="detail-edit-dialog">
