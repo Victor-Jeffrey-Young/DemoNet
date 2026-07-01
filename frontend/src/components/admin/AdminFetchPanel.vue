@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import {
   triggerSteamFetch, triggerTMDBFetch, triggerAniListFetch,
   triggerBangumiFetch, triggerTMDBTVFetch, triggerItunesFetch, triggerIGDBFetch,
-  getPendingItems, approveItem, rejectItem,
+  getPendingItems, approveItem, rejectItem, rejectBatch, searchSteamGames,
 } from '../../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getMeta, TYPE_LIST } from '../../constants/types'
@@ -11,6 +11,9 @@ import TypeIcon from '../../components/TypeIcon.vue'
 
 const steamIds = ref('')
 const steamTarget = ref('game')
+const steamQuery = ref('')
+const steamResults = ref([])
+const steamSearching = ref(false)
 const tmdbQuery = ref('')
 const tmdbTarget = ref('movie')
 const aniQuery = ref('')
@@ -35,6 +38,21 @@ async function handleSteamFetch() {
   const ids = steamIds.value.split(',').map(s => s.trim()).filter(Boolean).map(Number)
   if (!ids.length) { ElMessage.warning('请输入 AppID'); return }
   try { const r = await triggerSteamFetch(ids, steamTarget.value); ElMessage.success(r.message); steamIds.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+}
+// Steam search
+let steamSearchTimer = null
+async function searchSteam() {
+  if (!steamQuery.value.trim()) { steamResults.value = []; return }
+  steamSearching.value = true
+  try { steamResults.value = await searchSteamGames(steamQuery.value.trim()) } catch { steamResults.value = [] }
+  steamSearching.value = false
+}
+function debounceSearchSteam() {
+  clearTimeout(steamSearchTimer)
+  steamSearchTimer = setTimeout(searchSteam, 400)
+}
+async function fetchSteamResult(game) {
+  try { const r = await triggerSteamFetch([game.id], steamTarget.value); ElMessage.success(`${game.name} 已加入抓取队列`); setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
 }
 // TMDB Movie
 async function handleTMDBFetch() {
@@ -88,6 +106,15 @@ async function handleReject(item) {
   try { await ElMessageBox.confirm(`确定拒绝「${item.title}」？`, '确认拒绝', { type: 'warning' }); await rejectItem(item.id); ElMessage.success(`已拒绝: ${item.title}`); await loadPending() }
   catch (e) { if (e !== 'cancel') ElMessage.error('操作失败') }
 }
+const selectedIds = ref([])
+async function handleBatchReject() {
+  const ids = selectedIds.value
+  if (!ids.length) { ElMessage.warning('请先选择条目'); return }
+  try {
+    await ElMessageBox.confirm(`确定批量拒绝 ${ids.length} 条？`, '批量拒绝', { type: 'warning' })
+    await rejectBatch(ids); ElMessage.success(`已拒绝 ${ids.length} 条`); selectedIds.value = []; await loadPending()
+  } catch (e) { if (e !== 'cancel') ElMessage.error('操作失败') }
+}
 onMounted(loadPending)
 defineExpose({ refresh: loadPending })
 </script>
@@ -100,9 +127,19 @@ defineExpose({ refresh: loadPending })
       <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
         <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="game" size="14" /> Steam</h4>
         <el-select v-model="steamTarget" size="small" style="width:100%" :teleported="false" popper-class="admin-select-drop" class="mb-1">
-          <el-option v-for="t in ['game','movie','anime']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
+          <el-option v-for="t in ['game']" :key="t" :label="getMeta(t).emoji+' '+getMeta(t).label" :value="t" />
         </el-select>
-        <el-input v-model="steamIds" type="textarea" :rows="2" placeholder="AppID, 逗号分隔" size="small" class="mb-1" />
+        <el-input v-model="steamQuery" placeholder="搜索游戏名称..." size="small" class="mb-1" @input="debounceSearchSteam" clearable />
+        <div v-if="steamSearching" class="text-xs text-gray-500 mb-1">搜索中...</div>
+        <div v-if="steamResults.length" class="max-h-[120px] overflow-y-auto mb-1 space-y-0.5">
+          <div v-for="g in steamResults" :key="g.id" @click="fetchSteamResult(g)"
+            class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-gray-700 text-xs text-gray-300">
+            <img v-if="g.tinyImage" :src="g.tinyImage" class="w-6 h-6 object-cover rounded" />
+            <span class="flex-1 truncate">{{ g.name }}</span>
+            <span class="text-blue-400 shrink-0">抓取</span>
+          </div>
+        </div>
+        <el-input v-model="steamIds" type="textarea" :rows="1" placeholder="或直接输入 AppID, 逗号分隔" size="small" class="mb-1" />
         <el-button type="primary" size="small" @click="handleSteamFetch" style="width:100%">提交</el-button>
       </div>
       <!-- TMDB Movie -->
@@ -177,8 +214,10 @@ defineExpose({ refresh: loadPending })
     <div class="flex items-center gap-3 mb-3">
       <h4 class="text-sm font-semibold text-gray-200">待审核队列 ({{ pendingTotal }})</h4>
       <el-button size="small" text @click="loadPending" :loading="loading">刷新</el-button>
+      <el-button v-if="selectedIds.length" type="danger" size="small" @click="handleBatchReject">批量拒绝 ({{ selectedIds.length }})</el-button>
     </div>
-    <el-table :data="pendingList" v-loading="loading" style="width: 100%">
+    <el-table :data="pendingList" v-loading="loading" style="width: 100%" @selection-change="selectedIds = $event.map(r => r.id)">
+      <el-table-column type="selection" width="40" />
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="封面" width="80">
         <template #default="{ row }">

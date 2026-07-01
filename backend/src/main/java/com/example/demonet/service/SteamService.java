@@ -36,7 +36,7 @@ public class SteamService {
 
     public Item fetchAppDetail(Long appId) {
         Map<String, Object> resp = restClient.get()
-                .uri("https://store.steampowered.com/api/appdetails?appids=" + appId + "&cc=cn&l=zh")
+                .uri("https://store.steampowered.com/api/appdetails?appids=" + appId + "&cc=cn&l=schinese")
                 .retrieve()
                 .body(Map.class);
 
@@ -61,9 +61,14 @@ public class SteamService {
         String platforms = buildPlatforms(data);
         boolean isFree = Boolean.TRUE.equals(data.get("is_free"));
 
+        // Extract screenshots
+        String screenshots = extractScreenshots(data);
+        // Extract movies/videos
+        String movies = extractMovies(data);
+
         item.setInfoJson(String.format(
-                "{\"developer\":\"%s\",\"publisher\":\"%s\",\"genre\":\"%s\",\"platform\":\"%s\",\"demo_available\":false,\"free\":%s}",
-                esc(developer), esc(publisher), esc(genres), esc(platforms), isFree));
+                "{\"developer\":\"%s\",\"publisher\":\"%s\",\"genre\":\"%s\",\"platform\":\"%s\",\"demo_available\":false,\"free\":%s,\"screenshots\":%s,\"videos\":%s}",
+                esc(developer), esc(publisher), esc(genres), esc(platforms), isFree, screenshots, movies));
 
         item.setSource("steam");
         item.setStatus(0);
@@ -132,5 +137,48 @@ public class SteamService {
 
     private String esc(String s) {
         return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private String extractScreenshots(Map<String, Object> data) {
+        Object raw = data.get("screenshots");
+        if (!(raw instanceof List)) return "[]";
+        List<String> urls = new ArrayList<>();
+        for (Object s : (List<?>) raw) {
+            if (s instanceof Map) {
+                Object url = ((Map<?,?>) s).get("path_full");
+                if (url != null) urls.add(esc(url.toString()));
+            }
+        }
+        return "[\"" + String.join("\",\"", urls) + "\"]";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractMovies(Map<String, Object> data) {
+        Object raw = data.get("movies");
+        if (!(raw instanceof List)) return "{}";
+        // Try mp4 → webm → construct from movie id
+        for (Object m : (List<?>) raw) {
+            if (m instanceof Map) {
+                Map<String, Object> movie = (Map<String, Object>) m;
+                // Check mp4 and webm first (older games)
+                for (String fmt : new String[]{"mp4", "webm"}) {
+                    Object fmtObj = movie.get(fmt);
+                    if (fmtObj instanceof Map) {
+                        Object max = ((Map<String, Object>) fmtObj).get("max");
+                        if (max != null && !max.toString().isEmpty()) {
+                            return "{\"steam\":\"" + esc(max.toString()) + "\"}";
+                        }
+                    }
+                }
+                // Construct mp4 URL from movie id (modern Steam games)
+                Object movieId = movie.get("id");
+                if (movieId instanceof Number) {
+                    String url = "https://video.akamai.steamstatic.com/store_trailers/"
+                            + ((Number) movieId).longValue() + "/movie_max.mp4";
+                    return "{\"steam\":\"" + url + "\"}";
+                }
+            }
+        }
+        return "{}";
     }
 }

@@ -11,7 +11,7 @@ export const TYPE_META = {
   offline:   { label:'线下', emoji:'🏛️', icon:'offline', heroColor:'from-indigo-950 via-slate-950 to-gray-950', accent:'indigo', desc:'展览 & 活动' },
 }
 
-export const TYPE_LIST = Object.keys(TYPE_META)
+export const TYPE_LIST = Object.keys(TYPE_META).filter(k => k !== 'model')
 
 export function getMeta(type) {
   const defaults = {

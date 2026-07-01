@@ -90,6 +90,10 @@ export function triggerSteamFetch(appIds, targetType = 'game') {
   return request.post('/admin/fetch/steam', { appIds, targetType })
 }
 
+export function searchSteamGames(query) {
+  return request.get('/admin/steam/search', { params: { q: query } })
+}
+
 export function triggerTMDBFetch(query, targetType = 'movie') {
   return request.post('/admin/fetch/tmdb', { query, targetType })
 }
@@ -124,4 +128,16 @@ export function approveItem(id) {
 
 export function rejectItem(id) {
   return request.put(`/admin/reject/${id}`)
+}
+
+export function rejectBatch(ids) {
+  return request.put('/admin/reject/batch', ids)
+}
+
+export function getCategorySettings() {
+  return request.get('/admin/categories/settings')
+}
+
+export function updateCategorySettings(settings) {
+  return request.put('/admin/categories/settings', settings)
 }

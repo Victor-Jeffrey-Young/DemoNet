@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { getHotItems, getFeatured } from "../api/item";
+import { getHotItems, getFeatured, getVisibleCategories } from "../api/item";
 import AppCard from "../components/AppCard.vue";
 import SearchBar from "../components/SearchBar.vue";
 import TypeIcon from "../components/TypeIcon.vue";
+import { ArrowLeft, ArrowRight, Search } from "@element-plus/icons-vue";
 import { TYPE_META } from "../constants/types.js";
 
 const router = useRouter();
@@ -21,10 +22,7 @@ const GAP = 20; // gap-5
 const HOT_TOTAL = 10; // how many trending cards to show
 const FEAT_TOTAL = 6; // featured limit
 
-const categories = Object.keys(TYPE_META).map((key) => ({
-    key,
-    ...TYPE_META[key],
-}));
+const categories = ref([]);
 
 const heroItem = ref(null);
 const heroMeta = ref(null);
@@ -77,6 +75,13 @@ onMounted(async () => {
         featured.value = (await getFeatured({ limit: FEAT_TOTAL })) || [];
     } catch (e) {
         /* */
+    }
+
+    try {
+        const vis = await getVisibleCategories();
+        categories.value = vis.filter(s => s.visible).map(s => ({ key: s.type, ...TYPE_META[s.type] }));
+    } catch (e) { /* fallback to all */
+        categories.value = Object.keys(TYPE_META).map(k => ({ key: k, ...TYPE_META[k] }));
     }
 });
 
@@ -169,7 +174,7 @@ function goItem(slug) {
                         {{ heroItem.description }}
                     </p>
                     <button class="mt-5 bg-white/10 backdrop-blur-sm text-white border border-white/20 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white/20 transition-colors inline-flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg">explore</span>
+                        <el-icon :size="20" class="text-white"><Search /></el-icon>
                         探索详情
                     </button>
                 </div>
@@ -193,7 +198,7 @@ function goItem(slug) {
                     class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-gray-900/90 backdrop-blur-sm border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-all shadow-lg hover:scale-105"
                     aria-label="上一个"
                 >
-                    <span class="material-symbols-outlined text-white text-2xl">chevron_left</span>
+                    <el-icon :size="24" class="text-white"><ArrowLeft /></el-icon>
                 </button>
 
                 <!-- Viewport -->
@@ -243,7 +248,7 @@ function goItem(slug) {
                     class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-gray-900/90 backdrop-blur-sm border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-all shadow-lg hover:scale-105"
                     aria-label="下一个"
                 >
-                    <span class="material-symbols-outlined text-white text-2xl">chevron_right</span>
+                    <el-icon :size="24" class="text-white"><ArrowRight /></el-icon>
                 </button>
             </div>
         </section>
@@ -265,7 +270,7 @@ function goItem(slug) {
                     class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-gray-900/90 backdrop-blur-sm border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-all shadow-lg hover:scale-105"
                     aria-label="上一个"
                 >
-                    <span class="material-symbols-outlined text-white text-2xl">chevron_left</span>
+                    <el-icon :size="24" class="text-white"><ArrowLeft /></el-icon>
                 </button>
 
                 <!-- Viewport -->
@@ -290,7 +295,7 @@ function goItem(slug) {
                     class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-gray-900/90 backdrop-blur-sm border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-all shadow-lg hover:scale-105"
                     aria-label="下一个"
                 >
-                    <span class="material-symbols-outlined text-white text-2xl">chevron_right</span>
+                    <el-icon :size="24" class="text-white"><ArrowRight /></el-icon>
                 </button>
             </div>
         </section>

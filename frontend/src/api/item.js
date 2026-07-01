@@ -23,3 +23,7 @@ export function getRecommended(params) {
 export function getFeatured(params) {
   return request.get('/items/featured', { params })
 }
+
+export function getVisibleCategories() {
+  return request.get('/categories/visible')
+}

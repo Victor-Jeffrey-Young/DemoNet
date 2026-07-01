@@ -24,6 +24,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import org.springframework.web.client.RestClient;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -34,6 +38,7 @@ public class AdminController {
     private final ItemMapper itemMapper;
     private final AdminService adminService;
     private final TagService tagService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -215,6 +220,26 @@ public class AdminController {
         return adminService.getStats();
     }
 
+    // ========== Category Visibility ==========
+
+    @GetMapping("/categories/settings")
+    public List<Map<String, Object>> getCategorySettings() {
+        return jdbcTemplate.queryForList("SELECT * FROM category_settings ORDER BY sort_order");
+    }
+
+    @PutMapping("/categories/settings")
+    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
+    public Map<String, String> updateCategorySettings(@RequestBody List<Map<String, Object>> settings) {
+        for (Map<String, Object> s : settings) {
+            String type = (String) s.get("type");
+            boolean visible = Boolean.TRUE.equals(s.get("visible"));
+            int sortOrder = s.containsKey("sort_order") ? ((Number) s.get("sort_order")).intValue() : 0;
+            jdbcTemplate.update("REPLACE INTO category_settings (type, visible, sort_order) VALUES (?, ?, ?)",
+                    type, visible ? 1 : 0, sortOrder);
+        }
+        return Map.of("message", "ok");
+    }
+
     // ========== Fetch & Pending (existing) ==========
 
     @PostMapping("/fetch/steam")
@@ -224,6 +249,27 @@ public class AdminController {
         Map<String, Object> payload = Map.of("appIds", appIds, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_STEAM, payload);
         return Map.of("message", "Steam fetch queued: " + appIds.size() + " appIds → " + targetType);
+    }
+
+    @GetMapping("/steam/search")
+    public List<Map<String, Object>> searchSteam(@RequestParam String q) {
+        Map<String, Object> resp = RestClient.create().get()
+                .uri("https://store.steampowered.com/api/storesearch/?term={q}&cc=cn&l=schinese", q)
+                .retrieve()
+                .body(Map.class);
+        if (resp == null) return List.of();
+        List<Map<String, Object>> items = (List<Map<String, Object>>) resp.get("items");
+        if (items == null) return List.of();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> item : items) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("id", item.get("id"));
+            entry.put("name", item.get("name"));
+            entry.put("price", item.get("price"));
+            entry.put("tinyImage", item.get("tiny_image"));
+            result.add(entry);
+        }
+        return result;
     }
 
     @PostMapping("/fetch/tmdb")
@@ -311,5 +357,11 @@ public class AdminController {
     @PutMapping("/reject/{id}")
     public void reject(@PathVariable Long id) {
         itemMapper.deleteById(id);
+    }
+
+    @PutMapping("/reject/batch")
+    public Map<String, String> rejectBatch(@RequestBody List<Long> ids) {
+        itemMapper.deleteBatchIds(ids);
+        return Map.of("message", "已批量拒绝 " + ids.size() + " 条");
     }
 }
