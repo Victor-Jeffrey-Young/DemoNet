@@ -1,4 +1,4 @@
-export const TYPE_META = {
+﻿export const TYPE_META = {
   game:      { label:'游戏', emoji:'🎮', icon:'game', heroColor:'from-emerald-950 via-emerald-900 to-gray-950', accent:'emerald', desc:'试玩版 & 浏览器可玩' },
   movie:     { label:'电影', emoji:'🎬', icon:'movie', heroColor:'from-red-950 via-neutral-950 to-stone-900', accent:'red', desc:'预告片 & 导演访谈' },
   anime:     { label:'动漫', emoji:'🎭', icon:'anime', heroColor:'from-violet-950 via-fuchsia-950 to-gray-950', accent:'violet', desc:'先导PV & 前5分钟试看' },
@@ -11,7 +11,7 @@ export const TYPE_META = {
   offline:   { label:'线下', emoji:'🏛️', icon:'offline', heroColor:'from-indigo-950 via-slate-950 to-gray-950', accent:'indigo', desc:'展览 & 活动' },
 }
 
-export const TYPE_LIST = Object.keys(TYPE_META).filter(k => k !== 'model')
+export const TYPE_LIST = Object.keys(TYPE_META)
 
 export function getMeta(type) {
   const defaults = {

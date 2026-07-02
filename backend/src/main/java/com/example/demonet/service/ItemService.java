@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,13 +23,31 @@ public class ItemService {
     private final ItemMapper itemMapper;
     private final JdbcTemplate jdbcTemplate;
 
+    /** Types visible in the frontend */
+    private Set<String> visibleTypes() {
+        List<String> types = jdbcTemplate.queryForList(
+                "SELECT type FROM category_settings WHERE visible = 1", String.class);
+        return types.isEmpty() ? Set.of() : Set.copyOf(types);
+    }
+
+    /** Filter by type, respecting visibility: if type is hidden → no results */
+    private void filterByType(LambdaQueryWrapper<Item> wrapper, String type) {
+        if (type != null && !type.isBlank()) {
+            if (!visibleTypes().contains(type)) {
+                wrapper.eq(Item::getType, "__nonexistent__");
+            } else {
+                wrapper.eq(Item::getType, type);
+            }
+        } else {
+            wrapper.in(Item::getType, visibleTypes());
+        }
+    }
+
     public IPage<Item> listItems(Integer page, Integer size, String type, String keyword, List<String> tags) {
         Page<Item> p = new Page<>(page != null ? page : 1, size != null ? size : 12);
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);
-        if (type != null && !type.isBlank()) {
-            wrapper.eq(Item::getType, type);
-        }
+        filterByType(wrapper, type);
         if (keyword != null && !keyword.isBlank()) {
             wrapper.and(w -> w.like(Item::getTitle, keyword).or().like(Item::getDescription, keyword));
         }
@@ -71,9 +91,7 @@ public class ItemService {
         Page<Item> p = new Page<>(1, limit != null ? limit : 6);
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);
-        if (type != null && !type.isBlank()) {
-            wrapper.eq(Item::getType, type);
-        }
+        filterByType(wrapper, type);
         wrapper.orderByDesc(Item::getCreatedAt);
         return itemMapper.selectPage(p, wrapper).getRecords();
     }
@@ -83,9 +101,7 @@ public class ItemService {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);
         wrapper.isNotNull(Item::getCarouselOrder);
-        if (type != null && !type.isBlank()) {
-            wrapper.eq(Item::getType, type);
-        }
+        filterByType(wrapper, type);
         wrapper.orderByAsc(Item::getCarouselOrder);
         return itemMapper.selectList(wrapper);
     }
@@ -93,9 +109,7 @@ public class ItemService {
     public List<Item> listByType(String type) {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);
-        if (type != null && !type.isBlank()) {
-            wrapper.eq(Item::getType, type);
-        }
+        filterByType(wrapper, type);
         wrapper.orderByDesc(Item::getCreatedAt);
         return itemMapper.selectList(wrapper);
     }
@@ -107,7 +121,12 @@ public class ItemService {
                 "(SELECT item_id, COUNT(*) AS cnt FROM user_items GROUP BY item_id) ui " +
                 "ON i.id = ui.item_id WHERE i.status = 1");
         boolean hasType = type != null && !type.isBlank();
-        if (hasType) sql.append(" AND i.type = ?");
+        if (hasType) {
+            if (!visibleTypes().contains(type)) return List.of();
+            sql.append(" AND i.type = ?");
+        } else {
+            sql.append(" AND i.type IN (SELECT type FROM category_settings WHERE visible = 1)");
+        }
         sql.append(" ORDER BY IFNULL(ui.cnt, 0) DESC, i.created_at DESC LIMIT ?");
         return jdbcTemplate.query(sql.toString(), ps -> {
             int idx = 1;

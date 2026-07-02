@@ -59,6 +59,10 @@ function goDetail() {
     if (props.item?.slug)
         router.push({ name: "Detail", params: { slug: props.item.slug } });
 }
+
+const isDlc = computed(() => {
+    try { return !!JSON.parse(props.item.infoJson || '{}').is_dlc } catch { return false }
+});
 </script>
 
 <template>
@@ -79,6 +83,9 @@ function goDetail() {
                 }"
             />
             <div v-else class="absolute inset-0" />
+            <div v-if="isDlc" class="absolute top-2 left-2 z-10">
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/80 text-white font-bold">DLC</span>
+            </div>
             <div
                 class="absolute inset-0 bg-black/20 group-hover:opacity-0 transition-opacity pointer-events-none"
             />

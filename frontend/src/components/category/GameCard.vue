@@ -8,6 +8,9 @@ const router = useRouter()
 const hasDemo = computed(() => {
   try { return JSON.parse(props.item.infoJson || '{}').demo_available } catch { return false }
 })
+const isDlc = computed(() => {
+  try { return !!JSON.parse(props.item.infoJson || '{}').is_dlc } catch { return false }
+})
 
 function go() { router.push({ name:'Detail', params:{ slug: props.item.slug } }) }
 function tryDemo(e) {
@@ -23,13 +26,16 @@ const demoUrl = computed(() => {
 <template>
   <div @click="go"
     class="game-card-hover relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer group ring-1 ring-emerald-900/20 hover:ring-emerald-400/50 shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500">
-    <div v-if="item.coverUrl"
+    <div v-if="item.posterUrl || item.coverUrl"
       class="card-bg absolute inset-0 bg-cover bg-top transition-transform duration-700"
-      :style="{ backgroundImage: 'url('+item.coverUrl+')' }" />
+      :style="{ backgroundImage: 'url(' + (item.posterUrl || item.coverUrl) + ')' }" />
     <div v-else class="card-bg absolute inset-0 bg-gradient-to-br from-emerald-950 via-gray-950 to-black flex items-center justify-center text-5xl transition-transform duration-700">🎮</div>
 
     <div v-if="hasDemo" class="absolute top-3 left-3 z-10">
       <span class="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-white font-black tracking-wider shadow-lg shadow-cyan-500/30 animate-pulse">DEMO</span>
+    </div>
+    <div v-if="isDlc" class="absolute top-3 z-10" :class="hasDemo ? 'left-16' : 'left-3'">
+      <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/80 text-white font-black tracking-wider shadow-lg shadow-amber-500/30">DLC</span>
     </div>
 
     <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />

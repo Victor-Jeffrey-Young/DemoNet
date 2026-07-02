@@ -8,6 +8,7 @@ import com.example.demonet.entity.Item;
 import com.example.demonet.entity.Tag;
 import com.example.demonet.mapper.ItemMapper;
 import com.example.demonet.service.AdminService;
+import com.example.demonet.service.SteamService;
 import com.example.demonet.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -39,6 +40,7 @@ public class AdminController {
     private final AdminService adminService;
     private final TagService tagService;
     private final JdbcTemplate jdbcTemplate;
+    private final SteamService steamService;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -242,6 +244,12 @@ public class AdminController {
 
     // ========== Fetch & Pending (existing) ==========
 
+    
+    @PostMapping("/backfill/poster-urls")
+    public Map<String, Object> backfillPosterUrls() {
+        int count = steamService.backfillPosterUrls();
+        return Map.of("message", "Backfilled poster_url for " + count + " games", "count", count);
+    }
     @PostMapping("/fetch/steam")
     public Map<String, String> triggerSteam(@RequestBody Map<String, Object> body) {
         List<Integer> appIds = (List<Integer>) body.get("appIds");

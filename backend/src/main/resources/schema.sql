@@ -61,3 +61,6 @@ CREATE TABLE IF NOT EXISTS reviews (
     comment TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS category_settings (type VARCHAR(20) NOT NULL PRIMARY KEY, visible TINYINT NOT NULL DEFAULT 1, sort_order INT NOT NULL DEFAULT 0);
+INSERT IGNORE INTO category_settings (type, visible, sort_order) VALUES ('game',1,10),('movie',1,20),('anime',1,30),('boardgame',1,40),('model',1,50),('book',1,60),('music',1,70),('digital',1,80),('coffee',1,90),('offline',1,100);

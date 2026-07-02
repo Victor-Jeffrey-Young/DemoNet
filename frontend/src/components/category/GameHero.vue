@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getFeatured } from '../../api/item'
 import { getMeta } from '../../constants/types'
+import TypeIcon from '../TypeIcon.vue'
 
 const router = useRouter()
 const meta = getMeta('game')
@@ -47,7 +48,7 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
 <template>
   <div v-if="games.length === 0" class="relative w-full overflow-hidden" style="background: radial-gradient(ellipse at 30% 20%, #064e3b 0%, #022c22 30%, #0a0a0a 70%)">
     <div class="flex flex-col items-center justify-center py-28 gap-3">
-      <span class="text-gray-500 text-5xl">🎮</span>
+      <span class="text-gray-500 text-3xl"><TypeIcon type="game" size="40" /></span>
       <span class="text-gray-400 text-sm">管理员尚未配置轮播作品</span>
     </div>
   </div>
@@ -59,7 +60,7 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
         <div>
           <div class="text-[10px] tracking-[0.3em] text-emerald-500/80 uppercase mb-2 font-mono">Featured Games</div>
           <h2 class="text-4xl sm:text-5xl font-black tracking-tighter">
-            <span class="text-emerald-400">{{ meta.emoji }}</span>
+            <span class="text-emerald-400"><TypeIcon type="game" size="20" /></span>
             <span class="bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent"> {{ meta.label }}专区</span>
           </h2>
         </div>
@@ -71,7 +72,7 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
       </div>
 
       <div class="overflow-hidden -mx-3 px-3">
-        <div class="flex gap-6" :style="trackStyle">
+        <div class="flex gap-6 py-1" :style="trackStyle">
           <div v-for="(g, i) in displayCards" :key="g.id+'-'+i"
             class="shrink-0 w-[280px] sm:w-[320px] cursor-pointer group"
             @click="goDetail(g.slug)">
@@ -79,7 +80,7 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
               <div v-if="g.coverUrl"
                 class="absolute inset-0 bg-cover bg-top group-hover:scale-110 transition-transform duration-700"
                 :style="{ backgroundImage: 'url('+g.coverUrl+')' }" />
-              <div v-else class="absolute inset-0 bg-gradient-to-br from-emerald-900 via-gray-900 to-black flex items-center justify-center text-5xl">🎮</div>
+              <div v-else class="absolute inset-0 bg-gradient-to-br from-emerald-900 via-gray-900 to-black flex items-center justify-center"><TypeIcon type="game" size="40" /></div>
               <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/60 to-transparent" />
               <div class="absolute bottom-0 left-0 right-0 p-4">
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2 inline-block font-medium">GAME</span>
