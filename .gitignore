@@ -17,5 +17,9 @@ dist/
 uploads/
 demonet-coffee-plan.md
 demonet.sql
-fix_images.py
+# Temp scripts and SQL files
+*.py
+*.sql
+!backend/**
+!frontend/**
 items.json
