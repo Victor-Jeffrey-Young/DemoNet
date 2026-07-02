@@ -1,11 +1,13 @@
 package com.example.demonet.controller;
 
+import com.example.demonet.dto.ReviewCreateRequest;
 import com.example.demonet.entity.Review;
 import com.example.demonet.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -17,12 +19,9 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
-    public ResponseEntity<Review> create(Authentication auth, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Review> create(Authentication auth, @Valid @RequestBody ReviewCreateRequest req) {
         Long userId = Long.valueOf(auth.getName());
-        Long itemId = Long.valueOf(body.get("itemId").toString());
-        Integer rating = body.get("rating") != null ? Integer.valueOf(body.get("rating").toString()) : null;
-        String comment = (String) body.getOrDefault("comment", "");
-        return ResponseEntity.ok(reviewService.create(userId, itemId, rating, comment));
+        return ResponseEntity.ok(reviewService.create(userId, req.getItemId(), req.getRating(), req.getComment()));
     }
 
     @GetMapping("/item/{itemId}")

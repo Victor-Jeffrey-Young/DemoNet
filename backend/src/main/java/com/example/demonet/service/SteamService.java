@@ -47,10 +47,13 @@ public class SteamService {
         if (data == null) return null;
 
         Item item = new Item();
+        String steamType = String.valueOf(data.getOrDefault("type", "game"));
+        boolean isDlc = "dlc".equals(steamType);
         item.setType("game");
         item.setTitle(String.valueOf(data.getOrDefault("name", "Unknown")));
         item.setSlug("steam-" + appId);
         item.setCoverUrl(extractHeaderImage(data));
+        item.setPosterUrl("https://steamcdn-a.akamaihd.net/steam/apps/" + appId + "/library_600x900.jpg");
         item.setDescription(String.valueOf(data.getOrDefault("short_description", "")));
         item.setExternalId(String.valueOf(appId));
         item.setExternalLink("https://store.steampowered.com/app/" + appId + "/");
@@ -65,10 +68,27 @@ public class SteamService {
         String screenshots = extractScreenshots(data);
         // Extract movies/videos
         String movies = extractMovies(data);
+        // Extra details
+        String releaseDate = esc(extractValue(data, "release_date", "date"));
+        String supportedLanguages = esc(extractValue(data, "supported_languages", null));
+        String price = extractPrice(data);
+        String minRequirements = esc(extractRequirements(data, "minimum"));
+        String recRequirements = esc(extractRequirements(data, "recommended"));
+        String dlcStr = extractDLC(data);
+        String featuresStr = extractFeatures(data);
 
         item.setInfoJson(String.format(
-                "{\"developer\":\"%s\",\"publisher\":\"%s\",\"genre\":\"%s\",\"platform\":\"%s\",\"demo_available\":false,\"free\":%s,\"screenshots\":%s,\"videos\":%s}",
-                esc(developer), esc(publisher), esc(genres), esc(platforms), isFree, screenshots, movies));
+                "{\"developer\":\"%s\",\"publisher\":\"%s\",\"genre\":\"%s\",\"platform\":\"%s\"," +
+                "\"demo_available\":false,\"free\":%s,\"is_dlc\":%s," +
+                "\"release_date\":\"%s\",\"languages\":\"%s\",\"price\":\"%s\"," +
+                "\"min_requirements\":\"%s\",\"rec_requirements\":\"%s\"," +
+                "\"dlc\":%s,\"features\":%s," +
+                "\"screenshots\":%s,\"videos\":%s}",
+                esc(developer), esc(publisher), esc(genres), esc(platforms),
+                isFree, isDlc, releaseDate, supportedLanguages, price,
+                minRequirements, recRequirements,
+                dlcStr, featuresStr,
+                screenshots, movies));
 
         item.setSource("steam");
         item.setStatus(0);
@@ -98,7 +118,26 @@ public class SteamService {
         return updated;
     }
 
-    private String extractHeaderImage(Map<String, Object> data) {
+    
+    /** Backfill poster_url for existing games that have a Steam AppID */
+    public int backfillPosterUrls() {
+        List<Map<String, Object>> games = jdbcTemplate.queryForList(
+                "SELECT id, external_id FROM items WHERE type='game' AND external_id IS NOT NULL AND (poster_url IS NULL OR poster_url = '')");
+        int updated = 0;
+        for (Map<String, Object> row : games) {
+            try {
+                Long id = (Long) row.get("id");
+                String posterUrl = "https://steamcdn-a.akamaihd.net/steam/apps/" + row.get("external_id") + "/library_600x900.jpg";
+                jdbcTemplate.update("UPDATE items SET poster_url=? WHERE id=?", posterUrl, id);
+                updated++;
+            } catch (Exception e) {
+                log.warn("Backfill poster failed for row {}: {}", row.get("id"), e.getMessage());
+            }
+        }
+        log.info("Backfilled poster_url for {} games", updated);
+        return updated;
+    }
+private String extractHeaderImage(Map<String, Object> data) {
         Object img = data.get("header_image");
         if (img != null && !img.toString().isBlank()) {
             String s = img.toString();
@@ -180,5 +219,126 @@ public class SteamService {
             }
         }
         return "{}";
+    }
+
+    // ========== Steam detail extractors ==========
+
+    private String extractValue(Map<String, Object> data, String parentKey, String childKey) {
+        try {
+            Object raw = data.get(parentKey);
+            if (raw instanceof Map) {
+                Object val = childKey != null ? ((Map<?,?>) raw).get(childKey) : raw;
+                if (val != null) { String s = val.toString(); if (!s.isBlank() && !"null".equals(s)) return s; }
+            } else if (raw instanceof String) {
+                String s = (String) raw; if (!s.isBlank()) return s;
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
+    private String extractPrice(Map<String, Object> data) {
+        try {
+            Object raw = data.get("price_overview");
+            if (raw instanceof Map) {
+                Map<?,?> p = (Map<?,?>) raw;
+                Object final_ = p.get("final"); Object currency = p.get("currency");
+                if (final_ instanceof Number && currency != null) {
+                    return String.format("%s %.2f", currency, ((Number) final_).longValue() / 100.0);
+                }
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
+    private String extractRequirements(Map<String, Object> data, String key) {
+        try {
+            Object raw = data.get("pc_requirements");
+            if (raw instanceof Map) {
+                Object req = ((Map<?,?>) raw).get(key);
+                if (req != null) {
+                    String s = req.toString()
+                            .replaceAll("</li>", "\n")
+                            .replaceAll("<br\\s*/?>", "\n")
+                            .replaceAll("<li>", "")
+                            .replaceAll("<strong>", "")
+                            .replaceAll("</strong>", " ")
+                            .replaceAll("<[^>]+>", "")
+                            .replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">")
+                            .replace("&#39;", "'").replace("&quot;", "\"").replace("&amp;", "&")
+                            .replace("最低配置:", "").replace("推荐配置:", "")
+                            .replaceAll("\n{2,}", "\n")
+                            .replaceAll(" • ", "• ")
+                            .trim();
+                    return s;
+                }
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractDLC(Map<String, Object> data) {
+        Object raw = data.get("dlc");
+        if (!(raw instanceof List)) return "[]";
+        List<?> list = (List<?>) raw;
+        if (list.isEmpty()) return "[]";
+        
+        // Take up to 10 DLCs and batch-fetch their names
+        List<Long> ids = new ArrayList<>();
+        for (Object o : list) {
+            if (ids.size() >= 10) break;
+            if (o instanceof Number) ids.add(((Number) o).longValue());
+        }
+        
+        // Batch fetch DLC names from Steam API
+        String idsParam = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+        try {
+            Map<String, Object> dlcResp = restClient.get()
+                    .uri("https://store.steampowered.com/api/appdetails?appids=" + idsParam + "&cc=cn&l=schinese")
+                    .retrieve()
+                    .body(Map.class);
+            if (dlcResp != null) {
+                StringBuilder sb = new StringBuilder("[");
+                for (int i = 0; i < ids.size(); i++) {
+                    if (i > 0) sb.append(",");
+                    Long id = ids.get(i);
+                    Map<String, Object> appData = (Map<String, Object>) dlcResp.get(String.valueOf(id));
+                    String name = "";
+                    if (appData != null && Boolean.TRUE.equals(appData.get("success"))) {
+                        Map<String, Object> d = (Map<String, Object>) appData.get("data");
+                        if (d != null) name = String.valueOf(d.getOrDefault("name", ""));
+                    }
+                    if (name.isEmpty()) name = "App " + id;
+                    sb.append("{\"id\":").append(id).append(",\"name\":\"").append(esc(name)).append("\"}");
+                }
+                sb.append("]");
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            log.warn("DLC batch fetch failed: {}", e.getMessage());
+        }
+        
+        // Fallback: just IDs
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append("{\"id\":").append(ids.get(i)).append(",\"name\":\"App ").append(ids.get(i)).append("\"}");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractFeatures(Map<String, Object> data) {
+        Object raw = data.get("categories");
+        if (!(raw instanceof List)) return "[]";
+        List<String> names = new ArrayList<>();
+        for (Object c : (List<?>) raw) {
+            if (c instanceof Map) {
+                String desc = (String) ((Map<String, Object>) c).get("description");
+                if (desc != null && !desc.isBlank()) names.add("\"" + esc(desc) + "\"");
+            }
+        }
+        return "[" + String.join(",", names) + "]";
     }
 }

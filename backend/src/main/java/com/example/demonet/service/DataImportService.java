@@ -721,7 +721,7 @@ public class DataImportService implements CommandLineRunner {
 
         jdbcTemplate.update(
                 "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)",
-                "admin", "admin@demonet.local", passwordEncoder.encode("changeme"), "ADMIN");
-        log.info("Default admin user created: admin / changeme");
+                "admin", "admin@demonet.local", passwordEncoder.encode(System.getenv().getOrDefault("ADMIN_DEFAULT_PASSWORD", "changeme")), "ADMIN");
+        log.info("Default admin user created");
     }
 }

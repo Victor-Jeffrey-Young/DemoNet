@@ -1,0 +1,13 @@
+SET NAMES utf8mb4;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[]') WHERE id = 576;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[{"id":4586820,"name":"App 4586820"},{"id":4586830,"name":"App 4586830"},{"id":4586840,"name":"App 4586840"},{"id":2437280,"name":"App 2437280"}]') WHERE id = 577;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[{"id":442010,"name":"App 442010"},{"id":506970,"name":"App 506970"},{"id":506971,"name":"App 506971"}]') WHERE id = 578;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[{"id":2672610,"name":"App 2672610"},{"id":3288260,"name":"App 3288260"}]') WHERE id = 581;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[{"id":271942,"name":"App 271942"},{"id":271943,"name":"App 271943"},{"id":271944,"name":"App 271944"},{"id":355700,"name":"App 355700"}]') WHERE id = 582;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[]') WHERE id = 583;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[{"id":4211520,"name":"App 4211520"},{"id":1084430,"name":"App 1084430"},{"id":1167330,"name":"App 1167330"},{"id":1051700,"name":"App 1051700"},{"id":1710241,"name":"App 1710241"},{"id":840750,"name":"App 840750"},{"id":1522880,"name":"App 1522880"},{"id":840760,"name":"App 840760"},{"id":1558300,"name":"App 1558300"},{"id":3373370,"name":"App 3373370"}]') WHERE id = 584;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[{"id":712640,"name":"App 712640"},{"id":393010,"name":"App 393010"},{"id":282470,"name":"App 282470"},{"id":219750,"name":"App 219750"}]') WHERE id = 585;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[]') WHERE id = 586;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[]') WHERE id = 587;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[]') WHERE id = 588;
+UPDATE items SET info_json = JSON_SET(info_json, '$.dlc', '[]') WHERE id = 589;

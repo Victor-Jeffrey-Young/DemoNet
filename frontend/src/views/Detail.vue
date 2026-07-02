@@ -233,11 +233,11 @@ const activeVideoUrl = ref("");
 watch(
     () => item.value,
     () => {
-        if (videos.value.bilibili) activeVideoUrl.value = videos.value.bilibili;
+        if (videos.value.steam) activeVideoUrl.value = videos.value.steam;
+        else if (videos.value.bilibili)
+            activeVideoUrl.value = videos.value.bilibili;
         else if (videos.value.youtube)
             activeVideoUrl.value = videos.value.youtube;
-        else if (videos.value.steam)
-            activeVideoUrl.value = videos.value.steam;
         else if (item.value?.mediaUrl && isEmbed(item.value.mediaUrl))
             activeVideoUrl.value = item.value.mediaUrl;
         else activeVideoUrl.value = "";
@@ -270,8 +270,10 @@ const infoFields = computed(() => {
     const map = {
         game: [
             ["开发商", i.developer],
+            ["发行日期", i.release_date],
             ["类型", i.genre],
             ["平台", i.platform],
+            ["价格", i.price],
         ],
         movie: [
             ["导演", i.director],
@@ -335,6 +337,38 @@ const isBoardgame = computed(() => item.value?.type === "boardgame");
 const screenshots = computed(() => {
     const ss = info.value.screenshots;
     return Array.isArray(ss) ? ss : [];
+});
+const gameFeatures = computed(() => {
+    try {
+        const f = info.value.features;
+        if (Array.isArray(f)) return f;
+        if (typeof f === 'string') return JSON.parse(f);
+        return [];
+    } catch { return []; }
+});
+const gameDlc = computed(() => {
+    try {
+        const d = info.value.dlc;
+        if (Array.isArray(d)) return d;
+        if (typeof d === 'string') return JSON.parse(d);
+        return [];
+    } catch { return []; }
+});
+const langFullAudio = ref(false); // expand full audio languages
+const langBasic = ref(false); // expand basic languages
+const parsedLanguages = computed(() => {
+    const raw = info.value.languages || '';
+    // Remove trailing note like "*具有完全音频支持的语言"
+    const clean = raw.replace(/\*[^*]*$/, '').trim();
+    const items = clean.split(',').map(s => s.trim()).filter(Boolean);
+    const fullAudio = []; // items with *
+    const basic = []; // items without *
+    for (const item of items) {
+        const name = item.replace('*', '').trim();
+        if (item.includes('*')) fullAudio.push(name);
+        else basic.push(name);
+    }
+    return { fullAudio, basic };
 });
 const showBoardgameRules = ref(false);
 const rulePage = ref(0);
@@ -482,7 +516,7 @@ const coffeeFlavors = computed(() => {
 
 <template>
     <div class="min-h-screen bg-gray-950 text-white">
-        <main class="max-w-[90%] mx-auto px-6 py-10">
+        <main class="max-w-[85%] mx-auto px-6 py-10">
             <div v-if="loading" class="text-center text-gray-500 py-20">
                 加载中...
             </div>
@@ -643,7 +677,7 @@ const coffeeFlavors = computed(() => {
                                 !readerUrl &&
                                 !isMusic
                             "
-                            class="absolute top-3 right-3 flex gap-1 z-10"
+                            class="absolute top-3 left-3 flex gap-1 z-10"
                         >
                             <button
                                 v-for="src in videoSources"
@@ -736,6 +770,73 @@ const coffeeFlavors = computed(() => {
                         <p class="text-gray-300 text-base leading-relaxed mb-6">
                             {{ item.description }}
                         </p>
+
+                        <!-- Steam: Language Support -->
+                        <div v-if="isGame" class="mb-6">
+                            <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-3">语言支持</h4>
+                            <div v-if="parsedLanguages.fullAudio.length" class="space-y-2">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-[11px] text-gray-500 w-12 shrink-0">界面</span>
+                                    <div class="text-[13px] text-gray-400 leading-relaxed">
+                                        {{ langBasic ? parsedLanguages.basic.join(', ') : parsedLanguages.basic.slice(0, 8).join(', ') }}
+                                        <button v-if="parsedLanguages.basic.length > 8" @click="langBasic = !langBasic"
+                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langBasic ? '收起' : '等' + parsedLanguages.basic.length + '种' }}</button>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="text-[11px] text-gray-500 w-12 shrink-0">字幕</span>
+                                    <div class="text-[13px] text-gray-400 leading-relaxed">
+                                        {{ langBasic ? parsedLanguages.basic.join(', ') : parsedLanguages.basic.slice(0, 8).join(', ') }}
+                                        <button v-if="parsedLanguages.basic.length > 8" @click="langBasic = !langBasic"
+                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langBasic ? '收起' : '等' + parsedLanguages.basic.length + '种' }}</button>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="text-[11px] text-gray-500 w-12 shrink-0">音频</span>
+                                    <div class="text-[13px] text-gray-400 leading-relaxed">
+                                        {{ langFullAudio ? parsedLanguages.fullAudio.join(', ') : parsedLanguages.fullAudio.slice(0, 8).join(', ') }}
+                                        <button v-if="parsedLanguages.fullAudio.length > 8" @click="langFullAudio = !langFullAudio"
+                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langFullAudio ? '收起' : '等' + parsedLanguages.fullAudio.length + '种' }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="text-[13px] text-gray-500">暂不支持</div>
+                        </div>
+
+                        <!-- Steam: Features -->
+                        <div v-if="isGame && gameFeatures.length" class="mb-6">
+                            <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">游戏特性</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span v-for="f in gameFeatures" :key="f" class="text-[11px] px-2 py-1 rounded-full bg-gray-700/50 text-gray-300 border border-gray-600/30">{{ f }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Steam: DLC -->
+                        <div v-if="isGame && gameDlc.length" class="mb-6">
+                            <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">DLC ({{ gameDlc.length }})</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <a v-for="d in gameDlc" :key="typeof d === 'object' ? d.id : d"
+                                    :href="'https://store.steampowered.com/app/' + (typeof d === 'object' ? d.id : d)" target="_blank"
+                                    class="text-[11px] px-2 py-1 rounded bg-gray-800/50 text-blue-400 hover:text-blue-300 border border-gray-700/50 hover:border-blue-700/50 transition">
+                                    {{ typeof d === 'object' ? d.name : 'App ' + d }}
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Steam: System Requirements -->
+                        <div v-if="isGame && (info.min_requirements || info.rec_requirements)" class="mb-6">
+                            <h4 class="text-sm font-semibold text-gray-200 mb-3">系统配置要求</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div v-if="info.min_requirements" class="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                                    <div class="text-xs font-medium text-gray-400 mb-2">最低配置</div>
+                                    <div class="text-xs text-gray-300 whitespace-pre-line leading-relaxed">{{ info.min_requirements }}</div>
+                                </div>
+                                <div v-if="info.rec_requirements" class="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                                    <div class="text-xs font-medium text-gray-400 mb-2">推荐配置</div>
+                                    <div class="text-xs text-gray-300 whitespace-pre-line leading-relaxed">{{ info.rec_requirements }}</div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- External link: all types -->
                         <div v-if="item.externalLink" class="flex gap-3 mb-6">
