@@ -106,7 +106,7 @@ public class FetchConsumer {
     }
 
     private void saveItems(List<Item> items, String targetType, String source) {
-        int saved = 0, skipped = 0;
+        int saved = 0, updated = 0, failed = 0;
         for (Item item : items) {
             if (!targetType.equals(item.getType())) {
                 item.setType(targetType);
@@ -115,10 +115,16 @@ public class FetchConsumer {
                 itemService.createItem(item);
                 saved++;
             } catch (DuplicateKeyException e) {
-                skipped++;
-                log.info("{} item skipped (duplicate slug): {}", source, item.getSlug());
+                // Slug already exists → update the existing item with fresh data
+                itemService.updateBySlug(item);
+                updated++;
+            } catch (Exception e) {
+                failed++;
+                log.error("{} item failed: {} — {}", source, item.getTitle(), e.getMessage());
             }
         }
-        log.info("{} fetch done: {} saved, {} skipped → type={}", source, saved, skipped, targetType);
+        String msg = String.format("%s fetch: %d new, %d updated, %d failed → type=%s",
+                source, saved, updated, failed, targetType);
+        if (failed > 0) log.error(msg); else log.info(msg);
     }
 }

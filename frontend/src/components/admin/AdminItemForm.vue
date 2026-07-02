@@ -14,6 +14,7 @@ import DigitalEditorFields from './DigitalEditorFields.vue'
 import CoffeeEditorFields from './CoffeeEditorFields.vue'
 import OfflineEditorFields from './OfflineEditorFields.vue'
 import GenericEditorFields from './GenericEditorFields.vue'
+import TypeIcon from '../TypeIcon.vue'
 
 const props = defineProps({
   visible: Boolean,
@@ -88,13 +89,10 @@ const editorComponent = computed(() => {
 function initInfoFields() {
   const info = parseInfoJson(form.value.infoJson)
   if (isGameType.value) {
+    // Preserve ALL existing fields, only ensure videos object exists
     form.value.infoJson = stringifyInfoJson({
-      developer: info.developer || '',
-      genre: info.genre || '',
-      platform: info.platform || '',
-      demo_available: info.demo_available || false,
-      demo_url: info.demo_url || '',
-      videos: info.videos || { youtube: '', bilibili: '' },
+      ...info,
+      videos: { steam: '', youtube: '', bilibili: '', ...(info.videos || {}) },
     })
   } else if (isMovieType.value) {
     form.value.infoJson = stringifyInfoJson({
@@ -310,99 +308,102 @@ watch(() => form.value.type, () => {
   <el-dialog
     :model-value="visible"
     :title="isEdit ? '编辑内容' : '新增内容'"
-    width="720px"
+    width="92vw"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
     @close="handleClose"
     destroy-on-close
   >
-    <div class="max-h-[70vh] overflow-y-auto pr-2">
-      <!-- Basic Fields -->
-      <el-form label-position="top" size="default">
-        <div class="grid grid-cols-2 gap-4">
-          <el-form-item label="标题 *" class="col-span-2">
+    <div class="admin-item-form max-h-[75vh] overflow-y-auto pr-2">
+      <el-form label-position="top" size="small">
+        <!-- ===== 基本信息 ===== -->
+        <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-2">基本信息</h5>
+        <div class="grid grid-cols-4 gap-3 mb-4">
+          <el-form-item label="标题 *" class="col-span-4">
             <el-input v-model="form.title" placeholder="输入标题" @blur="autoSlug" />
           </el-form-item>
-          <el-form-item label="Slug *">
+          <el-form-item label="Slug *" class="col-span-2">
             <el-input v-model="form.slug" placeholder="url-friendly-slug" />
           </el-form-item>
           <el-form-item label="品类">
-            <el-select v-model="form.type" :disabled="isEdit" :teleported="false" popper-class="admin-select-drop" style="width: 100%">
-              <el-option v-for="t in TYPE_LIST" :key="t" :label="getMeta(t).emoji + ' ' + getMeta(t).label" :value="t" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="描述" class="col-span-2">
-            <el-input v-model="form.description" type="textarea" :rows="3" placeholder="内容描述" />
-          </el-form-item>
-
-          <!-- Image fields -->
-          <el-form-item label="封面图 URL" class="col-span-2">
-            <div class="flex items-center gap-2 w-full">
-              <el-input v-model="form.coverUrl" placeholder="https://... 或上传图片" class="flex-1" />
-              <label class="el-button el-button--default cursor-pointer">
-                上传
-                <input type="file" accept="image/*,.webp,.avif,.heic,.heif" class="hidden" @change="handleUpload($event, 'coverUrl')" />
-              </label>
-            </div>
-            <img v-if="form.coverUrl" :src="form.coverUrl" class="w-16 h-22 object-cover rounded mt-2" />
-          </el-form-item>
-
-          <el-form-item label="宽封面 URL" class="col-span-2">
-            <div class="flex items-center gap-2 w-full">
-              <el-input v-model="form.wideCoverUrl" placeholder="https://..." class="flex-1" />
-              <label class="el-button el-button--default cursor-pointer">
-                上传
-                <input type="file" accept="image/*,.webp,.avif,.heic,.heif" class="hidden" @change="handleUpload($event, 'wideCoverUrl')" />
-              </label>
+            <template v-if="isEdit">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border"
+                :class="`bg-gray-700/50 text-gray-200 border-gray-600`">
+                <TypeIcon :type="form.type" size="16" /> {{ getMeta(form.type).label }}
+              </span>
+            </template>
+            <div v-else class="flex flex-wrap gap-1.5">
+              <button v-for="t in TYPE_LIST" :key="t" @click="form.type = t"
+                :class="form.type === t
+                  ? 'bg-blue-600 text-white border-blue-500 ring-1 ring-blue-400'
+                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600 hover:text-white'"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs border transition-colors">
+                <TypeIcon :type="t" size="14" /> {{ getMeta(t).label }}
+              </button>
             </div>
           </el-form-item>
-
-          <el-form-item label="竖版海报 URL" class="col-span-2">
-            <div class="flex items-center gap-2 w-full">
-              <el-input v-model="form.posterUrl" placeholder="https://..." class="flex-1" />
-              <label class="el-button el-button--default cursor-pointer">
-                上传
-                <input type="file" accept="image/*,.webp,.avif,.heic,.heif" class="hidden" @change="handleUpload($event, 'posterUrl')" />
-              </label>
-            </div>
+          <el-form-item label="状态">
+            <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上线" inactive-text="下架" size="small" />
           </el-form-item>
-
-          <el-form-item label="媒体 URL">
-            <el-input v-model="form.mediaUrl" placeholder="视频/媒体链接" />
+          <el-form-item label="描述" class="col-span-4">
+            <el-input v-model="form.description" type="textarea" :rows="2" placeholder="内容描述" />
+          </el-form-item>
+          <el-form-item label="来源">
+            <el-input v-model="form.source" placeholder="steam, igdb, manual..." />
           </el-form-item>
           <el-form-item label="外部链接">
             <el-input v-model="form.externalLink" placeholder="https://..." />
           </el-form-item>
-          <el-form-item label="来源">
-            <el-input v-model="form.source" placeholder="manual, steam, tmdb..." />
+          <el-form-item label="媒体 URL">
+            <el-input v-model="form.mediaUrl" placeholder="视频链接" />
           </el-form-item>
-          <el-form-item label="状态">
-            <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上线" inactive-text="下架" />
-          </el-form-item>
-
-          <!-- Tags -->
-          <el-form-item label="标签" class="col-span-2">
-            <el-select
-              v-model="selectedTagIds"
-              multiple
-              filterable
-              placeholder="选择标签"
-              :teleported="false"
-              popper-class="admin-select-drop"
-              style="width: 100%"
-            >
-              <el-option v-for="tag in allTags" :key="tag.id" :label="tag.name" :value="tag.id" />
-            </el-select>
+          <el-form-item label="External ID">
+            <el-input v-model="form.externalId" placeholder="AppID / TMDB ID" />
           </el-form-item>
         </div>
 
-          <el-form-item v-if="form.type === 'book'" label="上传书稿 (PDF/EPUB)" class="col-span-2">
-            <label class="el-button el-button--default cursor-pointer">
-              选择文件
-              <input type="file" accept=".pdf,.epub" class="hidden" @change="handleUpload($event, 'readerUrl')" />
+        <!-- ===== 封面图 ===== -->
+        <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">封面图</h5>
+        <div class="grid grid-cols-3 gap-3 mb-4">
+          <el-form-item label="横版封面">
+            <el-input v-model="form.coverUrl" placeholder="https://... 或上传" size="small" />
+            <label class="el-button el-button--small el-button--default cursor-pointer mt-1" style="width:100%">上传
+              <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'coverUrl')" />
             </label>
-            <span class="text-xs text-gray-500 ml-2">{{ infoObj.reader_url || '未上传' }}</span>
+            <img v-if="form.coverUrl" :src="form.coverUrl" class="w-full aspect-video object-cover rounded mt-1 border border-gray-600" />
           </el-form-item>
+          <el-form-item label="宽封面">
+            <el-input v-model="form.wideCoverUrl" placeholder="https://... 或上传" size="small" />
+            <label class="el-button el-button--small el-button--default cursor-pointer mt-1" style="width:100%">上传
+              <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'wideCoverUrl')" />
+            </label>
+            <img v-if="form.wideCoverUrl" :src="form.wideCoverUrl" class="w-full aspect-video object-cover rounded mt-1 border border-gray-600" />
+          </el-form-item>
+          <el-form-item label="竖版海报">
+            <el-input v-model="form.posterUrl" placeholder="https://... 或上传" size="small" />
+            <label class="el-button el-button--small el-button--default cursor-pointer mt-1" style="width:100%">上传
+              <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'posterUrl')" />
+            </label>
+            <img v-if="form.posterUrl" :src="form.posterUrl" class="w-full object-cover rounded mt-1 border border-gray-600" style="aspect-ratio: 2/3" />
+          </el-form-item>
+        </div>
 
-          <!-- Dynamic per-category editor -->
+        <!-- ===== 标签 ===== -->
+        <el-form-item label="标签">
+          <el-select v-model="selectedTagIds" multiple filterable placeholder="选择标签" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+            <el-option v-for="tag in allTags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          </el-select>
+        </el-form-item>
+
+        <!-- ===== 书稿上传 ===== -->
+        <el-form-item v-if="form.type === 'book'" label="上传书稿 (PDF/EPUB)">
+          <label class="el-button el-button--small el-button--default cursor-pointer">选择文件
+            <input type="file" accept=".pdf,.epub" class="hidden" @change="handleUpload($event, 'readerUrl')" />
+          </label>
+          <span class="text-xs text-gray-500 ml-2">{{ infoObj.reader_url || '未上传' }}</span>
+        </el-form-item>
+
+        <!-- ===== 品类详情编辑器 ===== -->
         <component :is="editorComponent" v-model="infoObj" :type="form.type" :item-id="currentId" />
       </el-form>
     </div>
@@ -415,3 +416,34 @@ watch(() => form.value.type, () => {
     </template>
   </el-dialog>
 </template>
+
+<style>
+/* Admin form dark theme - applied to el-dialog content */
+.el-dialog {
+  --el-dialog-bg-color: #1f2937;
+}
+.el-dialog__header { border-bottom: 1px solid #374151; padding-bottom: 16px; }
+.el-dialog__title { color: #f3f4f6; font-weight: 700; }
+.el-form-item__label { color: #d1d5db !important; font-weight: 600; }
+.el-input__wrapper {
+  --el-fill-color-blank: #374151;
+  background-color: #374151 !important;
+  box-shadow: 0 0 0 1px #4b5563 !important;
+}
+.el-input__inner { color: #f3f4f6 !important; }
+.el-input__inner::placeholder { color: #6b7280 !important; }
+.el-textarea__inner { background-color: #374151 !important; border-color: #4b5563 !important; color: #f3f4f6 !important; }
+.el-select .el-input__wrapper {
+  --el-fill-color-blank: #374151;
+  background-color: #374151 !important;
+  box-shadow: 0 0 0 1px #4b5563 !important;
+}
+.el-select .el-input__inner { color: #f3f4f6 !important; }
+.el-select .el-select__caret { color: #9ca3af !important; }
+.el-button--default {
+  --el-button-bg-color: #374151; --el-button-border-color: #4b5563; --el-button-text-color: #d1d5db;
+}
+.el-switch__label { color: #9ca3af !important; }
+.el-switch__label.is-active { color: #60a5fa !important; }
+.el-checkbox__label { color: #d1d5db !important; font-size: 12px; }
+</style>

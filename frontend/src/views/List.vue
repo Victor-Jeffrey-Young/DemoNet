@@ -109,7 +109,7 @@ const CardComponent = computed(() => {
     <main class="max-w-[90%] mx-auto px-6 py-10">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-bold"><TypeIcon :type="activeType" size="24" /> {{ meta.label }}</h1>
+          <h1 class="text-2xl font-bold"><TypeIcon :type="activeType" size="36" /> {{ meta.label }}</h1>
           <p class="text-sm mt-1" :class="meta.light ? 'text-gray-500' : 'text-gray-400'">共 {{ total }} 条内容</p>
         </div>
         <div v-if="isMovie" class="flex items-center gap-1 bg-gray-800 rounded-lg p-0.5">
