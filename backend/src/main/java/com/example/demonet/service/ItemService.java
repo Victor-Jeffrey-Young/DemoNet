@@ -86,6 +86,28 @@ public class ItemService {
         itemMapper.deleteById(id);
     }
 
+    /** Update an existing item by slug (for re-fetch from external sources) */
+    @CacheEvict(value = {"hotItems", "featured", "recommended"}, allEntries = true)
+    public void updateBySlug(Item fresh) {
+        // Find by slug regardless of status (may be status=0 still pending approval)
+        Item existing = itemMapper.selectOne(
+                new LambdaQueryWrapper<Item>().eq(Item::getSlug, fresh.getSlug()));
+        if (existing == null) return;
+        // Update fields that may have changed
+        if (fresh.getCoverUrl() != null && !fresh.getCoverUrl().isBlank())
+            existing.setCoverUrl(fresh.getCoverUrl());
+        if (fresh.getPosterUrl() != null && !fresh.getPosterUrl().isBlank())
+            existing.setPosterUrl(fresh.getPosterUrl());
+        if (fresh.getDescription() != null && !fresh.getDescription().isBlank())
+            existing.setDescription(fresh.getDescription());
+        if (fresh.getInfoJson() != null && !fresh.getInfoJson().isBlank())
+            existing.setInfoJson(fresh.getInfoJson());
+        if (fresh.getExternalLink() != null && !fresh.getExternalLink().isBlank())
+            existing.setExternalLink(fresh.getExternalLink());
+        existing.setStatus(0); // Re-queue for approval
+        itemMapper.updateById(existing);
+    }
+
     @Cacheable(value = "hotItems", key = "#type + '_' + #limit")
     public List<Item> listHotItems(String type, Integer limit) {
         Page<Item> p = new Page<>(1, limit != null ? limit : 6);

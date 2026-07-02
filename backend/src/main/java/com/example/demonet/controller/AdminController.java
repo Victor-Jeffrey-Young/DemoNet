@@ -26,10 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestClient;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -251,12 +256,37 @@ public class AdminController {
         return Map.of("message", "Backfilled poster_url for " + count + " games", "count", count);
     }
     @PostMapping("/fetch/steam")
-    public Map<String, String> triggerSteam(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> triggerSteam(@RequestBody Map<String, Object> body) {
         List<Integer> appIds = (List<Integer>) body.get("appIds");
         String targetType = (String) body.getOrDefault("targetType", "game");
+        // Check which appIds already exist
+        List<String> existingNames = new ArrayList<>();
+        List<Integer> newIds = new ArrayList<>();
+        for (Integer appId : appIds) {
+            String slug = "steam-" + appId;
+            Item existing = itemMapper.selectOne(
+                    new LambdaQueryWrapper<Item>().eq(Item::getSlug, slug));
+            if (existing != null) {
+                existingNames.add(existing.getTitle());
+            } else {
+                newIds.add(appId);
+            }
+        }
         Map<String, Object> payload = Map.of("appIds", appIds, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_STEAM, payload);
-        return Map.of("message", "Steam fetch queued: " + appIds.size() + " appIds → " + targetType);
+        
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("total", appIds.size());
+        result.put("newCount", newIds.size());
+        result.put("existingCount", existingNames.size());
+        if (!existingNames.isEmpty()) {
+            result.put("existingNames", existingNames);
+            result.put("message", String.format("已加入队列: %d 个新游戏 + %d 个更新 (%s)",
+                    newIds.size(), existingNames.size(), String.join(", ", existingNames)));
+        } else {
+            result.put("message", "已加入队列: " + appIds.size() + " 个游戏 → " + targetType);
+        }
+        return result;
     }
 
     @GetMapping("/steam/search")
@@ -268,8 +298,38 @@ public class AdminController {
         if (resp == null) return List.of();
         List<Map<String, Object>> items = (List<Map<String, Object>>) resp.get("items");
         if (items == null) return List.of();
+        
+        // Batch-check types to filter out DLCs
+        Set<Integer> dlcIds = new HashSet<>();
+        if (!items.isEmpty()) {
+            String ids = items.stream()
+                    .map(it -> String.valueOf(it.get("id")))
+                    .collect(java.util.stream.Collectors.joining(","));
+            try {
+                Map<String, Object> check = RestClient.create().get()
+                        .uri("https://store.steampowered.com/api/appdetails?appids=" + ids + "&cc=cn&l=schinese")
+                        .retrieve()
+                        .body(Map.class);
+                if (check != null) {
+                    for (Map<String, Object> item : items) {
+                        Object appId = item.get("id");
+                        Map<String, Object> appData = (Map<String, Object>) check.get(String.valueOf(appId));
+                        if (appData != null && Boolean.TRUE.equals(appData.get("success"))) {
+                            Map<String, Object> data = (Map<String, Object>) appData.get("data");
+                            if (data != null && "dlc".equals(String.valueOf(data.getOrDefault("type", "")))) {
+                                dlcIds.add(((Number) appId).intValue());
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("DLC filter check failed: {}", e.getMessage());
+            }
+        }
+        
         List<Map<String, Object>> result = new ArrayList<>();
         for (Map<String, Object> item : items) {
+            if (dlcIds.contains(((Number) item.get("id")).intValue())) continue;
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("id", item.get("id"));
             entry.put("name", item.get("name"));

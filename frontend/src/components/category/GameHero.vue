@@ -60,7 +60,7 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
         <div>
           <div class="text-[10px] tracking-[0.3em] text-emerald-500/80 uppercase mb-2 font-mono">Featured Games</div>
           <h2 class="text-4xl sm:text-5xl font-black tracking-tighter">
-            <span class="text-emerald-400"><TypeIcon type="game" size="20" /></span>
+            <span class="text-emerald-400"><TypeIcon type="game" size="36" /></span>
             <span class="bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent"> {{ meta.label }}专区</span>
           </h2>
         </div>
@@ -76,20 +76,24 @@ const realIdx = computed(() => activeIdx.value % realCount.value)
           <div v-for="(g, i) in displayCards" :key="g.id+'-'+i"
             class="shrink-0 w-[280px] sm:w-[320px] cursor-pointer group"
             @click="goDetail(g.slug)">
-            <div class="relative w-full aspect-[21/10] rounded-2xl overflow-hidden ring-1 ring-emerald-900/30 group-hover:ring-emerald-400/60 group-hover:shadow-xl group-hover:shadow-emerald-500/10 transition-all duration-500">
-              <div v-if="g.coverUrl"
-                class="absolute inset-0 bg-cover bg-top group-hover:scale-110 transition-transform duration-700"
-                :style="{ backgroundImage: 'url('+g.coverUrl+')' }" />
-              <div v-else class="absolute inset-0 bg-gradient-to-br from-emerald-900 via-gray-900 to-black flex items-center justify-center"><TypeIcon type="game" size="40" /></div>
-              <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/60 to-transparent" />
-              <div class="absolute bottom-0 left-0 right-0 p-4">
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2 inline-block font-medium">GAME</span>
-                <h3 class="font-extrabold text-base sm:text-lg leading-tight text-white drop-shadow-md group-hover:text-emerald-300 transition-colors">{{ g.title }}</h3>
+            <div class="relative w-full aspect-[21/10] rounded-2xl ring-1 ring-emerald-900/30 group-hover:ring-emerald-400/60 group-hover:shadow-xl group-hover:shadow-emerald-500/10 transition-all duration-500">
+              <!-- Image area (clipped to rounded corners) -->
+              <div class="absolute inset-0 rounded-2xl overflow-hidden">
+                <div v-if="g.coverUrl"
+                  class="absolute inset-0 bg-cover bg-top group-hover:scale-110 transition-transform duration-700"
+                  :style="{ backgroundImage: 'url('+g.coverUrl+')' }" />
+                <div v-else class="absolute inset-0 bg-gradient-to-br from-emerald-900 via-gray-900 to-black flex items-center justify-center"><TypeIcon type="game" size="40" /></div>
               </div>
+              <!-- Gradient overlay (outside overflow, so text below it is not clipped) -->
+              <div class="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/95 via-black/60 to-transparent rounded-b-2xl pointer-events-none" />
+              <!-- Text (outside overflow) -->
+              <div class="absolute bottom-0 left-0 right-0 p-4 pb-5">
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-1.5 inline-block font-medium">GAME</span>
+                <h3 class="font-extrabold text-base sm:text-lg leading-snug text-white drop-shadow-md group-hover:text-emerald-300 transition-colors line-clamp-2">{{ g.title }}</h3>
+              </div>
+              <!-- Badges -->
               <div class="absolute top-3 left-3 z-10">
-                <span v-if="hasDemo(g)" class="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-white font-black tracking-wider shadow-lg shadow-cyan-500/30 animate-pulse">
-                  DEMO
-                </span>
+                <span v-if="hasDemo(g)" class="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-white font-black tracking-wider shadow-lg shadow-cyan-500/30 animate-pulse">DEMO</span>
               </div>
               <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-black/60 text-emerald-400 border border-emerald-600/40 backdrop-blur-sm">查看 →</span>

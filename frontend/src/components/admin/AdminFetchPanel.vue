@@ -52,7 +52,7 @@ function debounceSearchSteam() {
   steamSearchTimer = setTimeout(searchSteam, 400)
 }
 async function fetchSteamResult(game) {
-  try { const r = await triggerSteamFetch([game.id], steamTarget.value); ElMessage.success(`${game.name} 已加入抓取队列`); setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerSteamFetch([game.id], steamTarget.value); ElMessage.success(r.message || `${game.name} 已加入抓取队列`); setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
 }
 // TMDB Movie
 async function handleTMDBFetch() {

@@ -358,9 +358,7 @@ const langFullAudio = ref(false); // expand full audio languages
 const langBasic = ref(false); // expand basic languages
 const parsedLanguages = computed(() => {
     const raw = info.value.languages || '';
-    // Remove trailing note like "*具有完全音频支持的语言"
-    const clean = raw.replace(/\*[^*]*$/, '').trim();
-    const items = clean.split(',').map(s => s.trim()).filter(Boolean);
+    const items = raw.split(',').map(s => s.trim()).filter(Boolean);
     const fullAudio = []; // items with *
     const basic = []; // items without *
     for (const item of items) {
@@ -368,8 +366,10 @@ const parsedLanguages = computed(() => {
         if (item.includes('*')) fullAudio.push(name);
         else basic.push(name);
     }
-    return { fullAudio, basic };
+    const all = [...basic, ...fullAudio];
+    return { fullAudio, basic, all };
 });
+const allLanguages = computed(() => parsedLanguages.value.all);
 const showBoardgameRules = ref(false);
 const rulePage = ref(0);
 const ruleFlipAnim = ref('next');
@@ -774,24 +774,24 @@ const coffeeFlavors = computed(() => {
                         <!-- Steam: Language Support -->
                         <div v-if="isGame" class="mb-6">
                             <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-3">语言支持</h4>
-                            <div v-if="parsedLanguages.fullAudio.length" class="space-y-2">
+                            <div v-if="allLanguages.length" class="space-y-2">
                                 <div class="flex items-start gap-3">
                                     <span class="text-[11px] text-gray-500 w-12 shrink-0">界面</span>
                                     <div class="text-[13px] text-gray-400 leading-relaxed">
-                                        {{ langBasic ? parsedLanguages.basic.join(', ') : parsedLanguages.basic.slice(0, 8).join(', ') }}
-                                        <button v-if="parsedLanguages.basic.length > 8" @click="langBasic = !langBasic"
-                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langBasic ? '收起' : '等' + parsedLanguages.basic.length + '种' }}</button>
+                                        {{ langBasic ? allLanguages.join(', ') : allLanguages.slice(0, 8).join(', ') }}
+                                        <button v-if="allLanguages.length > 8" @click="langBasic = !langBasic"
+                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langBasic ? '收起' : '等' + allLanguages.length + '种' }}</button>
                                     </div>
                                 </div>
                                 <div class="flex items-start gap-3">
                                     <span class="text-[11px] text-gray-500 w-12 shrink-0">字幕</span>
                                     <div class="text-[13px] text-gray-400 leading-relaxed">
-                                        {{ langBasic ? parsedLanguages.basic.join(', ') : parsedLanguages.basic.slice(0, 8).join(', ') }}
-                                        <button v-if="parsedLanguages.basic.length > 8" @click="langBasic = !langBasic"
-                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langBasic ? '收起' : '等' + parsedLanguages.basic.length + '种' }}</button>
+                                        {{ langBasic ? allLanguages.join(', ') : allLanguages.slice(0, 8).join(', ') }}
+                                        <button v-if="allLanguages.length > 8" @click="langBasic = !langBasic"
+                                            class="text-blue-400 hover:text-blue-300 ml-1 text-[12px]">{{ langBasic ? '收起' : '等' + allLanguages.length + '种' }}</button>
                                     </div>
                                 </div>
-                                <div class="flex items-start gap-3">
+                                <div v-if="parsedLanguages.fullAudio.length" class="flex items-start gap-3">
                                     <span class="text-[11px] text-gray-500 w-12 shrink-0">音频</span>
                                     <div class="text-[13px] text-gray-400 leading-relaxed">
                                         {{ langFullAudio ? parsedLanguages.fullAudio.join(', ') : parsedLanguages.fullAudio.slice(0, 8).join(', ') }}
