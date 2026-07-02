@@ -23,3 +23,7 @@ demonet.sql
 !backend/**
 !frontend/**
 items.json
+
+# Explicitly re-exclude compiled files
+backend/target/
+backend/uploads/
