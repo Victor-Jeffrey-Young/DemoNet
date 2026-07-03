@@ -62,6 +62,25 @@ public class TagService {
         }
     }
 
+    /** Get or create a tag by name, return its ID */
+    public Long ensureTag(String name) {
+        var existing = tagMapper.selectOne(
+                new LambdaQueryWrapper<Tag>().eq(Tag::getName, name));
+        if (existing != null) return existing.getId();
+        Tag tag = new Tag();
+        tag.setName(name);
+        tagMapper.insert(tag);
+        return tag.getId();
+    }
+
+    /** Associate a tag by name with an item */
+    public void addItemTag(Long itemId, String tagName) {
+        Long tagId = ensureTag(tagName);
+        jdbcTemplate.update(
+                "INSERT IGNORE INTO item_tag_mapping (item_id, tag_id) VALUES (?, ?)",
+                itemId, tagId);
+    }
+
     public void removeItemTag(Long itemId, Long tagId) {
         jdbcTemplate.update("DELETE FROM item_tag_mapping WHERE item_id = ? AND tag_id = ?", itemId, tagId);
     }

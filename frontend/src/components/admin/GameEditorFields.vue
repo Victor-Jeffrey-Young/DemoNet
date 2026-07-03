@@ -83,19 +83,16 @@ function updateDlc(idx, field, val) {
   set('dlc', d)
 }
 
-// ---- Features ----
-const featuresStr = ref((data.value.features || []).join(', '))
-watch(featuresStr, (val) => {
-  const arr = val.split(',').map(s => s.trim()).filter(Boolean)
-  set('features', arr)
-})
 
 // ---- Languages ----
 const langList = computed(() => {
   const raw = data.value.languages || ''
-  return raw.split(',').map(s => s.trim()).filter(Boolean)
+  return raw.split(',').map(s => s.trim())
 })
-function addLang() { set('languages', (data.value.languages || '') + ', ') }
+function addLang() { 
+  const current = data.value.languages || ''
+  set('languages', current + (current && !current.endsWith(',') ? ', ' : '') + '新语言')
+}
 function updateLang(i, val) {
   const langs = [...langList.value]
   langs[i] = val
@@ -142,10 +139,10 @@ function toggleAudio(i) {
           <el-input :model-value="data.platform || ''" @input="set('platform', $event)" placeholder="PC, PS5, Xbox" />
         </el-form-item>
         <el-form-item label="免费" size="small">
-          <el-checkbox :model-value="!!data.free" @change="set('free', $event)" />
+          <el-checkbox :model-value="!!data.free" @update:model-value="v => set('free', v)" />
         </el-form-item>
         <el-form-item label="试玩版" size="small">
-          <el-checkbox :model-value="!!data.demo_available" @change="set('demo_available', $event)" />
+          <el-checkbox :model-value="!!data.demo_available" @update:model-value="v => set('demo_available', v)" />
         </el-form-item>
       </div>
       <el-form-item label="DEMO 链接" size="small" class="mt-2" v-if="data.demo_available">
@@ -167,14 +164,6 @@ function toggleAudio(i) {
           <el-input :model-value="data?.videos?.bilibili || ''" @input="setVideos('bilibili', $event)" placeholder="粘贴 BV 号或链接" />
         </el-form-item>
       </div>
-    </section>
-
-    <!-- ====== 游戏特性 ====== -->
-    <section>
-      <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4">游戏特性</h4>
-      <el-form-item size="small">
-        <el-input :model-value="featuresStr" @input="featuresStr = $event" placeholder="逗号分隔: 单人, 多人, Steam 云, 控制器支持..." type="textarea" :rows="2" />
-      </el-form-item>
     </section>
 
     <!-- ====== 截图库 ====== -->
@@ -221,7 +210,7 @@ function toggleAudio(i) {
           :class="lang.includes('*') ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-gray-700/50 text-gray-300 border-gray-600/30'"
           class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border cursor-pointer hover:opacity-80 transition"
           @click="toggleAudio(i)">
-          <input :value="lang.replace('*','')" @input="updateLang(i, $event.target.value)" class="bg-transparent border-none outline-none w-auto text-inherit text-xs" style="width:80px" />
+          <input :value="lang.replace('*','')" @input="updateLang(i, $event.target.value)" :placeholder="lang ? '' : '输入...'" class="bg-transparent border-none outline-none text-inherit text-xs" style="min-width:60px" />
           <span v-if="lang.includes('*')" class="text-[10px] opacity-70">🎤</span>
           <button type="button" @click.stop="removeLang(i)" class="text-gray-500 hover:text-red-400 ml-0.5">×</button>
         </span>

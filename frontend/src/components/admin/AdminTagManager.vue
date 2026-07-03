@@ -10,6 +10,7 @@ const page = ref(1)
 const pageSize = ref(20)
 const newTagName = ref('')
 const searchKeyword = ref('')
+const tagSelection = ref(new Set())
 
 async function loadTags() {
   loading.value = true
@@ -54,13 +55,19 @@ async function handleDelete(tag) {
     await ElMessageBox.confirm(`确定删除标签「${tag.name}」？关联的内容将取消该标签。`, '确认删除', { type: 'warning' })
     await deleteAdminTag(tag.id)
     ElMessage.success('标签已删除')
-    if (tags.value.length === 1 && page.value > 1) {
-      page.value--
-    }
+    if (tags.value.length === 1 && page.value > 1) page.value--
     await loadTags()
-  } catch (e) {
-    if (e !== 'cancel') ElMessage.error('删除失败')
-  }
+  } catch (e) { if (e !== 'cancel') ElMessage.error('删除失败') }
+}
+
+function handleTagSelection(rows) { tagSelection.value = new Set(rows.map(r => r.id)) }
+async function batchDeleteTags() {
+  try {
+    await ElMessageBox.confirm(`确定删除 ${tagSelection.value.size} 个标签？`, '批量删除', { type: 'warning' })
+    for (const id of tagSelection.value) await deleteAdminTag(id)
+    tagSelection.value = new Set(); await loadTags()
+    ElMessage.success('已删除')
+  } catch (e) { if (e !== 'cancel') ElMessage.error('失败') }
 }
 
 let searchTimer = null
@@ -83,7 +90,8 @@ defineExpose({ refresh: loadTags })
       <span class="text-sm text-gray-300">共 {{ total }} 个</span>
     </div>
 
-    <el-table :data="tags" style="width: 100%">
+    <el-table :data="tags" style="width: 100%" @selection-change="handleTagSelection">
+      <el-table-column type="selection" width="40" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="标签名称" min-width="200" />
       <el-table-column label="操作" width="120" fixed="right">
@@ -101,6 +109,12 @@ defineExpose({ refresh: loadTags })
         </template>
       </el-table-column>
     </el-table>
+
+    <div v-if="tagSelection.size > 0" class="flex items-center gap-3 mt-3 p-2 bg-blue-900/30 rounded-lg border border-blue-800/50">
+      <span class="text-sm text-blue-300">已选 {{ tagSelection.size }} 项</span>
+      <el-button size="small" type="danger" @click="batchDeleteTags">批量删除</el-button>
+      <el-button size="small" @click="tagSelection = new Set()">取消</el-button>
+    </div>
 
     <div class="flex justify-center mt-4" v-if="total > pageSize">
       <el-pagination

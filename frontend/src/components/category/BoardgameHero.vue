@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getFeatured, getHotItems } from '../../api/item'
 import { getMeta } from '../../constants/types'
+import TypeIcon from '../TypeIcon.vue'
 
 const router = useRouter()
 const meta = getMeta('boardgame')
@@ -32,7 +33,7 @@ function weightStars(w) {
       <!-- Header -->
       <div class="flex items-center gap-4 mb-8">
         <div class="flex items-center gap-3">
-          <span class="text-3xl">🎲</span>
+          <TypeIcon type="boardgame" :size="36" />
           <div>
             <h2 class="text-2xl font-black text-amber-100 tracking-tight">店员推荐</h2>
             <p class="text-xs text-amber-700/60 tracking-widest uppercase mt-0.5">Staff Picks</p>

@@ -226,7 +226,7 @@ async function startEpub() {
 
 const videos = computed(() => info.value.videos || {});
 const videoSources = computed(() =>
-    Object.entries(videos.value).map(([k, v]) => ({ key: k, url: v })),
+    Object.entries(videos.value).filter(([, v]) => v).map(([k, v]) => ({ key: k, url: v })),
 );
 const activeVideoUrl = ref("");
 

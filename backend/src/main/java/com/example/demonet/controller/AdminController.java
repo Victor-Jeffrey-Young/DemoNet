@@ -99,6 +99,25 @@ public class AdminController {
         return adminService.toggleFeatured(id);
     }
 
+    @PostMapping("/items/batch-delete")
+    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
+    public Map<String, Object> batchDelete(@RequestBody Map<String, List<Long>> body) {
+        List<Long> ids = body.get("ids");
+        int count = adminService.batchDelete(ids);
+        return Map.of("message", "已删除 " + count + " 条内容", "count", count);
+    }
+
+    @PostMapping("/items/batch-status")
+    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
+    public Map<String, Object> batchUpdateStatus(@RequestBody Map<String, Object> body) {
+        List<Integer> rawIds = (List<Integer>) body.get("ids");
+        List<Long> ids = rawIds.stream().map(Integer::longValue).toList();
+        Integer status = (Integer) body.get("status");
+        int count = adminService.batchUpdateStatus(ids, status);
+        String label = status == 1 ? "已上线" : "已下架";
+        return Map.of("message", label + " " + count + " 条内容", "count", count);
+    }
+
     // ========== Carousel Management ==========
 
     @GetMapping("/carousel/{type}")

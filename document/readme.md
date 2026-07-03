@@ -1,7 +1,7 @@
 # DemoNet 文档导航
 
 > **DemoNet** — 策展化的"试玩派对"，多品类聚合平台（游戏/电影/动漫/桌游/模型/书籍/音乐/数码/咖啡/线下体验）
-> **最后更新**：2026-06-24
+> **最后更新**：2026-07-03
 
 ---
 
@@ -26,12 +26,12 @@
 | 指标 | 数值 |
 |------|------|
 | 品类完成 | 10/10 |
-| 种子数据 | ~116 items |
-| 前端组件 | 10 Hero + 11 Card + 11 Editor |
+| 种子数据 | 126 items |
+| 前端组件 | 10 Hero + 11 Card + 11 Editor + TypeIcon |
 | 后端 Service | 15 个 |
 | 后端 Controller | 7 个 |
-| 数据抓取源 | 6（Steam / TMDB / IGDB / AniList / Bangumi / iTunes） |
-| 测试覆盖 | 0 ❌ |
+| 数据抓取源 | 6（Steam / TMDB / IGDB / AniList / Bangumi / iTunes）+ 自动标签 |
+| 测试覆盖 | 1 集成测试 |
 
 ### 技术栈
 

@@ -8,8 +8,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -23,10 +22,11 @@ public class FetchConsumer {
     private final ItunesService itunesService;
     private final IGDBService igdbService;
     private final ItemService itemService;
+    private final TagService tagService;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_STEAM)
     public void handleSteamFetch(Map<String, Object> payload) {
-        List<Long> appIds = new java.util.ArrayList<>();
+        List<Long> appIds = new ArrayList<>();
         Object rawIds = payload.get("appIds");
         if (rawIds instanceof List) {
             for (Object id : (List<?>) rawIds) {
@@ -90,17 +90,11 @@ public class FetchConsumer {
         String query = (String) payload.get("query");
         Integer limit = payload.get("limit") != null ? ((Number) payload.get("limit")).intValue() : 10;
         String targetType = (String) payload.getOrDefault("targetType", "game");
-        log.info("IGDB fetch: endpoint={} query={} limit={} → type={}", endpoint, query, limit, targetType);
         List<Item> items;
         switch (endpoint) {
-            case "popular":
-                items = igdbService.fetchPopularGames(limit);
-                break;
-            case "recent":
-                items = igdbService.fetchRecentGames(limit);
-                break;
-            default:
-                items = igdbService.searchGames(query != null ? query : "", limit);
+            case "popular": items = igdbService.fetchPopularGames(limit); break;
+            case "recent":  items = igdbService.fetchRecentGames(limit); break;
+            default:        items = igdbService.searchGames(query != null ? query : "", limit);
         }
         saveItems(items, targetType, "IGDB");
     }
@@ -108,14 +102,12 @@ public class FetchConsumer {
     private void saveItems(List<Item> items, String targetType, String source) {
         int saved = 0, updated = 0, failed = 0;
         for (Item item : items) {
-            if (!targetType.equals(item.getType())) {
-                item.setType(targetType);
-            }
+            if (!targetType.equals(item.getType())) item.setType(targetType);
             try {
                 itemService.createItem(item);
+                autoTag(item);
                 saved++;
             } catch (DuplicateKeyException e) {
-                // Slug already exists → update the existing item with fresh data
                 itemService.updateBySlug(item);
                 updated++;
             } catch (Exception e) {
@@ -126,5 +118,24 @@ public class FetchConsumer {
         String msg = String.format("%s fetch: %d new, %d updated, %d failed → type=%s",
                 source, saved, updated, failed, targetType);
         if (failed > 0) log.error(msg); else log.info(msg);
+    }
+
+    /** Auto-tag from genre & features in infoJson */
+    @SuppressWarnings("unchecked")
+    private void autoTag(Item item) {
+        try {
+            Map<String, Object> info = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(item.getInfoJson() != null ? item.getInfoJson() : "{}", Map.class);
+            Set<String> keywords = new LinkedHashSet<>();
+            String genre = (String) info.get("genre");
+            if (genre != null) for (String g : genre.split(",")) {
+                String t = g.trim(); if (!t.isEmpty() && t.length() <= 20) keywords.add(t);
+            }
+            Object features = info.get("features");
+            if (features instanceof List) for (Object f : (List<?>) features) {
+                if (f instanceof String s) { s = s.trim(); if (!s.isEmpty() && s.length() <= 20) keywords.add(s); }
+            }
+            for (String kw : keywords) tagService.addItemTag(item.getId(), kw);
+        } catch (Exception ignored) {}
     }
 }
