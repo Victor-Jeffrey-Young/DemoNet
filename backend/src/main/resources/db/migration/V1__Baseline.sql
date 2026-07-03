@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     avatar VARCHAR(255),
     role VARCHAR(20) DEFAULT 'USER' COMMENT 'USER, ADMIN',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    enabled TINYINT DEFAULT 1 COMMENT '1=normal 0=banned'
 );
 
 CREATE TABLE IF NOT EXISTS user_items (
@@ -66,3 +67,18 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 CREATE TABLE IF NOT EXISTS category_settings (type VARCHAR(20) NOT NULL PRIMARY KEY, visible TINYINT NOT NULL DEFAULT 1, sort_order INT NOT NULL DEFAULT 0);
 INSERT IGNORE INTO category_settings (type, visible, sort_order) VALUES ('game',1,10),('movie',1,20),('anime',1,30),('boardgame',1,40),('model',1,50),('book',1,60),('music',1,70),('digital',1,80),('coffee',1,90),('offline',1,100);
+
+
+CREATE TABLE IF NOT EXISTS invite_codes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    used_by BIGINT NULL,
+    used_at DATETIME NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (used_by) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key VARCHAR(100) NOT NULL PRIMARY KEY,
+    setting_value TEXT
+);

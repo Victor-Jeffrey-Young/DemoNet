@@ -83,10 +83,10 @@ defineExpose({ refresh: loadTags })
 <template>
   <div v-loading="loading">
     <div class="flex flex-wrap items-center gap-3 mb-4">
-      <el-input v-model="newTagName" placeholder="标签名称" size="small" style="width:150px" @keyup.enter="handleCreate" />
-      <el-button type="primary" size="small" @click="handleCreate" :disabled="!newTagName.trim()">添加</el-button>
+      <el-input v-model="newTagName" placeholder="标签名称"  style="width:150px" @keyup.enter="handleCreate" />
+      <el-button type="primary"  @click="handleCreate" :disabled="!newTagName.trim()">添加</el-button>
       <div class="flex-1" />
-      <el-input v-model="searchKeyword" placeholder="搜索标签" clearable size="small" style="width:140px" />
+      <el-input v-model="searchKeyword" placeholder="搜索标签" clearable  style="width:140px" />
       <span class="text-sm text-gray-300">共 {{ total }} 个</span>
     </div>
 
@@ -103,7 +103,7 @@ defineExpose({ refresh: loadTags })
             @confirm="handleDelete(row)"
           >
             <template #reference>
-              <el-button type="danger" size="small" text>删除</el-button>
+              <el-button type="danger"  text>删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -112,8 +112,8 @@ defineExpose({ refresh: loadTags })
 
     <div v-if="tagSelection.size > 0" class="flex items-center gap-3 mt-3 p-2 bg-blue-900/30 rounded-lg border border-blue-800/50">
       <span class="text-sm text-blue-300">已选 {{ tagSelection.size }} 项</span>
-      <el-button size="small" type="danger" @click="batchDeleteTags">批量删除</el-button>
-      <el-button size="small" @click="tagSelection = new Set()">取消</el-button>
+      <el-button  type="danger" @click="batchDeleteTags">批量删除</el-button>
+      <el-button  @click="tagSelection = new Set()">取消</el-button>
     </div>
 
     <div class="flex justify-center mt-4" v-if="total > pageSize">

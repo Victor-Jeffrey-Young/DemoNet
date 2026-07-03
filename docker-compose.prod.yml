@@ -10,7 +10,6 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
 
   redis:
     image: redis:7-alpine
@@ -43,12 +42,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-root}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
       APP_JWT_SECRET: ${JWT_SECRET:-changeme}
       APP_TMDB_API_KEY: ${TMDB_API_KEY:-}
       APP_STEAM_API_KEY: ${STEAM_API_KEY:-}
       APP_IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:-}
       APP_IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:-}
+      APP_STEAMGRIDDB_API_KEY: ${STEAMGRIDDB_API_KEY:-}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-changeme}
 
   frontend:
     build: ./frontend

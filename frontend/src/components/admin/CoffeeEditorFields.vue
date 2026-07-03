@@ -40,17 +40,17 @@ const processOptions = ['水洗', '日晒', '蜜处理', '湿刨法', '厌氧发
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="产地" size="default">
-      <el-select :model-value="modelValue?.origin || ''" @update:model-value="set('origin', $event)" placeholder="选择产地" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.origin || ''" @update:model-value="set('origin', $event)" placeholder="选择产地" :teleported="false" style="width:100%">
         <el-option v-for="o in originOptions" :key="o" :label="o" :value="o" />
       </el-select>
     </el-form-item>
     <el-form-item label="烘焙度">
-      <el-select :model-value="modelValue?.roast || ''" @update:model-value="set('roast', $event)" placeholder="选择烘焙度" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.roast || ''" @update:model-value="set('roast', $event)" placeholder="选择烘焙度" :teleported="false" style="width:100%">
         <el-option v-for="o in roastOptions" :key="o" :label="o" :value="o" />
       </el-select>
     </el-form-item>
     <el-form-item label="处理法">
-      <el-select :model-value="modelValue?.process || ''" @update:model-value="set('process', $event)" placeholder="选择处理法" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.process || ''" @update:model-value="set('process', $event)" placeholder="选择处理法" :teleported="false" style="width:100%">
         <el-option v-for="o in processOptions" :key="o" :label="o" :value="o" />
       </el-select>
     </el-form-item>

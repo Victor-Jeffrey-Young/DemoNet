@@ -26,7 +26,7 @@ async function handleResetPassword(user) {
   try {
     await ElMessageBox.confirm(`确定重置「${user.username}」的密码？`, '重置密码', { type: 'warning' })
     const res = await resetUserPassword(user.id)
-    ElMessage.success({ message: `新密码: ${res.password}`, duration: 10000 })
+    ElMessageBox.alert(res.message, '密码重置成功', { type: 'success' })
   } catch (e) { if (e !== 'cancel') ElMessage.error('重置失败') }
 }
 defineExpose({ refresh: loadUsers })
@@ -36,7 +36,7 @@ defineExpose({ refresh: loadUsers })
   <div style="width:85%">
     <div class="flex items-center justify-between mb-4">
       <span class="text-sm text-gray-400">共 {{ users.length }} 个用户</span>
-      <el-button size="small" @click="loadUsers">刷新</el-button>
+      <el-button  @click="loadUsers">刷新</el-button>
     </div>
     <el-table :data="users" style="width:100%">
       <el-table-column prop="id" label="ID" width="60" />
@@ -44,7 +44,7 @@ defineExpose({ refresh: loadUsers })
       <el-table-column prop="email" label="邮箱" min-width="200" />
       <el-table-column label="角色" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.role==='ADMIN'?'danger':'info'" size="small">{{ row.role }}</el-tag>
+          <el-tag :type="row.role==='ADMIN'?'danger':'info'" >{{ row.role }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="注册时间" width="110">
@@ -52,15 +52,15 @@ defineExpose({ refresh: loadUsers })
       </el-table-column>
       <el-table-column label="状态" width="80">
         <template #default="{ row }">
-          <el-tag :type="row.enabled===1?'success':'danger'" size="small">{{ row.enabled===1?'正常':'封禁' }}</el-tag>
+          <el-tag :type="row.enabled===1?'success':'danger'" >{{ row.enabled===1?'正常':'封禁' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" :type="row.enabled===1?'warning':'success'" @click="handleBan(row)" :disabled="!canBan(row)">
+          <el-button  :type="row.enabled===1?'warning':'success'" @click="handleBan(row)" :disabled="!canBan(row)">
             {{ row.enabled===1 ? '封禁' : '解封' }}
           </el-button>
-          <el-button size="small" type="primary" @click="handleResetPassword(row)">重置密码</el-button>
+          <el-button  type="primary" @click="handleResetPassword(row)">重置密码</el-button>
         </template>
       </el-table-column>
     </el-table>

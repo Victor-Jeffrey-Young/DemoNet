@@ -58,7 +58,7 @@ defineExpose({ refresh })
   <div>
     <div class="flex items-center justify-between mb-4">
       <p class="text-sm text-gray-400">拖拽或使用上下按钮调整品类排序，点击切换显示/隐藏</p>
-      <el-button type="primary" size="small" @click="save" :loading="saving" :disabled="saving">保存更改</el-button>
+      <el-button type="primary"  @click="save" :loading="saving" :disabled="saving">保存更改</el-button>
     </div>
     <div v-if="loading" class="text-gray-500 text-sm py-8 text-center">加载中...</div>
     <div v-else class="space-y-2 max-w-2xl">

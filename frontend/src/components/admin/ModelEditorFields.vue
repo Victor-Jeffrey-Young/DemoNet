@@ -39,7 +39,7 @@ const materialOptions = ['PS', 'ABS', 'PE', 'PP', 'LED', '合金']
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="等级" size="default">
-      <el-select :model-value="modelValue?.grade || ''" @update:model-value="set('grade', $event)" placeholder="选择等级" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.grade || ''" @update:model-value="set('grade', $event)" placeholder="选择等级" :teleported="false" style="width:100%">
         <el-option v-for="g in gradeOptions" :key="g" :label="g" :value="g" />
       </el-select>
     </el-form-item>

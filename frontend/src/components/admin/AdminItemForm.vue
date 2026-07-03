@@ -32,7 +32,6 @@ const form = ref(getDefaultForm())
 const selectedTagIds = ref([])
 const itemTags = ref([])
 const currentId = ref(null)
-const filteredTags = ref(null)
 
 function getDefaultForm() {
   return {
@@ -334,7 +333,7 @@ watch(() => form.value.type, () => {
     destroy-on-close
   >
     <div class="admin-item-form max-h-[75vh] overflow-y-auto pr-2">
-      <el-form label-position="top" size="small">
+      <el-form label-position="top" >
         <!-- ===== 基本信息 ===== -->
         <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-2">基本信息</h5>
         <div class="grid grid-cols-4 gap-3 mb-4">
@@ -362,7 +361,7 @@ watch(() => form.value.type, () => {
             </div>
           </el-form-item>
           <el-form-item label="状态">
-            <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上线" inactive-text="下架" size="small" />
+            <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上线" inactive-text="下架"  />
           </el-form-item>
           <el-form-item label="描述" class="col-span-4">
             <el-input v-model="form.description" type="textarea" :rows="2" placeholder="内容描述" />
@@ -380,7 +379,7 @@ watch(() => form.value.type, () => {
             <el-input v-model="form.externalId" placeholder="AppID / TMDB ID" />
           </el-form-item>
           <el-form-item label="热门加权">
-            <el-input-number v-model="form.hotBoost" :min="0" :step="50" size="small" style="width:100%" />
+            <el-input-number v-model="form.hotBoost" :min="0" :step="50"  style="width:100%" />
           </el-form-item>
         </div>
 
@@ -388,26 +387,26 @@ watch(() => form.value.type, () => {
         <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">封面图</h5>
         <div class="grid grid-cols-3 gap-3 mb-4">
           <el-form-item label="横版封面">
-            <el-input v-model="form.coverUrl" placeholder="https://... 或上传" size="small" />
-            <label class="el-button el-button--small el-button--default cursor-pointer mt-1" style="width:100%">上传
+            <el-input v-model="form.coverUrl" placeholder="https://... 或上传"  />
+            <label class="el-button  el-button--default cursor-pointer mt-1" style="width:100%">上传
               <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'coverUrl')" />
             </label>
             <img v-if="form.coverUrl" :src="form.coverUrl" class="w-full aspect-video object-cover rounded mt-1 border border-gray-600" />
           </el-form-item>
           <el-form-item label="宽封面">
-            <el-input v-model="form.wideCoverUrl" placeholder="https://... 或上传" size="small" />
-            <label class="el-button el-button--small el-button--default cursor-pointer mt-1" style="width:100%">上传
+            <el-input v-model="form.wideCoverUrl" placeholder="https://... 或上传"  />
+            <label class="el-button  el-button--default cursor-pointer mt-1" style="width:100%">上传
               <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'wideCoverUrl')" />
             </label>
             <img v-if="form.wideCoverUrl" :src="form.wideCoverUrl" class="w-full aspect-video object-cover rounded mt-1 border border-gray-600" />
           </el-form-item>
           <el-form-item label="竖版海报">
-            <el-input v-model="form.posterUrl" placeholder="https://... 或上传" size="small" />
+            <el-input v-model="form.posterUrl" placeholder="https://... 或上传"  />
             <div class="flex gap-1 mt-1">
-              <label class="el-button el-button--small el-button--default cursor-pointer flex-1">上传
+              <label class="el-button  el-button--default cursor-pointer flex-1">上传
                 <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'posterUrl')" />
               </label>
-              <button type="button" class="el-button el-button--small el-button--primary flex-1" @click="handleFetchSgdbPoster">SGDB 拉取</button>
+              <button type="button" class="el-button  el-button--primary flex-1" @click="handleFetchSgdbPoster">SGDB 拉取</button>
             </div>
             <img v-if="form.posterUrl" :src="form.posterUrl" class="w-full object-cover rounded mt-1 border border-gray-600" style="aspect-ratio: 2/3" />
           </el-form-item>
@@ -415,14 +414,14 @@ watch(() => form.value.type, () => {
 
         <!-- ===== 标签 ===== -->
         <el-form-item label="标签">
-          <el-select v-model="selectedTagIds" multiple filterable :filter-method="(q) => filteredTags = allTags.filter(t => t.name.includes(q))" placeholder="搜索或选择标签" :teleported="false" popper-class="admin-select-drop" style="width:100%">
-            <el-option v-for="tag in (filteredTags || allTags)" :key="tag.id" :label="tag.name" :value="tag.id" />
+          <el-select v-model="selectedTagIds" multiple filterable placeholder="搜索或选择标签" :teleported="false" style="width:100%">
+            <el-option v-for="tag in allTags" :key="tag.id" :label="tag.name" :value="tag.id" />
           </el-select>
         </el-form-item>
 
         <!-- ===== 书稿上传 ===== -->
         <el-form-item v-if="form.type === 'book'" label="上传书稿 (PDF/EPUB)">
-          <label class="el-button el-button--small el-button--default cursor-pointer">选择文件
+          <label class="el-button  el-button--default cursor-pointer">选择文件
             <input type="file" accept=".pdf,.epub" class="hidden" @change="handleUpload($event, 'readerUrl')" />
           </label>
           <span class="text-xs text-gray-500 ml-2">{{ infoObj.reader_url || '未上传' }}</span>
@@ -441,42 +440,3 @@ watch(() => form.value.type, () => {
     </template>
   </el-dialog>
 </template>
-
-<style>
-/* Admin form dark theme - applied to el-dialog content */
-.el-dialog {
-  --el-dialog-bg-color: #1f2937;
-}
-.el-dialog__header { border-bottom: 1px solid #374151; padding-bottom: 16px; }
-.el-dialog__title { color: #f3f4f6; font-weight: 700; }
-.el-form-item__label { color: #d1d5db !important; font-weight: 600; }
-.el-input__wrapper {
-  --el-fill-color-blank: #374151;
-  background-color: #374151 !important;
-  box-shadow: 0 0 0 1px #4b5563 !important;
-}
-.el-input__inner { color: #f3f4f6 !important; }
-.el-input__inner::placeholder { color: #6b7280 !important; }
-.el-textarea__inner { background-color: #374151 !important; border-color: #4b5563 !important; color: #f3f4f6 !important; }
-.el-select .el-input__wrapper {
-  --el-fill-color-blank: #374151;
-  background-color: #374151 !important;
-  box-shadow: 0 0 0 1px #4b5563 !important;
-}
-.el-select .el-input__inner { color: #f3f4f6 !important; }
-.el-select .el-select__caret { color: #9ca3af !important; }
-/* Fix filterable select search input in dropdown */
-.el-select-dropdown .el-select-dropdown__item { color: #e5e7eb; }
-.el-select-dropdown__wrap { padding: 4px; }
-.el-select-dropdown__search .el-input__wrapper {
-  background-color: #374151 !important;
-  box-shadow: 0 0 0 1px #4b5563 !important;
-}
-.el-select-dropdown__search .el-input__inner { color: #f3f4f6 !important; }
-.el-button--default {
-  --el-button-bg-color: #374151; --el-button-border-color: #4b5563; --el-button-text-color: #d1d5db;
-}
-.el-switch__label { color: #9ca3af !important; }
-.el-switch__label.is-active { color: #60a5fa !important; }
-.el-checkbox__label { color: #d1d5db !important; font-size: 12px; }
-</style>

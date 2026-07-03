@@ -11,7 +11,6 @@ import AdminItemForm from "../components/admin/AdminItemForm.vue";
 import TypeIcon from "../components/TypeIcon.vue";
 import { ArrowLeft, ArrowRight, Edit } from "@element-plus/icons-vue";
 import { getMeta } from "../constants/types";
-import * as echarts from "echarts/dist/echarts.esm.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -182,11 +181,13 @@ function destroyEpub() {
     epubReady.value = false;
 }
 
+let radarChartInstance = null;
+
 onUnmounted(() => {
     destroyEpub();
-    if (radarChartRef.value) {
-        const c = echarts.getInstanceByDom(radarChartRef.value);
-        if (c) c.dispose();
+    if (radarChartInstance) {
+        radarChartInstance.dispose();
+        radarChartInstance = null;
     }
 });
 
@@ -423,15 +424,15 @@ const brewTime = computed(() => {
   return '3:00-3:30';
 });
 
-function renderRadarChart() {
+async function renderRadarChart() {
   if (!radarChartRef.value || !hasScaScores.value) return;
   try {
     const el = radarChartRef.value;
-    const existing = echarts.getInstanceByDom(el);
-    if (existing) existing.dispose();
-    const chart = echarts.init(el);
+    const echarts = await import('echarts/dist/echarts.esm.js');
+    if (radarChartInstance) radarChartInstance.dispose();
+    radarChartInstance = echarts.init(el);
     const values = scaDimensions.map(d => Number(info.value[d]) || 0);
-    chart.setOption({
+    radarChartInstance.setOption({
       backgroundColor: '#1a120a',
       title: { text: 'SCA 评分', left: 'center', textStyle: { color: '#fbbf24', fontSize: 14 } },
       radar: {
@@ -453,7 +454,7 @@ function renderRadarChart() {
         label: { show: true, formatter: '{c}', color: '#fbbf24', fontSize: 10, distance: 8 }
       }]
     });
-    setTimeout(() => chart.resize(), 100);
+    setTimeout(() => { if (radarChartInstance) radarChartInstance.resize(); }, 100);
   } catch(e) {
     console.error('radar:', e);
   }
@@ -1226,7 +1227,7 @@ const coffeeFlavors = computed(() => {
     </div>
 </template>
 
-<style>
+<style scoped>
 .page-next-enter-active,
 .page-next-leave-active,
 .page-prev-enter-active,
@@ -1262,53 +1263,4 @@ const coffeeFlavors = computed(() => {
 .rule-thumb-strip::-webkit-scrollbar-thumb:hover {
   background: rgba(217, 119, 6, 0.5);
 }
-.detail-edit-dialog .el-dialog {
-  --el-dialog-bg-color: #1f2937;
-  --el-dialog-border-radius: 12px;
-}
-.detail-edit-dialog .el-dialog__header { border-bottom: 1px solid #374151; padding-bottom: 16px; }
-.detail-edit-dialog .el-dialog__title { color: #f3f4f6; font-weight: 700; }
-.detail-edit-dialog .el-input__wrapper {
-  background-color: #374151 !important;
-  box-shadow: 0 0 0 1px #4b5563 !important;
-}
-.detail-edit-dialog .el-input__inner { color: #f3f4f6; }
-.detail-edit-dialog .el-input__inner::placeholder { color: #6b7280; }
-.detail-edit-dialog .el-form-item__label { color: #d1d5db; font-weight: 600; }
-.detail-edit-dialog .el-button--default {
-  --el-button-bg-color: #374151; --el-button-border-color: #4b5563; --el-button-text-color: #d1d5db;
-}
-.detail-edit-dialog .el-button--default:hover {
-  --el-button-bg-color: #4b5563; --el-button-border-color: #6b7280; --el-button-text-color: #f3f4f6;
-}
-.detail-edit-dialog .el-button--primary {
-  --el-button-bg-color: #2563eb; --el-button-border-color: #3b82f6;
-}
-.detail-edit-dialog .el-textarea__inner {
-  background-color: #374151; border-color: #4b5563; color: #f3f4f6;
-}
-.detail-edit-dialog .el-textarea__inner::placeholder { color: #6b7280; }
-.detail-edit-dialog .el-select .el-input__wrapper {
-  --el-fill-color-blank: #374151; --el-border-color: #4b5563;
-}
-.detail-edit-dialog .el-select .el-input__inner { color: #f3f4f6; }
-.detail-edit-dialog .el-select .el-input__wrapper {
-  --el-fill-color-blank: #374151;
-  --el-border-color: #4b5563;
-  background-color: #374151 !important;
-}
-.detail-edit-dialog .el-select .el-input__inner { color: #f3f4f6; }
-.detail-edit-dialog .el-select .el-select__caret { color: #9ca3af; }
-.detail-edit-dialog .el-select__placeholder { color: #6b7280 !important; }
-.detail-edit-dialog .el-loading-mask { background-color: rgba(31, 41, 55, 0.8); }
-.el-select-dropdown.is-multiple .el-select-dropdown__item.selected { color: #60a5fa; }
-.admin-select-drop {
-  --el-fill-color-blank: #1f2937;
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-}
-.admin-select-drop .el-select-dropdown__item { color: #e5e7eb; }
-.admin-select-drop .el-select-dropdown__item.is-hovering,
-.admin-select-drop .el-select-dropdown__item:hover { background-color: #374151; }
-.admin-select-drop .el-select-dropdown__item.selected { color: #60a5fa; font-weight: 600; }
 </style>

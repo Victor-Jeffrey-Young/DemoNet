@@ -41,7 +41,7 @@ const categoryOptions = ['耳机', '键盘', '鼠标', '显示器', '手机', '�
       <el-input :model-value="modelValue?.brand || ''" @input="set('brand', $event)" placeholder="如: Apple, Sony" />
     </el-form-item>
     <el-form-item label="类别">
-      <el-select :model-value="modelValue?.category || ''" @update:model-value="set('category', $event)" placeholder="选择类别" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.category || ''" @update:model-value="set('category', $event)" placeholder="选择类别" :teleported="false" style="width:100%">
         <el-option v-for="c in categoryOptions" :key="c" :label="c" :value="c" />
       </el-select>
     </el-form-item>

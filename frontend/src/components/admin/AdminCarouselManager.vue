@@ -137,7 +137,7 @@ defineExpose({ refresh() { loadCarousel(); loadPool() } })
     <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
       <div class="flex items-center gap-3 mb-3">
         <h4 class="text-sm font-semibold text-gray-200">可选作品池</h4>
-        <el-input v-model="searchKeyword" placeholder="搜索..." clearable size="small" style="width:160px" />
+        <el-input v-model="searchKeyword" placeholder="搜索..." clearable  style="width:160px" />
       </div>
       <div v-loading="loading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         <div

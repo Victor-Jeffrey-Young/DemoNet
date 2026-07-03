@@ -5,6 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.config.RabbitMQConfig;
 import com.example.demonet.entity.Item;
+import com.example.demonet.entity.AppSetting;
+import com.example.demonet.entity.CategorySetting;
+import com.example.demonet.entity.InviteCode;
+import com.example.demonet.entity.User;
+import com.example.demonet.mapper.AppSettingMapper;
+import com.example.demonet.mapper.CategorySettingMapper;
+import com.example.demonet.mapper.InviteCodeMapper;
+import com.example.demonet.mapper.UserMapper;
 import com.example.demonet.entity.Tag;
 import com.example.demonet.mapper.ItemMapper;
 import com.example.demonet.service.AdminService;
@@ -46,7 +54,10 @@ public class AdminController {
     private final ItemMapper itemMapper;
     private final AdminService adminService;
     private final TagService tagService;
-    private final JdbcTemplate jdbcTemplate;
+    private final AppSettingMapper appSettingMapper;
+    private final CategorySettingMapper categorySettingMapper;
+    private final InviteCodeMapper inviteCodeMapper;
+    private final UserMapper userMapper;
     private final SteamService steamService;
     private final SteamGridDBService steamGridDBService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -156,6 +167,18 @@ public class AdminController {
                 return Map.of("error", "Item not found");
             }
 
+            String contentType = file.getContentType();
+            if (contentType == null) {
+                return Map.of("error", "文件类型未识别");
+            }
+            List<String> allowedTypes = "reader".equals(type)
+                ? List.of("image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf", "application/epub+zip")
+                : List.of("image/jpeg", "image/png", "image/webp", "image/gif");
+                
+            if (!allowedTypes.contains(contentType)) {
+                return Map.of("error", "不支持的文件类型: " + contentType);
+            }
+
             Path uploadPath = Paths.get(new java.io.File(uploadDir).getAbsolutePath());
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -253,19 +276,28 @@ public class AdminController {
     // ========== Category Visibility ==========
 
     @GetMapping("/categories/settings")
-    public List<Map<String, Object>> getCategorySettings() {
-        return jdbcTemplate.queryForList("SELECT * FROM category_settings ORDER BY sort_order");
+    public List<CategorySetting> getCategorySettings() {
+        return categorySettingMapper.selectList(new LambdaQueryWrapper<CategorySetting>().orderByAsc(CategorySetting::getSortOrder));
     }
 
     @PutMapping("/categories/settings")
-    @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
-    public Map<String, String> updateCategorySettings(@RequestBody List<Map<String, Object>> settings) {
-        for (Map<String, Object> s : settings) {
-            String type = (String) s.get("type");
-            boolean visible = Boolean.TRUE.equals(s.get("visible"));
-            int sortOrder = s.containsKey("sort_order") ? ((Number) s.get("sort_order")).intValue() : 0;
-            jdbcTemplate.update("REPLACE INTO category_settings (type, visible, sort_order) VALUES (?, ?, ?)",
-                    type, visible ? 1 : 0, sortOrder);
+    @CacheEvict(value = {"featured", "hotItems", "recommended", "visibleTypes"}, allEntries = true)
+    public Map<String, String> updateCategorySettings(@RequestBody List<CategorySetting> settings) {
+        for (CategorySetting s : settings) {
+            String type = s.getType();
+            List<String> validTypes = List.of("game", "movie", "anime", "boardgame", "model", "book", "music", "digital", "coffee", "offline");
+            if (type == null || !validTypes.contains(type)) continue;
+            int sortOrder = s.getSortOrder() != null ? s.getSortOrder() : 0;
+            int visible = s.getVisible() != null ? s.getVisible() : 0;
+            CategorySetting cs = new CategorySetting();
+            cs.setType(type);
+            cs.setVisible(visible);
+            cs.setSortOrder(sortOrder);
+            if (categorySettingMapper.selectById(type) != null) {
+                categorySettingMapper.updateById(cs);
+            } else {
+                categorySettingMapper.insert(cs);
+            }
         }
         return Map.of("message", "ok");
     }
@@ -460,9 +492,9 @@ public class AdminController {
 
     @GetMapping("/settings")
     public Map<String, Object> getAllSettings() {
-        var rows = jdbcTemplate.queryForList("SELECT setting_key, setting_value FROM app_settings");
+        List<AppSetting> rows = appSettingMapper.selectList(null);
         Map<String, Object> result = new LinkedHashMap<>();
-        for (var row : rows) result.put((String) row.get("setting_key"), row.get("setting_value"));
+        for (AppSetting row : rows) result.put(row.getSettingKey(), row.getSettingValue());
         // Ensure all known keys exist with defaults
         for (String key : List.of("STEAMGRIDDB_API_KEY", "STEAM_API_KEY", "TMDB_API_KEY", "IGDB_CLIENT_ID", "IGDB_CLIENT_SECRET",
                 "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "INVITE_ONLY")) {
@@ -474,9 +506,14 @@ public class AdminController {
     @PutMapping("/settings/{key}")
     public void updateSetting(@PathVariable String key, @RequestBody Map<String, String> body) {
         String value = body.getOrDefault("value", "");
-        jdbcTemplate.update(
-            "INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-            key, value, value);
+        AppSetting as = new AppSetting();
+        as.setSettingKey(key);
+        as.setSettingValue(value);
+        if (appSettingMapper.selectById(key) != null) {
+            appSettingMapper.updateById(as);
+        } else {
+            appSettingMapper.insert(as);
+        }
     }
 
     // ========== SteamGridDB poster fetch ==========
@@ -501,8 +538,7 @@ public class AdminController {
 
     @GetMapping("/invite-codes")
     public List<Map<String, Object>> listInviteCodes() {
-        return jdbcTemplate.queryForList(
-            "SELECT ic.*, u.username as used_by_name FROM invite_codes ic LEFT JOIN users u ON ic.used_by = u.id ORDER BY ic.created_at DESC");
+        return inviteCodeMapper.selectWithUsers();
     }
 
     @PostMapping("/invite-codes/generate")
@@ -511,7 +547,9 @@ public class AdminController {
         List<String> codes = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            jdbcTemplate.update("INSERT INTO invite_codes (code) VALUES (?)", code);
+            InviteCode ic = new InviteCode();
+            ic.setCode(code);
+            inviteCodeMapper.insert(ic);
             codes.add(code);
         }
         return Map.of("codes", codes, "message", "已生成 " + count + " 个邀请码");
@@ -521,25 +559,30 @@ public class AdminController {
 
     @GetMapping("/users")
     public List<Map<String, Object>> listUsers() {
-        return jdbcTemplate.queryForList(
-            "SELECT id, username, email, role, enabled, created_at FROM users ORDER BY created_at DESC");
+        return userMapper.selectUserList();
     }
 
     @PutMapping("/users/{id}/ban")
     public void toggleBan(@PathVariable Long id, @RequestBody Map<String, Integer> body, Authentication auth) {
         Long currentUserId = (Long) auth.getPrincipal();
         if (id.equals(currentUserId)) throw new RuntimeException("不能封禁自己");
-        String role = jdbcTemplate.queryForObject("SELECT role FROM users WHERE id=?", String.class, id);
-        if ("ADMIN".equals(role)) throw new RuntimeException("不能封禁管理员");
+        User user = userMapper.selectById(id);
+        if (user == null) throw new RuntimeException("用户不存在");
+        if ("ADMIN".equals(user.getRole())) throw new RuntimeException("不能封禁管理员");
         int enabled = body.getOrDefault("enabled", 1);
-        jdbcTemplate.update("UPDATE users SET enabled=? WHERE id=?", enabled, id);
+        user.setEnabled(enabled);
+        userMapper.updateById(user);
     }
 
     @PutMapping("/users/{id}/reset-password")
     public Map<String, String> resetPassword(@PathVariable Long id) {
         String newPassword = UUID.randomUUID().toString().substring(0, 10);
         String hash = passwordEncoder.encode(newPassword);
-        jdbcTemplate.update("UPDATE users SET password_hash=? WHERE id=?", hash, id);
-        return Map.of("password", newPassword);
+        User user = userMapper.selectById(id);
+        if (user != null) {
+            user.setPasswordHash(hash);
+            userMapper.updateById(user);
+        }
+        return Map.of("message", "密码已重置为: " + newPassword + " (请将此密码复制发送给用户，窗口关闭后将无法再次查看)");
     }
 }
