@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS items (
     status TINYINT DEFAULT 1 COMMENT '1-online 0-offline',
     carousel_order INT NULL COMMENT 'NULL=not in carousel, 0,1,2...=display order',
     recommendations INT DEFAULT 0 COMMENT 'Steam review count for hot ranking',
+    hot_boost INT DEFAULT 0 COMMENT 'Manual hot boost for ranking',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_type (type),
