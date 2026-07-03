@@ -64,6 +64,9 @@ public class SteamService {
         String genres = extractGenres(data);
         String platforms = buildPlatforms(data);
         boolean isFree = Boolean.TRUE.equals(data.get("is_free"));
+        // Steam review count for hot ranking
+        int recommendations = extractRecommendations(data);
+        item.setRecommendations(recommendations);
 
         // Extract screenshots
         String screenshots = extractScreenshots(data);
@@ -108,8 +111,9 @@ public class SteamService {
                 Item fresh = fetchAppDetail(appId);
                 if (fresh == null) continue;
                 jdbcTemplate.update(
-                        "UPDATE items SET cover_url=?, description=?, info_json=?, external_link=? WHERE id=?",
-                        fresh.getCoverUrl(), fresh.getDescription(), fresh.getInfoJson(), fresh.getExternalLink(), id);
+                        "UPDATE items SET cover_url=?, description=?, info_json=?, external_link=?, recommendations=? WHERE id=?",
+                        fresh.getCoverUrl(), fresh.getDescription(), fresh.getInfoJson(), fresh.getExternalLink(),
+                        fresh.getRecommendations(), id);
                 updated++;
                 log.info("Updated {} with Steam data", fresh.getTitle());
             } catch (Exception e) {
@@ -266,6 +270,17 @@ public class SteamService {
     }
 
     // ========== Steam detail extractors ==========
+
+    private int extractRecommendations(Map<String, Object> data) {
+        try {
+            Object rec = data.get("recommendations");
+            if (rec instanceof Map) {
+                Object total = ((Map<?,?>) rec).get("total");
+                if (total instanceof Number) return ((Number) total).intValue();
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
 
     private String extractValue(Map<String, Object> data, String parentKey, String childKey) {
         try {

@@ -148,6 +148,14 @@ function toggleAudio(i) {
       <el-form-item label="DEMO 链接" size="small" class="mt-2" v-if="data.demo_available">
         <el-input :model-value="data.demo_url || ''" @input="set('demo_url', $event)" placeholder="steam://install/APPID 或 https://..." />
       </el-form-item>
+      <div class="flex items-center gap-4 mt-2">
+        <el-form-item label="性能测试工具" size="small">
+          <el-checkbox :model-value="!!data.has_benchmark" @update:model-value="v => set('has_benchmark', v)" />
+        </el-form-item>
+      </div>
+      <el-form-item label="测试工具链接" size="small" v-if="data.has_benchmark">
+        <el-input :model-value="data.benchmark_url || ''" @input="set('benchmark_url', $event)" placeholder="steam://run/APPID 或 https://..." />
+      </el-form-item>
     </section>
 
     <!-- ====== 视频 ====== -->
