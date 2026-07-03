@@ -27,7 +27,8 @@ public class ItemService {
     private final JdbcTemplate jdbcTemplate;
 
     /** Types visible in the frontend */
-    private Set<String> visibleTypes() {
+    @Cacheable(value = "visibleTypes")
+    public Set<String> visibleTypes() {
         List<String> types = jdbcTemplate.queryForList(
                 "SELECT type FROM category_settings WHERE visible = 1", String.class);
         return types.isEmpty() ? Set.of() : Set.copyOf(types);

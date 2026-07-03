@@ -41,7 +41,7 @@ const types = TYPE_LIST
 async function fetchData(page = 1) {
   loading.value = true
   try {
-    const data = await getItems({ page, size:12, type: activeType.value })
+    const data = await getItems({ page, size:60, type: activeType.value })
     items.value = data.records || []
     current.value = data.current || 1
     total.value = data.total || 0
@@ -60,7 +60,7 @@ onMounted(() => {
 })
 
 function goPage(p) { fetchData(p); window.scrollTo({top:0,behavior:'smooth'}) }
-const totalPages = computed(() => Math.ceil(total.value/12) || 1)
+const totalPages = computed(() => Math.ceil(total.value/60) || 1)
 const meta = computed(() => getMeta(activeType.value))
 const showHero = computed(() => !!activeType.value && current.value === 1)
 const isGame = computed(() => activeType.value === 'game')

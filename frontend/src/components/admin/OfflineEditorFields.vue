@@ -38,7 +38,7 @@ const eventTypeOptions = ['密室逃脱', '沉浸式剧场', '展览', '市集',
   </h4>
   <div class="grid grid-cols-2 gap-4">
     <el-form-item label="活动类型" size="default">
-      <el-select :model-value="modelValue?.event_type || ''" @update:model-value="set('event_type', $event)" placeholder="选择类型" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.event_type || ''" @update:model-value="set('event_type', $event)" placeholder="选择类型" :teleported="false" style="width:100%">
         <el-option v-for="o in eventTypeOptions" :key="o" :label="o" :value="o" />
       </el-select>
     </el-form-item>

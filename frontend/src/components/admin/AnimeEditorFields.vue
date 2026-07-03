@@ -53,12 +53,12 @@ const originOptions = ['日漫', '国漫', '美漫', '韩漫', '其他']
       <el-input :model-value="modelValue?.year || ''" @input="set('year', $event)" placeholder="如: 2023" />
     </el-form-item>
     <el-form-item label="类型">
-      <el-select :model-value="modelValue?.genre || ''" @update:model-value="set('genre', $event)" placeholder="动漫类型" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.genre || ''" @update:model-value="set('genre', $event)" placeholder="动漫类型" :teleported="false" style="width:100%">
         <el-option v-for="g in genreOptions" :key="g" :label="g" :value="g" />
       </el-select>
     </el-form-item>
     <el-form-item label="原作地区">
-      <el-select :model-value="modelValue?.origin || ''" @update:model-value="set('origin', $event)" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+      <el-select :model-value="modelValue?.origin || ''" @update:model-value="set('origin', $event)" :teleported="false" style="width:100%">
         <el-option v-for="o in originOptions" :key="o" :label="o" :value="o" />
       </el-select>
     </el-form-item>

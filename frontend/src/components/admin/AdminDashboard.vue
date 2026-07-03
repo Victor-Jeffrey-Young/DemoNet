@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { getAdminStats } from '../../api/admin'
 import { TYPE_LIST, getMeta } from '../../constants/types'
+import TypeIcon from '../TypeIcon.vue'
 
 const stats = ref(null)
 const loading = ref(false)

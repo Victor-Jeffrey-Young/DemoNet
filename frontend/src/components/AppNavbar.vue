@@ -83,23 +83,30 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     <!-- Mobile menu -->
     <Transition name="slide">
       <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-800 bg-gray-950/98 backdrop-blur-sm">
-        <div class="px-6 py-4 grid grid-cols-3 gap-2">
+        <div class="px-4 py-4 grid grid-cols-4 sm:grid-cols-5 gap-2">
           <router-link v-for="t in visibleTypes" :key="t" :to="`/list/${t}`"
             @click="mobileMenuOpen = false"
-            class="text-xs text-gray-400 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-lg transition text-center">
-            <TypeIcon :type="t" size="18" />
-            {{ getMeta(t).label }}
+            class="flex flex-col items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-white hover:bg-gray-800/50 py-3 rounded-xl transition">
+            <TypeIcon :type="t" size="22" class="opacity-80" />
+            <span class="font-medium">{{ getMeta(t).label }}</span>
           </router-link>
         </div>
-        <div class="px-6 pb-4 flex items-center gap-3 md:hidden">
-          <router-link to="/search" @click="mobileMenuOpen = false" class="text-xs text-gray-400 hover:text-white transition py-1">🔍 搜索</router-link>
-          <template v-if="!auth.isLoggedIn">
-            <router-link to="/login" @click="mobileMenuOpen = false" class="text-xs text-gray-400 hover:text-white transition py-1 ml-auto">登录</router-link>
-            <router-link to="/register" @click="mobileMenuOpen = false" class="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg">注册</router-link>
-          </template>
-          <template v-else>
-            <router-link to="/profile" @click="mobileMenuOpen = false" class="text-xs text-gray-400 hover:text-white transition py-1 ml-auto">个人中心</router-link>
-          </template>
+        <div class="px-4 pb-4 flex flex-col gap-2">
+          <router-link to="/search" @click="mobileMenuOpen = false" class="flex items-center justify-center gap-2 text-sm text-gray-300 bg-gray-900 hover:bg-gray-800 py-2.5 rounded-xl transition border border-gray-800/50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            搜索全站
+          </router-link>
+          
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <template v-if="!auth.isLoggedIn">
+              <router-link to="/login" @click="mobileMenuOpen = false" class="flex justify-center text-sm text-gray-400 hover:text-white bg-gray-900/50 hover:bg-gray-800 py-2 rounded-xl transition border border-gray-800/30">登录</router-link>
+              <router-link to="/register" @click="mobileMenuOpen = false" class="flex justify-center text-sm bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-xl transition">注册</router-link>
+            </template>
+            <template v-else>
+              <router-link v-if="auth.isAdmin" to="/admin" @click="mobileMenuOpen = false" class="flex justify-center text-sm text-amber-400 hover:text-amber-300 bg-amber-900/20 hover:bg-amber-900/40 py-2 rounded-xl transition font-medium border border-amber-900/30">管理后台</router-link>
+              <router-link to="/profile" @click="mobileMenuOpen = false" class="flex justify-center text-sm text-gray-300 hover:text-white bg-gray-900 hover:bg-gray-800 py-2 rounded-xl transition border border-gray-800/50" :class="auth.isAdmin ? '' : 'col-span-2'">个人中心</router-link>
+            </template>
+          </div>
         </div>
       </div>
     </Transition>

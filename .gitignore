@@ -27,3 +27,5 @@ items.json
 # Explicitly re-exclude compiled files
 backend/target/
 backend/uploads/
+demonet-coffee-plan.md
+fix_images.py

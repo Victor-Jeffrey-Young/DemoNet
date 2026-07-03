@@ -171,16 +171,16 @@ defineExpose({ refresh: loadItems });
                 v-model="searchKeyword"
                 placeholder="搜索..."
                 clearable
-                size="small"
+                
                 style="width: 160px"
             />
             <el-select
                 v-model="filterType"
                 placeholder="品类"
                 clearable
-                size="small"
+                
                 :teleported="false"
-                popper-class="admin-select-drop"
+               
                 style="width: 110px"
                 @change="handleSearch"
             >
@@ -195,9 +195,9 @@ defineExpose({ refresh: loadItems });
                 v-model="filterStatus"
                 placeholder="状态"
                 clearable
-                size="small"
+                
                 :teleported="false"
-                popper-class="admin-select-drop"
+               
                 style="width: 100px"
                 @change="handleSearch"
             >
@@ -236,10 +236,10 @@ defineExpose({ refresh: loadItems });
         <!-- Batch action bar -->
         <div v-if="selectedIds.size > 0" class="flex items-center gap-3 mb-4 p-2 bg-blue-900/30 rounded-lg border border-blue-800/50">
           <span class="text-sm text-blue-300">已选 {{ selectedIds.size }} 项</span>
-          <el-button size="small" type="success" @click="batchStatus(1)">批量上线</el-button>
-          <el-button size="small" type="warning" @click="batchStatus(0)">批量下架</el-button>
-          <el-button size="small" type="danger" @click="batchDelete">批量删除</el-button>
-          <el-button size="small" @click="selectedIds = new Set(); selectAll = false">取消</el-button>
+          <el-button  type="success" @click="batchStatus(1)">批量上线</el-button>
+          <el-button  type="warning" @click="batchStatus(0)">批量下架</el-button>
+          <el-button  type="danger" @click="batchDelete">批量删除</el-button>
+          <el-button  @click="selectedIds = new Set(); selectAll = false">取消</el-button>
         </div>
 
         <!-- Card View -->
@@ -316,12 +316,12 @@ defineExpose({ refresh: loadItems });
                         <el-switch
                             :model-value="item.status === 1"
                             @change="handleStatusChange(item)"
-                            size="small"
+                            
                         />
                         <div class="flex-1" />
                         <el-button
                             type="primary"
-                            size="small"
+                            
                             text
                             @click="handleEdit(item)"
                             >编辑</el-button
@@ -331,7 +331,7 @@ defineExpose({ refresh: loadItems });
                             @confirm="handleDelete(item)"
                         >
                             <template #reference>
-                                <el-button type="danger" size="small" text
+                                <el-button type="danger"  text
                                     >删除</el-button
                                 >
                             </template>
@@ -377,7 +377,7 @@ defineExpose({ refresh: loadItems });
                 />
                 <el-table-column label="品类" width="100">
                     <template #default="{ row }">
-                        <el-tag size="small"
+                        <el-tag 
                             >{{ getMeta(row.type).emoji }}
                             {{ getMeta(row.type).label }}</el-tag
                         >
@@ -388,7 +388,7 @@ defineExpose({ refresh: loadItems });
                     <template #default="{ row }">
                         <el-tag
                             :type="formatStatus(row.status).type"
-                            size="small"
+                            
                             >{{ formatStatus(row.status).text }}</el-tag
                         >
                     </template>
@@ -405,7 +405,7 @@ defineExpose({ refresh: loadItems });
                         <el-switch
                             :model-value="row.status === 1"
                             @change="handleStatusChange(row)"
-                            size="small"
+                            
                         />
                     </template>
                 </el-table-column>
@@ -413,7 +413,7 @@ defineExpose({ refresh: loadItems });
                     <template #default="{ row }">
                         <el-button
                             type="primary"
-                            size="small"
+                            
                             text
                             @click="handleEdit(row)"
                             >编辑</el-button
@@ -423,7 +423,7 @@ defineExpose({ refresh: loadItems });
                             @confirm="handleDelete(row)"
                         >
                             <template #reference>
-                                <el-button type="danger" size="small" text
+                                <el-button type="danger"  text
                                     >删除</el-button
                                 >
                             </template>

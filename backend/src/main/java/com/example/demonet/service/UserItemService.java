@@ -43,7 +43,7 @@ public class UserItemService {
 
     public List<Map<String, Object>> listByUser(Long userId, String status) {
         StringBuilder sql = new StringBuilder(
-                "SELECT ui.id, ui.item_id, ui.status, ui.created_at, i.title, i.slug, i.type " +
+                "SELECT ui.id, ui.item_id, ui.status, ui.created_at, i.title, i.slug, i.type, i.cover_url, i.poster_url " +
                 "FROM user_items ui JOIN items i ON i.id = ui.item_id " +
                 "WHERE ui.user_id = ?");
         List<Object> params = new ArrayList<>();

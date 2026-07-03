@@ -27,5 +27,7 @@ public class DemoNetApplication {
         if (keys != null && !keys.isEmpty()) redisTemplate.delete(keys);
         keys = redisTemplate.keys("recommended*");
         if (keys != null && !keys.isEmpty()) redisTemplate.delete(keys);
+        keys = redisTemplate.keys("visibleTypes*");
+        if (keys != null && !keys.isEmpty()) redisTemplate.delete(keys);
     }
 }

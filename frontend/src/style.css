@@ -43,24 +43,8 @@ body { font-family: 'Inter', sans-serif; }
   color: #fff;
 }
 
-/* Admin form: dark select/input fixes */
-.el-select .el-input__wrapper,
-.el-select .el-input__wrapper.is-focus {
-  background-color: #374151 !important;
-  box-shadow: 0 0 0 1px #4b5563 !important;
-}
-.el-select .el-select__wrapper {
-  background-color: #374151 !important;
-  box-shadow: 0 0 0 1px #4b5563 !important;
-}
-.el-select .el-input__inner {
-  color: #f3f4f6 !important;
-  height: 32px !important;
-}
-.el-select .el-select__caret { color: #9ca3af !important; }
-
-/* Dark theme for multi-select tags */
-.el-select .el-tag--light {
+/* Dark theme for multi-select tags (Restored bright blue styling) */
+.el-select .el-tag {
   --el-tag-bg-color: #1e3a5f;
   --el-tag-border-color: #3b82f6;
   --el-tag-text-color: #93c5fd;
@@ -69,11 +53,3 @@ body { font-family: 'Inter', sans-serif; }
   color: #93c5fd !important;
 }
 
-/* Admin dropdown: center option text */
-.admin-select-drop .el-select-dropdown__item {
-  display: flex !important;
-  align-items: center !important;
-  padding: 0 12px !important;
-  height: 32px !important;
-  color: #e5e7eb !important;
-}
