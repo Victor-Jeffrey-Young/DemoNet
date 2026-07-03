@@ -152,9 +152,9 @@ public class ItemService {
 
     @Cacheable(value = "hotItems", key = "#type + '_' + #limit")
     public List<Item> listHotItems(String type, Integer limit) {
-        String sql = "SELECT * FROM items WHERE status = 1";
-        if (type != null && !type.isBlank()) sql += " AND type = '" + type.replace("'", "''") + "'";
-        sql += " ORDER BY (recommendations + hot_boost) / GREATEST(DATEDIFF(NOW(), created_at), 1) DESC LIMIT " + (limit != null ? limit : 6);
+        String sql = "SELECT i.*, (SELECT COUNT(*) FROM reviews r WHERE r.item_id = i.id AND r.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)) AS recent_reviews FROM items i WHERE i.status = 1";
+        if (type != null && !type.isBlank()) sql += " AND i.type = '" + type.replace("'", "''") + "'";
+        sql += " ORDER BY (LN(i.recommendations + 1) * 100 + i.hot_boost + recent_reviews * 500) / GREATEST(DATEDIFF(NOW(), i.created_at), 1) DESC LIMIT " + (limit != null ? limit : 6);
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             Item item = new Item();
             item.setId(rs.getLong("id"));
