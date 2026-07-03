@@ -131,7 +131,11 @@ public class ItemService {
         // Update fields that may have changed
         if (fresh.getCoverUrl() != null && !fresh.getCoverUrl().isBlank())
             existing.setCoverUrl(fresh.getCoverUrl());
-        if (fresh.getPosterUrl() != null && !fresh.getPosterUrl().isBlank())
+        // Preserve manually-set poster URL (e.g. SteamGridDB, upload) — only overwrite if blank or old CDN auto-generated
+        String existingPoster = existing.getPosterUrl();
+        boolean isAutoPoster = existingPoster == null || existingPoster.isBlank()
+                || existingPoster.contains("/library_600x900") || existingPoster.contains("/header");
+        if (fresh.getPosterUrl() != null && !fresh.getPosterUrl().isBlank() && isAutoPoster)
             existing.setPosterUrl(fresh.getPosterUrl());
         if (fresh.getDescription() != null && !fresh.getDescription().isBlank())
             existing.setDescription(fresh.getDescription());
@@ -148,13 +152,32 @@ public class ItemService {
 
     @Cacheable(value = "hotItems", key = "#type + '_' + #limit")
     public List<Item> listHotItems(String type, Integer limit) {
-        Page<Item> p = new Page<>(1, limit != null ? limit : 6);
-        LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Item::getStatus, 1);
-        filterByType(wrapper, type);
-        wrapper.orderByDesc(Item::getRecommendations);
-        wrapper.orderByDesc(Item::getCreatedAt);
-        return itemMapper.selectPage(p, wrapper).getRecords();
+        String sql = "SELECT * FROM items WHERE status = 1";
+        if (type != null && !type.isBlank()) sql += " AND type = '" + type.replace("'", "''") + "'";
+        sql += " ORDER BY (recommendations + hot_boost) / GREATEST(DATEDIFF(NOW(), created_at), 1) DESC LIMIT " + (limit != null ? limit : 6);
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Item item = new Item();
+            item.setId(rs.getLong("id"));
+            item.setType(rs.getString("type"));
+            item.setTitle(rs.getString("title"));
+            item.setSlug(rs.getString("slug"));
+            item.setCoverUrl(rs.getString("cover_url"));
+            item.setWideCoverUrl(rs.getString("wide_cover_url"));
+            item.setPosterUrl(rs.getString("poster_url"));
+            item.setDescription(rs.getString("description"));
+            item.setInfoJson(rs.getString("info_json"));
+            item.setMediaUrl(rs.getString("media_url"));
+            item.setExternalLink(rs.getString("external_link"));
+            item.setExternalId(rs.getString("external_id"));
+            item.setSource(rs.getString("source"));
+            item.setStatus(rs.getInt("status"));
+            item.setCarouselOrder(rs.getObject("carousel_order") != null ? rs.getInt("carousel_order") : null);
+            item.setRecommendations(rs.getInt("recommendations"));
+            item.setHotBoost(rs.getInt("hot_boost"));
+            item.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null);
+            item.setUpdatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null);
+            return item;
+        });
     }
 
     @Cacheable(value = "featured", key = "#type != null ? #type : 'all'")

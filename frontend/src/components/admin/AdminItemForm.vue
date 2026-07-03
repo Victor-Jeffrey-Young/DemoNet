@@ -45,6 +45,7 @@ function getDefaultForm() {
     mediaUrl: '',
     externalLink: '',
     externalId: '',
+    hotBoost: 0,
     source: 'manual',
     status: 1,
     infoJson: '{}',
@@ -376,6 +377,9 @@ watch(() => form.value.type, () => {
           </el-form-item>
           <el-form-item label="External ID">
             <el-input v-model="form.externalId" placeholder="AppID / TMDB ID" />
+          </el-form-item>
+          <el-form-item label="热门加权">
+            <el-input-number v-model="form.hotBoost" :min="0" :step="50" size="small" style="width:100%" />
           </el-form-item>
         </div>
 

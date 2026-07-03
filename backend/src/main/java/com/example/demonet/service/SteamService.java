@@ -64,9 +64,10 @@ public class SteamService {
         String genres = extractGenres(data);
         String platforms = buildPlatforms(data);
         boolean isFree = Boolean.TRUE.equals(data.get("is_free"));
-        // Steam review count for hot ranking
+        // Steam review count + new-game boost for hot ranking
         int recommendations = extractRecommendations(data);
         item.setRecommendations(recommendations);
+        item.setHotBoost(200);
 
         // Extract screenshots
         String screenshots = extractScreenshots(data);

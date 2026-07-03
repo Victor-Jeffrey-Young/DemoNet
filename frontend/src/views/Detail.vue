@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, nextTick, onUnmounted } from "vue";
+import { Icon } from "@iconify/vue";
 import { useRoute, useRouter } from "vue-router";
 import { getItemBySlug, getHotItems } from "../api/item";
 import { useAuthStore } from "../stores/auth";
@@ -826,8 +827,8 @@ const coffeeFlavors = computed(() => {
                         </div>
 
                         <!-- Steam review count -->
-                        <div v-if="item.type==='game' && item.recommendations > 0" class="mb-4 flex items-center gap-2 text-sm text-gray-400">
-                          <span class="text-amber-400">🔥</span>
+                        <div v-if="item.type==='game' && item.recommendations > 0" class="mb-4 flex items-center gap-2 text-sm">
+                          <Icon icon="ph:fire" width="16" height="16" class="text-amber-400" />
                           <span class="text-gray-500">Steam 好评</span>
                           <span class="text-gray-300 font-semibold">{{ item.recommendations.toLocaleString() }}</span>
                         </div>

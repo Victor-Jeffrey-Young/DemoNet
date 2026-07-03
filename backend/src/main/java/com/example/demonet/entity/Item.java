@@ -29,6 +29,7 @@ public class Item {
     private Integer status;
     private Integer carouselOrder;
     private Integer recommendations;
+    private Integer hotBoost;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
