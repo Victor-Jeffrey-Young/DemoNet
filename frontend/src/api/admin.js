@@ -138,6 +138,14 @@ export function getCategorySettings() {
   return request.get('/admin/categories/settings')
 }
 
+export function batchDeleteItems(ids) {
+  return request.post('/admin/items/batch-delete', { ids })
+}
+
+export function batchUpdateStatus(ids, status) {
+  return request.post('/admin/items/batch-status', { ids, status })
+}
+
 export function updateCategorySettings(settings) {
   return request.put('/admin/categories/settings', settings)
 }

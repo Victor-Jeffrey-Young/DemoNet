@@ -409,7 +409,7 @@ watch(() => form.value.type, () => {
     </div>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
+      <el-button type="danger" @click="handleClose">取消</el-button>
       <el-button type="primary" :loading="loading" @click="handleSubmit">
         {{ isEdit ? '保存修改' : '创建内容' }}
       </el-button>

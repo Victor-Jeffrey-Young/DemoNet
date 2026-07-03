@@ -1,42 +1,33 @@
 <script setup>
 import { computed } from "vue";
-import {
-    Trophy,
-    Film,
-    MagicStick,
-    Goblet,
-    Brush,
-    Reading,
-    Headset,
-    Iphone,
-    CoffeeCup,
-    Compass,
-} from "@element-plus/icons-vue";
+import { Icon } from "@iconify/vue";
 
 const iconMap = {
-    game: Trophy,
-    movie: Film,
-    anime: MagicStick,
-    boardgame: Goblet,
-    model: Brush,
-    book: Reading,
-    music: Headset,
-    digital: Iphone,
-    coffee: CoffeeCup,
-    offline: Compass,
+    game:      "game-icons:gamepad",
+    movie:     "mdi:filmstrip-box-multiple",
+    anime:     "mdi:animation-play",
+    boardgame: "game-icons:dice-six-faces-four",
+    model:     "mdi:puzzle",
+    book:      "mdi:book-open-page-variant",
+    music:     "mdi:music",
+    digital:   "mdi:cellphone",
+    coffee:    "mdi:coffee",
+    offline:   "mdi:map-marker",
 };
 
 const props = defineProps({
     type: { type: String, required: true },
-    size: { type: [String, Number], default: undefined },
+    size: { type: [String, Number], default: 20 },
 });
 
-const iconComponent = computed(() => iconMap[props.type]);
+const iconName = computed(() => iconMap[props.type] || "");
+const iconSize = computed(() => {
+    const s = typeof props.size === 'number' ? props.size : parseInt(props.size);
+    return isNaN(s) ? 20 : s;
+});
 </script>
 
 <template>
-    <el-icon v-if="iconComponent" :size="size">
-        <component :is="iconComponent" />
-    </el-icon>
-    <span v-else class="text-xs text-gray-500">?</span>
+    <Icon v-if="iconName" :icon="iconName" :width="iconSize" :height="iconSize" color="#fff" class="inline-block align-middle" />
+    <span v-else class="text-gray-500" :style="{ fontSize: iconSize + 'px' }">?</span>
 </template>

@@ -11,6 +11,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { TYPE_LIST, getMeta } from "../../constants/types";
 import TypeIcon from "../../components/TypeIcon.vue";
 import AdminItemForm from "./AdminItemForm.vue";
+import { batchDeleteItems, batchUpdateStatus } from "../../api/admin";
 
 const items = ref([]);
 const total = ref(0);
@@ -21,6 +22,9 @@ const searchKeyword = ref("");
 const filterType = ref("");
 const filterStatus = ref(null);
 const viewMode = ref("card");
+
+const selectedIds = ref(new Set());
+const selectAll = ref(false);
 
 const formVisible = ref(false);
 const editingItem = ref(null);
@@ -141,6 +145,21 @@ async function checkQuickEdit() {
         /* item not found */
     }
 }
+// ── Batch selection ──
+function toggleSelect(id) { const s = new Set(selectedIds.value); s.has(id) ? s.delete(id) : s.add(id); selectedIds.value = s; }
+function toggleSelectAll() { selectAll.value = !selectAll.value; selectedIds.value = selectAll.value ? new Set(items.value.map(i => i.id)) : new Set(); }
+async function batchDelete() {
+  try {
+    await ElMessageBox.confirm(`确定删除 ${selectedIds.value.size} 条？`, '批量删除', { type: 'warning' });
+    await batchDeleteItems([...selectedIds.value]); ElMessage.success('已删除'); selectedIds.value = new Set(); selectAll.value = false; loadItems();
+  } catch (e) { if (e !== 'cancel') ElMessage.error('失败') }
+}
+async function batchStatus(status) {
+  try {
+    await batchUpdateStatus([...selectedIds.value], status); ElMessage.success(status === 1 ? '已上线' : '已下架'); selectedIds.value = new Set(); selectAll.value = false; loadItems();
+  } catch (e) { ElMessage.error('失败') }
+}
+function handleSelectionChange(rows) { selectedIds.value = new Set(rows.map(r => r.id)); }
 defineExpose({ refresh: loadItems });
 </script>
 
@@ -212,6 +231,15 @@ defineExpose({ refresh: loadItems });
                 </button>
             </div>
             <el-button type="primary" @click="handleCreate">新增内容</el-button>
+        </div>
+
+        <!-- Batch action bar -->
+        <div v-if="selectedIds.size > 0" class="flex items-center gap-3 mb-4 p-2 bg-blue-900/30 rounded-lg border border-blue-800/50">
+          <span class="text-sm text-blue-300">已选 {{ selectedIds.size }} 项</span>
+          <el-button size="small" type="success" @click="batchStatus(1)">批量上线</el-button>
+          <el-button size="small" type="warning" @click="batchStatus(0)">批量下架</el-button>
+          <el-button size="small" type="danger" @click="batchDelete">批量删除</el-button>
+          <el-button size="small" @click="selectedIds = new Set(); selectAll = false">取消</el-button>
         </div>
 
         <!-- Card View -->
@@ -323,8 +351,8 @@ defineExpose({ refresh: loadItems });
 
         <!-- Table View -->
         <div v-else v-loading="loading">
-            <el-table :data="items" style="width: 100%">
-                <el-table-column prop="id" label="ID" width="60" />
+            <el-table :data="items" style="width: 100%" @selection-change="handleSelectionChange">
+                <el-table-column type="selection" width="40" />
                 <el-table-column label="封面" width="90">
                     <template #default="{ row }">
                         <div

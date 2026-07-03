@@ -2,6 +2,8 @@
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 
+import TypeIcon from '../TypeIcon.vue'
+
 const props = defineProps({ item: { type: Object, required: true } })
 const router = useRouter()
 
@@ -29,7 +31,7 @@ const demoUrl = computed(() => {
     <div v-if="item.posterUrl || item.coverUrl"
       class="card-bg absolute inset-0 bg-cover bg-top transition-transform duration-700"
       :style="{ backgroundImage: 'url(' + (item.posterUrl || item.coverUrl) + ')' }" />
-    <div v-else class="card-bg absolute inset-0 bg-gradient-to-br from-emerald-950 via-gray-950 to-black flex items-center justify-center text-5xl transition-transform duration-700">🎮</div>
+    <div v-else class="card-bg absolute inset-0 bg-gradient-to-br from-emerald-950 via-gray-950 to-black flex items-center justify-center transition-transform duration-700"><TypeIcon type="game" size="40" /></div>
 
     <div v-if="hasDemo" class="absolute top-3 left-3 z-10">
       <span class="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-white font-black tracking-wider shadow-lg shadow-cyan-500/30 animate-pulse">DEMO</span>
@@ -50,7 +52,7 @@ const demoUrl = computed(() => {
         </button>
         <button v-if="hasDemo" @click="tryDemo"
           class="text-xs px-4 py-2.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 hover:bg-emerald-500 hover:text-white text-emerald-300 transition-all font-semibold">
-          🎮 试玩
+          <TypeIcon type="game" size="14" /> 试玩
         </button>
       </div>
     </div>

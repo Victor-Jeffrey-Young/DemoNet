@@ -95,6 +95,25 @@ public class AdminService {
         return item;
     }
 
+    public int batchDelete(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return 0;
+        return itemMapper.deleteByIds(ids);
+    }
+
+    public int batchUpdateStatus(List<Long> ids, Integer status) {
+        if (ids == null || ids.isEmpty()) return 0;
+        int count = 0;
+        for (Long id : ids) {
+            Item item = itemMapper.selectById(id);
+            if (item != null) {
+                item.setStatus(status);
+                itemMapper.updateById(item);
+                count++;
+            }
+        }
+        return count;
+    }
+
     public List<Item> getCarouselItems(String type) {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getType, type);
