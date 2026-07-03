@@ -44,8 +44,8 @@ async function save() {
   try {
     await updateCategorySettings(body)
     ElMessage.success('已保存')
-  } catch {
-    ElMessage.error('保存失败')
+  } catch (e) {
+    ElMessage.error(e.response?.data?.error || e.response?.data?.message || '保存失败')
   }
   saving.value = false
 }

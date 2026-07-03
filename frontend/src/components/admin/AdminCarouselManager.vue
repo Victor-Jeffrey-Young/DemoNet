@@ -34,36 +34,44 @@ async function loadPool() {
 }
 
 async function handleAdd(item) {
-  const ids = [...carouselItems.value.map(i => i.id), item.id]
-  await saveCarouselOrder(activeType.value, ids)
-  await loadCarousel()
-  await loadPool()
-  ElMessage.success(`${item.title} 已加入轮播`)
+  try {
+    const ids = [...carouselItems.value.map(i => i.id), item.id]
+    await saveCarouselOrder(activeType.value, ids)
+    await loadCarousel()
+    await loadPool()
+    ElMessage.success(`${item.title} 已加入轮播`)
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '加入轮播失败') }
 }
 
 async function handleRemove(item) {
-  await removeFromCarousel(activeType.value, item.id)
-  await loadCarousel()
-  await loadPool()
-  ElMessage.success(`${item.title} 已从轮播移除`)
+  try {
+    await removeFromCarousel(activeType.value, item.id)
+    await loadCarousel()
+    await loadPool()
+    ElMessage.success(`${item.title} 已从轮播移除`)
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '移除轮播失败') }
 }
 
 async function handleMoveUp(index) {
   if (index === 0) return
-  const ids = carouselItems.value.map(i => i.id)
-  ;[ids[index - 1], ids[index]] = [ids[index], ids[index - 1]]
-  await saveCarouselOrder(activeType.value, ids)
-  await loadCarousel()
-  ElMessage.success('顺序已更新')
+  try {
+    const ids = carouselItems.value.map(i => i.id)
+    ;[ids[index - 1], ids[index]] = [ids[index], ids[index - 1]]
+    await saveCarouselOrder(activeType.value, ids)
+    await loadCarousel()
+    ElMessage.success('顺序已更新')
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '排序失败') }
 }
 
 async function handleMoveDown(index) {
   if (index === carouselItems.value.length - 1) return
-  const ids = carouselItems.value.map(i => i.id)
-  ;[ids[index], ids[index + 1]] = [ids[index + 1], ids[index]]
-  await saveCarouselOrder(activeType.value, ids)
-  await loadCarousel()
-  ElMessage.success('顺序已更新')
+  try {
+    const ids = carouselItems.value.map(i => i.id)
+    ;[ids[index], ids[index + 1]] = [ids[index + 1], ids[index]]
+    await saveCarouselOrder(activeType.value, ids)
+    await loadCarousel()
+    ElMessage.success('顺序已更新')
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '排序失败') }
 }
 
 function handleTypeChange() {

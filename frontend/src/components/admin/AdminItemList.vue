@@ -81,7 +81,7 @@ async function handleDelete(item) {
         ElMessage.success("已删除");
         await loadItems();
     } catch (e) {
-        if (e !== "cancel") ElMessage.error("删除失败");
+        if (e !== "cancel") ElMessage.error(e.response?.data?.error || e.response?.data?.message || "删除失败");
     }
 }
 
@@ -92,7 +92,7 @@ async function handleStatusChange(item) {
         item.status = newStatus;
         ElMessage.success(newStatus === 1 ? "已上线" : "已下架");
     } catch (e) {
-        ElMessage.error("操作失败");
+        ElMessage.error(e.response?.data?.error || e.response?.data?.message || "操作失败");
     }
 }
 
@@ -152,12 +152,12 @@ async function batchDelete() {
   try {
     await ElMessageBox.confirm(`确定删除 ${selectedIds.value.size} 条？`, '批量删除', { type: 'warning' });
     await batchDeleteItems([...selectedIds.value]); ElMessage.success('已删除'); selectedIds.value = new Set(); selectAll.value = false; loadItems();
-  } catch (e) { if (e !== 'cancel') ElMessage.error('失败') }
+  } catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.error || e.response?.data?.message || '删除失败') }
 }
 async function batchStatus(status) {
   try {
     await batchUpdateStatus([...selectedIds.value], status); ElMessage.success(status === 1 ? '已上线' : '已下架'); selectedIds.value = new Set(); selectAll.value = false; loadItems();
-  } catch (e) { ElMessage.error('失败') }
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '操作失败') }
 }
 function handleSelectionChange(rows) { selectedIds.value = new Set(rows.map(r => r.id)); }
 defineExpose({ refresh: loadItems });

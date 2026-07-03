@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +20,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public Map<String, Object> register(String username, String email, String password) {
+    /** Registers user, returns the created user ID. */
+    public Long register(String username, String email, String password) {
+        // Prohibit reserved usernames (case-insensitive)
+        Set<String> reserved = Set.of("admin", "root", "system", "administrator", "moderator", "owner", "superuser", "guest", "anonymous", "api");
+        if (reserved.contains(username.toLowerCase())) {
+            throw new RuntimeException("该用户名为系统保留字段，请使用其他用户名");
+        }
         if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, username)) > 0) {
             throw new RuntimeException("用户名已存在");
         }
@@ -33,7 +40,11 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole("USER");
         userMapper.insert(user);
+        return user.getId();
+    }
 
+    public Map<String, Object> buildResponse(Long userId) {
+        User user = userMapper.selectById(userId);
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername(), user.getRole());
         return Map.of("token", token, "user", UserDTO.fromEntity(user));
     }

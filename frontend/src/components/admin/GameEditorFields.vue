@@ -130,7 +130,7 @@ function toggleAudio(i) {
           <el-input :model-value="data.release_date || ''" @input="set('release_date', $event)" placeholder="2024-05-06" />
         </el-form-item>
         <el-form-item label="价格" size="small">
-          <el-input :model-value="data.price || ''" @input="set('price', $event)" placeholder="CNY 268.00" />
+          <el-input :model-value="data.free ? 'Free' : (data.price || '')" @input="set('price', $event)" placeholder="CNY 268.00" :disabled="!!data.free" />
         </el-form-item>
         <el-form-item label="类型" size="small">
           <el-input :model-value="data.genre || ''" @input="set('genre', $event)" placeholder="Action, RPG" />
@@ -139,7 +139,7 @@ function toggleAudio(i) {
           <el-input :model-value="data.platform || ''" @input="set('platform', $event)" placeholder="PC, PS5, Xbox" />
         </el-form-item>
         <el-form-item label="免费" size="small">
-          <el-checkbox :model-value="!!data.free" @update:model-value="v => set('free', v)" />
+          <el-checkbox :model-value="!!data.free" @update:model-value="v => { set('free', v); if (v) set('price', 'Free'); else set('price', ''); }" />
         </el-form-item>
         <el-form-item label="试玩版" size="small">
           <el-checkbox :model-value="!!data.demo_available" @update:model-value="v => set('demo_available', v)" />

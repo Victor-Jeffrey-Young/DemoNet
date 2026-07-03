@@ -43,7 +43,7 @@ async function submitReview() {
     ElMessage.success('评论发布成功')
     await fetchReviews()
   } catch (e) {
-    ElMessage.error(e.response?.data?.error || '评论失败')
+    ElMessage.error(e.response?.data?.error || e.response?.data?.message || '评论失败')
   } finally {
     submitting.value = false
   }
@@ -55,7 +55,7 @@ async function removeReview(id) {
     ElMessage.success('已删除')
     await fetchReviews()
   } catch (e) {
-    ElMessage.error(e.response?.data?.error || '删除失败')
+    ElMessage.error(e.response?.data?.error || e.response?.data?.message || '删除失败')
   }
 }
 

@@ -3,24 +3,24 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
+import { ElMessage } from 'element-plus'
+
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
 const username = ref('')
 const password = ref('')
-const error = ref('')
 const loading = ref(false)
 
 async function handleLogin() {
-  error.value = ''
   loading.value = true
   try {
     await auth.login(username.value, password.value)
     const redirect = route.query.redirect || '/'
     router.push(redirect)
   } catch (e) {
-    error.value = e.response?.data?.message || '登录失败'
+    ElMessage.error(e.response?.data?.error || e.response?.data?.message || '登录失败')
   } finally {
     loading.value = false
   }
@@ -31,9 +31,6 @@ async function handleLogin() {
   <div class="min-h-[70vh] flex items-center justify-center px-4">
     <div class="w-full max-w-sm bg-gray-900 rounded-2xl border border-gray-800 p-8">
       <h1 class="text-2xl font-bold text-center mb-6">登录</h1>
-      <div v-if="error" class="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-        {{ error }}
-      </div>
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
           <label class="block text-sm text-gray-400 mb-1">用户名</label>
