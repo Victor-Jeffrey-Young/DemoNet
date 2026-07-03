@@ -98,6 +98,22 @@ onMounted(() => {
 }
 .admin-tabs .el-tabs__active-bar { background-color: #3b82f6; }
 .admin-tabs .el-tabs__nav-wrap::after { background-color: #374151; }
+.admin-tabs .el-tabs__header {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  overflow: visible !important;
+}
+/* Fix Element Plus tab content clipping — visible overflow on all tab containers */
+.admin-tabs .el-tabs__header,
+.admin-tabs .el-tabs__nav-wrap,
+.admin-tabs .el-tabs__nav-scroll,
+.admin-tabs .el-tabs__nav,
+.admin-tabs .el-tabs__content,
+.admin-tabs .el-tab-pane {
+  overflow: visible !important;
+  overflow-x: visible !important;
+}
+.admin-tabs .el-tabs__nav { padding-left: 2px !important; }
 
 /* Table — global overrides for dark readability */
 .admin-tabs .el-table {
