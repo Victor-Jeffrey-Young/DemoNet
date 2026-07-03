@@ -57,7 +57,7 @@ async function handleDelete(tag) {
     ElMessage.success('标签已删除')
     if (tags.value.length === 1 && page.value > 1) page.value--
     await loadTags()
-  } catch (e) { if (e !== 'cancel') ElMessage.error('删除失败') }
+  } catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.error || e.response?.data?.message || '删除失败') }
 }
 
 function handleTagSelection(rows) { tagSelection.value = new Set(rows.map(r => r.id)) }
@@ -67,7 +67,7 @@ async function batchDeleteTags() {
     for (const id of tagSelection.value) await deleteAdminTag(id)
     tagSelection.value = new Set(); await loadTags()
     ElMessage.success('已删除')
-  } catch (e) { if (e !== 'cancel') ElMessage.error('失败') }
+  } catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.error || e.response?.data?.message || '批量删除失败') }
 }
 
 let searchTimer = null

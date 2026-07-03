@@ -39,3 +39,5 @@ app:
   igdb:
     client-id: ${IGDB_CLIENT_ID:}
     client-secret: ${IGDB_CLIENT_SECRET:}
+  steamgriddb:
+    api-key: ${STEAMGRIDDB_API_KEY:}

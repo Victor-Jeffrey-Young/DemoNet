@@ -17,6 +17,7 @@ public class SteamService {
 
     private final RestClient restClient = RestClient.create();
     private final JdbcTemplate jdbcTemplate;
+    private final SteamGridDBService steamGridDBService;
 
     @Value("${app.steam.api-key:}")
     private String apiKey;
@@ -53,7 +54,7 @@ public class SteamService {
         item.setTitle(String.valueOf(data.getOrDefault("name", "Unknown")));
         item.setSlug("steam-" + appId);
         item.setCoverUrl(extractHeaderImage(data));
-        item.setPosterUrl("https://cdn.cloudflare.steamstatic.com/steam/apps/" + appId + "/library_600x900_2x.jpg");
+        item.setPosterUrl(resolvePosterUrl(appId, item.getCoverUrl()));
         item.setDescription(String.valueOf(data.getOrDefault("short_description", "")));
         item.setExternalId(String.valueOf(appId));
         item.setExternalLink("https://store.steampowered.com/app/" + appId + "/");
@@ -122,12 +123,14 @@ public class SteamService {
     /** Backfill poster_url for existing games that have a Steam AppID */
     public int backfillPosterUrls() {
         List<Map<String, Object>> games = jdbcTemplate.queryForList(
-                "SELECT id, external_id FROM items WHERE type='game' AND external_id IS NOT NULL AND (poster_url IS NULL OR poster_url = '')");
+                "SELECT id, external_id, cover_url FROM items WHERE type='game' AND external_id IS NOT NULL AND (poster_url IS NULL OR poster_url = '')");
         int updated = 0;
         for (Map<String, Object> row : games) {
             try {
                 Long id = (Long) row.get("id");
-                String posterUrl = "https://cdn.cloudflare.steamstatic.com/steam/apps/" + row.get("external_id") + "/library_600x900_2x.jpg";
+                Long appId = Long.valueOf(row.get("external_id").toString());
+                String fallback = (String) row.get("cover_url");
+                String posterUrl = resolvePosterUrl(appId, fallback);
                 jdbcTemplate.update("UPDATE items SET poster_url=? WHERE id=?", posterUrl, id);
                 updated++;
             } catch (Exception e) {
@@ -137,7 +140,29 @@ public class SteamService {
         log.info("Backfilled poster_url for {} games", updated);
         return updated;
     }
-private String extractHeaderImage(Map<String, Object> data) {
+
+    /** Resolve vertical poster URL: try 4 CDN variants, then SteamGridDB, fallback to horizontal cover */
+    private String resolvePosterUrl(Long appId, String fallbackUrl) {
+        String[] candidates = {
+            "https://cdn.cloudflare.steamstatic.com/steam/apps/" + appId + "/library_600x900_2x.jpg",
+            "https://cdn.cloudflare.steamstatic.com/steam/apps/" + appId + "/library_600x900.jpg",
+            "https://steamcdn-a.akamaihd.net/steam/apps/" + appId + "/library_600x900_2x.jpg",
+            "https://steamcdn-a.akamaihd.net/steam/apps/" + appId + "/library_600x900.jpg",
+        };
+        for (String url : candidates) {
+            try {
+                int status = restClient.head().uri(url).retrieve().toBodilessEntity().getStatusCode().value();
+                if (status == 200) return url;
+            } catch (Exception ignored) {}
+        }
+        // Try SteamGridDB community covers (600×900 vertical)
+        String sgdbUrl = steamGridDBService.findPosterUrl(appId);
+        if (sgdbUrl != null) return sgdbUrl;
+        // Last resort: horizontal header_image
+        return fallbackUrl != null ? fallbackUrl : "";
+    }
+
+    private String extractHeaderImage(Map<String, Object> data) {
         Object img = data.get("header_image");
         if (img != null && !img.toString().isBlank()) {
             String s = img.toString();

@@ -37,7 +37,7 @@ const loading = ref(false)
 async function handleSteamFetch() {
   const ids = steamIds.value.split(',').map(s => s.trim()).filter(Boolean).map(Number)
   if (!ids.length) { ElMessage.warning('请输入 AppID'); return }
-  try { const r = await triggerSteamFetch(ids, steamTarget.value); ElMessage.success(r.message); steamIds.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerSteamFetch(ids, steamTarget.value); ElMessage.success(r.message); steamIds.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '提交失败') }
 }
 // Steam search
 let steamSearchTimer = null
@@ -52,31 +52,31 @@ function debounceSearchSteam() {
   steamSearchTimer = setTimeout(searchSteam, 400)
 }
 async function fetchSteamResult(game) {
-  try { const r = await triggerSteamFetch([game.id], steamTarget.value); ElMessage.success(r.message || `${game.name} 已加入抓取队列`); setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerSteamFetch([game.id], steamTarget.value); ElMessage.success(r.message || `${game.name} 已加入抓取队列`); setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
 }
 // TMDB Movie
 async function handleTMDBFetch() {
   if (!tmdbQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerTMDBFetch(tmdbQuery.value.trim(), tmdbTarget.value); ElMessage.success(r.message); tmdbQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerTMDBFetch(tmdbQuery.value.trim(), tmdbTarget.value); ElMessage.success(r.message); tmdbQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'TMDB 提交失败') }
 }
 // AniList
 async function handleAniListFetch() {
   if (!aniQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerAniListFetch(aniQuery.value.trim(), aniTarget.value); ElMessage.success(r.message); aniQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerAniListFetch(aniQuery.value.trim(), aniTarget.value); ElMessage.success(r.message); aniQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'AniList 提交失败') }
 }
 // Bangumi
 async function handleBangumiFetch() {
   if (!bangumiQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerBangumiFetch(bangumiQuery.value.trim(), bangumiTarget.value); ElMessage.success(r.message); bangumiQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerBangumiFetch(bangumiQuery.value.trim(), bangumiTarget.value); ElMessage.success(r.message); bangumiQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'Bangumi 提交失败') }
 }
 // TMDB TV
 async function handleTMDBTVFetch() {
   if (!tmdbTVQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerTMDBTVFetch(tmdbTVQuery.value.trim(), tmdbTVTarget.value); ElMessage.success(r.message); tmdbTVQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerTMDBTVFetch(tmdbTVQuery.value.trim(), tmdbTVTarget.value); ElMessage.success(r.message); tmdbTVQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'TMDB TV 提交失败') }
 }
 async function handleItunesFetch() {
   if (!itunesQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value); ElMessage.success(r.message); itunesQuery.value = ''; setTimeout(loadPending, 2000) } catch { ElMessage.error('提交失败') }
+  try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value); ElMessage.success(r.message); itunesQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'iTunes 提交失败') }
 }
 // IGDB
 async function handleIGDBFetch(endpoint) {
@@ -90,7 +90,7 @@ async function handleIGDBFetch(endpoint) {
     ElMessage.success(r.message)
     igdbQuery.value = ''
     setTimeout(loadPending, 2000)
-  } catch { ElMessage.error('提交失败') }
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'IGDB 提交失败') }
 }
 
 async function loadPending() {
@@ -100,11 +100,11 @@ async function loadPending() {
 }
 async function handleApprove(item) {
   try { await ElMessageBox.confirm(`确定通过「${item.title}」？`, '确认上线', { type: 'success' }); await approveItem(item.id); ElMessage.success(`已上线: ${item.title}`); await loadPending() }
-  catch (e) { if (e !== 'cancel') ElMessage.error('操作失败') }
+  catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.error || e.response?.data?.message || '操作失败') }
 }
 async function handleReject(item) {
   try { await ElMessageBox.confirm(`确定拒绝「${item.title}」？`, '确认拒绝', { type: 'warning' }); await rejectItem(item.id); ElMessage.success(`已拒绝: ${item.title}`); await loadPending() }
-  catch (e) { if (e !== 'cancel') ElMessage.error('操作失败') }
+  catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.error || e.response?.data?.message || '拒绝失败') }
 }
 const selectedIds = ref([])
 async function handleBatchReject() {
@@ -113,7 +113,7 @@ async function handleBatchReject() {
   try {
     await ElMessageBox.confirm(`确定批量拒绝 ${ids.length} 条？`, '批量拒绝', { type: 'warning' })
     await rejectBatch(ids); ElMessage.success(`已拒绝 ${ids.length} 条`); selectedIds.value = []; await loadPending()
-  } catch (e) { if (e !== 'cancel') ElMessage.error('操作失败') }
+  } catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.error || e.response?.data?.message || '批量拒绝失败') }
 }
 onMounted(loadPending)
 defineExpose({ refresh: loadPending })

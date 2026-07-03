@@ -149,3 +149,24 @@ export function batchUpdateStatus(ids, status) {
 export function updateCategorySettings(settings) {
   return request.put('/admin/categories/settings', settings)
 }
+
+// ── App Settings (API keys) ──
+export function getAppSettings() {
+  return request.get('/admin/settings')
+}
+export function updateAppSetting(key, value) {
+  return request.put(`/admin/settings/${key}`, { value })
+}
+
+// ── SteamGridDB fetch ──
+export function fetchSgdbPoster(id) {
+  return request.post(`/admin/items/${id}/fetch-sgdb-poster`)
+}
+
+// ── Invite codes ──
+export function getInviteCodes() {
+  return request.get('/admin/invite-codes')
+}
+export function generateInviteCodes(count) {
+  return request.post('/admin/invite-codes/generate', { count })
+}

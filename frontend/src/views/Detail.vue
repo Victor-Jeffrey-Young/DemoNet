@@ -273,8 +273,8 @@ const infoFields = computed(() => {
             ["发行日期", i.release_date],
             ["类型", i.genre],
             ["平台", i.platform],
-            ["价格", i.price],
-        ],
+            ["价格", i.free ? "Free" : i.price],
+        ].filter(f => f[1] != null && f[1] !== ''),
         movie: [
             ["导演", i.director],
             ["年份", i.year],

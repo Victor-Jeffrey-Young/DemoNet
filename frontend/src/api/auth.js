@@ -4,8 +4,8 @@ export function loginApi(username, password) {
   return request.post('/auth/login', { username, password })
 }
 
-export function registerApi(username, email, password) {
-  return request.post('/auth/register', { username, email, password })
+export function registerApi(username, email, password, turnstileToken, inviteCode) {
+  return request.post('/auth/register', { username, email, password, turnstileToken, inviteCode })
 }
 
 export function getMe() {

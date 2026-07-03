@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { createItem, updateItem, uploadImage, associateItemTags, getAdminItem } from '../../api/admin'
+import { fetchSgdbPoster } from '../../api/admin'
 import { ElMessage } from 'element-plus'
 import { TYPE_LIST, getMeta } from '../../constants/types'
 import GameEditorFields from './GameEditorFields.vue'
@@ -221,6 +222,22 @@ async function handleUpload(event, field) {
   }
 }
 
+async function handleFetchSgdbPoster() {
+  if (!currentId.value) { ElMessage.warning('请先保存内容'); return }
+  try {
+    const res = await fetchSgdbPoster(currentId.value)
+    if (res.success) {
+      form.value.posterUrl = res.posterUrl
+      ElMessage.success(res.message || '封面已拉取')
+    } else {
+      ElMessage.warning(res.message || '未找到封面')
+    }
+  } catch (e) {
+    const msg = e.response?.data?.message || e.response?.data?.error || '网络错误，请重试'
+    ElMessage.error(msg)
+  }
+}
+
 async function handleSubmit() {
   if (!form.value.title || !form.value.slug) {
     ElMessage.warning('标题和 slug 为必填项')
@@ -381,9 +398,12 @@ watch(() => form.value.type, () => {
           </el-form-item>
           <el-form-item label="竖版海报">
             <el-input v-model="form.posterUrl" placeholder="https://... 或上传" size="small" />
-            <label class="el-button el-button--small el-button--default cursor-pointer mt-1" style="width:100%">上传
-              <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'posterUrl')" />
-            </label>
+            <div class="flex gap-1 mt-1">
+              <label class="el-button el-button--small el-button--default cursor-pointer flex-1">上传
+                <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'posterUrl')" />
+              </label>
+              <button type="button" class="el-button el-button--small el-button--primary flex-1" @click="handleFetchSgdbPoster">SGDB 拉取</button>
+            </div>
             <img v-if="form.posterUrl" :src="form.posterUrl" class="w-full object-cover rounded mt-1 border border-gray-600" style="aspect-ratio: 2/3" />
           </el-form-item>
         </div>

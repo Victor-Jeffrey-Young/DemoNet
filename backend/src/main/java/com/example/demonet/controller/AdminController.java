@@ -9,6 +9,7 @@ import com.example.demonet.entity.Tag;
 import com.example.demonet.mapper.ItemMapper;
 import com.example.demonet.service.AdminService;
 import com.example.demonet.service.SteamService;
+import com.example.demonet.service.SteamGridDBService;
 import com.example.demonet.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -46,6 +47,7 @@ public class AdminController {
     private final TagService tagService;
     private final JdbcTemplate jdbcTemplate;
     private final SteamService steamService;
+    private final SteamGridDBService steamGridDBService;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -450,5 +452,66 @@ public class AdminController {
     public Map<String, String> rejectBatch(@RequestBody List<Long> ids) {
         itemMapper.deleteBatchIds(ids);
         return Map.of("message", "已批量拒绝 " + ids.size() + " 条");
+    }
+
+    // ========== App Settings (API keys) ==========
+
+    @GetMapping("/settings")
+    public Map<String, Object> getAllSettings() {
+        var rows = jdbcTemplate.queryForList("SELECT setting_key, setting_value FROM app_settings");
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (var row : rows) result.put((String) row.get("setting_key"), row.get("setting_value"));
+        // Ensure all known keys exist with defaults
+        for (String key : List.of("STEAMGRIDDB_API_KEY", "STEAM_API_KEY", "TMDB_API_KEY", "IGDB_CLIENT_ID", "IGDB_CLIENT_SECRET",
+                "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "INVITE_ONLY")) {
+            result.putIfAbsent(key, "");
+        }
+        return result;
+    }
+
+    @PutMapping("/settings/{key}")
+    public void updateSetting(@PathVariable String key, @RequestBody Map<String, String> body) {
+        String value = body.getOrDefault("value", "");
+        jdbcTemplate.update(
+            "INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?",
+            key, value, value);
+    }
+
+    // ========== SteamGridDB poster fetch ==========
+
+    @PostMapping("/items/{id}/fetch-sgdb-poster")
+    public Map<String, Object> fetchSgdbPoster(@PathVariable Long id) {
+        Item item = itemMapper.selectById(id);
+        if (item == null) return Map.of("success", false, "message", "内容不存在");
+        String extId = item.getExternalId();
+        if (extId == null || extId.isBlank()) return Map.of("success", false, "message", "该内容没有 Steam AppID，无法拉取封面");
+        Long appId;
+        try { appId = Long.valueOf(extId); } catch (NumberFormatException e) { return Map.of("success", false, "message", "External ID 不是有效的 Steam AppID"); }
+        // Check if API key is configured
+        String posterUrl = steamGridDBService.findPosterUrl(appId);
+        if (posterUrl == null) return Map.of("success", false, "message", "未找到封面（请确认已配置 SteamGridDB API Key 且该游戏有竖版封面）");
+        item.setPosterUrl(posterUrl);
+        itemMapper.updateById(item);
+        return Map.of("success", true, "posterUrl", posterUrl, "message", "封面已更新");
+    }
+
+    // ========== Invite codes ==========
+
+    @GetMapping("/invite-codes")
+    public List<Map<String, Object>> listInviteCodes() {
+        return jdbcTemplate.queryForList(
+            "SELECT ic.*, u.username as used_by_name FROM invite_codes ic LEFT JOIN users u ON ic.used_by = u.id ORDER BY ic.created_at DESC");
+    }
+
+    @PostMapping("/invite-codes/generate")
+    public Map<String, Object> generateInviteCodes(@RequestBody Map<String, Integer> body) {
+        int count = body.getOrDefault("count", 1);
+        List<String> codes = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            jdbcTemplate.update("INSERT INTO invite_codes (code) VALUES (?)", code);
+            codes.add(code);
+        }
+        return Map.of("codes", codes, "message", "已生成 " + count + " 个邀请码");
     }
 }

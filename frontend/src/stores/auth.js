@@ -17,8 +17,8 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  async function register(username, email, password) {
-    const data = await registerApi(username, email, password)
+  async function register(username, email, password, turnstileToken, inviteCode) {
+    const data = await registerApi(username, email, password, turnstileToken, inviteCode)
     token.value = data.token
     user.value = data.user
     localStorage.setItem('token', data.token)

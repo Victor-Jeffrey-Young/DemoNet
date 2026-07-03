@@ -24,7 +24,7 @@ async function uploadRuleImages(event) {
       const res = await uploadImage(props.itemId, fd)
       urls.push(res.url)
     } catch (e) {
-      ElMessage.error(`上传 ${file.name} 失败: ` + (e.response?.data?.error || '未知错误'))
+      ElMessage.error(`上传 ${file.name} 失败: ` + (e.response?.data?.error || e.response?.data?.message || '未知错误'))
     }
   }
   set('rule_images', urls.join(','))
