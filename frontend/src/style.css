@@ -54,3 +54,12 @@ body { font-family: 'Inter', sans-serif; }
   height: 32px !important;
 }
 .el-select .el-select__caret { color: #9ca3af !important; }
+
+/* Admin dropdown: center option text */
+.admin-select-drop .el-select-dropdown__item {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  height: 32px !important;
+  color: #e5e7eb !important;
+}

@@ -168,7 +168,7 @@ defineExpose({ refresh: loadItems });
                 <el-option
                     v-for="t in TYPE_LIST"
                     :key="t"
-                    :label="getMeta(t).emoji + ' ' + getMeta(t).label"
+                    :label="getMeta(t).label"
                     :value="t"
                 />
             </el-select>

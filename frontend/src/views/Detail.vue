@@ -8,7 +8,7 @@ import AppCard from "../components/AppCard.vue";
 import ReviewSection from "../components/ReviewSection.vue";
 import AdminItemForm from "../components/admin/AdminItemForm.vue";
 import TypeIcon from "../components/TypeIcon.vue";
-import { ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
+import { ArrowLeft, ArrowRight, Edit } from "@element-plus/icons-vue";
 import { getMeta } from "../constants/types";
 import * as echarts from "echarts/dist/echarts.esm.js";
 
@@ -521,19 +521,26 @@ const coffeeFlavors = computed(() => {
                 加载中...
             </div>
             <template v-else-if="item">
-                <button
-                    @click="goBack"
-                    class="text-gray-400 hover:text-white text-sm mb-6 transition"
-                >
-                    ← 返回
+            <div class="flex items-center gap-3 mb-6">
+                <button @click="goBack" class="text-gray-400 hover:text-white text-sm transition shrink-0">← 返回</button>
+
+                <!-- Video source switches -->
+                <div v-if="videoSources.length > 1 && !readerUrl && !isMusic" class="flex items-center gap-1">
+                    <button v-for="src in videoSources" :key="src.key" @click="switchVideo(src.url)"
+                        :class="activeVideoUrl === src.url
+                            ? 'bg-white/15 text-white ring-1 ring-white/20'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'"
+                        class="text-[11px] px-2.5 py-1 rounded-md transition-all">
+                        {{ src.key === 'youtube' ? 'YT' : src.key === 'bilibili' ? 'B站' : src.key === 'steam' ? 'Steam' : src.key }}
+                    </button>
+                </div>
+
+                <div class="flex-1" />
+                <button v-if="auth.isAdmin" @click="editItem"
+                    class="text-gray-500 hover:text-indigo-400 text-sm transition inline-flex items-center gap-1 shrink-0">
+                    <el-icon :size="14"><Edit /></el-icon> 编辑
                 </button>
-                <button
-                    v-if="auth.isAdmin"
-                    @click="editItem"
-                    class="text-gray-500 hover:text-indigo-400 text-sm mb-6 ml-4 transition"
-                >
-                    ✏️ 编辑
-                </button>
+            </div>
 
                 <div
                     class="bg-gray-900 rounded-2xl border border-gray-800 overflow-visible"
@@ -671,28 +678,6 @@ const coffeeFlavors = computed(() => {
                         </div>
                         <!-- Empty state -->
                         <span v-else><TypeIcon :type="item.type" size="28" /></span>
-                        <div
-                            v-if="
-                                videoSources.length > 1 &&
-                                !readerUrl &&
-                                !isMusic
-                            "
-                            class="absolute top-3 left-3 flex gap-1 z-10"
-                        >
-                            <button
-                                v-for="src in videoSources"
-                                :key="src.key"
-                                @click="switchVideo(src.url)"
-                                :class="
-                                    activeVideoUrl === src.url
-                                        ? 'bg-white/20 text-white'
-                                        : 'bg-black/40 text-white/60 hover:bg-black/60'
-                                "
-                                class="text-[10px] px-2 py-1 rounded backdrop-blur-sm transition"
-                            >
-                                {{ src.key === "youtube" ? "YT" : src.key === "bilibili" ? "B站" : src.key === "steam" ? "Steam" : src.key }}
-                            </button>
-                        </div>
                     </div>
 
                     <!-- Steam Screenshot Gallery -->
@@ -1179,7 +1164,7 @@ const coffeeFlavors = computed(() => {
                     </div>
                 </section>
 
-                <section v-if="item.id" class="mt-16 max-w-5xl mx-auto px-6">
+                <section v-if="item.id" class="mt-16">
                     <ReviewSection :item-id="item.id" />
                 </section>
             </template>

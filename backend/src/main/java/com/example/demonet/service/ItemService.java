@@ -13,8 +13,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -86,6 +89,38 @@ public class ItemService {
         itemMapper.deleteById(id);
     }
 
+    /** Merge fresh API infoJson into existing, keeping manual fields */
+    @SuppressWarnings("unchecked")
+    private String mergeInfoJson(String existingJson, String freshJson) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> e = mapper.readValue(
+                    existingJson != null && !existingJson.isBlank() ? existingJson : "{}", Map.class);
+            Map<String, Object> f = mapper.readValue(
+                    freshJson != null && !freshJson.isBlank() ? freshJson : "{}", Map.class);
+
+            String[] apiFields = {"developer","publisher","genre","platform","price",
+                    "release_date","languages","screenshots","dlc","features",
+                    "min_requirements","rec_requirements","free","is_dlc"};
+            for (String field : apiFields) {
+                if (f.containsKey(field)) e.put(field, f.get(field));
+            }
+
+            // videos: only update steam, keep youtube/bilibili
+            Map<String, Object> fv = (Map<String, Object>) f.get("videos");
+            Map<String, Object> ev = (Map<String, Object>) e.get("videos");
+            if (ev == null) ev = new java.util.LinkedHashMap<>();
+            if (fv != null && fv.get("steam") != null) ev.put("steam", fv.get("steam"));
+            ev.putIfAbsent("youtube", "");
+            ev.putIfAbsent("bilibili", "");
+            e.put("videos", ev);
+
+            return mapper.writeValueAsString(e);
+        } catch (Exception ex) {
+            return freshJson != null ? freshJson : existingJson;
+        }
+    }
+
     /** Update an existing item by slug (for re-fetch from external sources) */
     @CacheEvict(value = {"hotItems", "featured", "recommended"}, allEntries = true)
     public void updateBySlug(Item fresh) {
@@ -100,10 +135,11 @@ public class ItemService {
             existing.setPosterUrl(fresh.getPosterUrl());
         if (fresh.getDescription() != null && !fresh.getDescription().isBlank())
             existing.setDescription(fresh.getDescription());
-        if (fresh.getInfoJson() != null && !fresh.getInfoJson().isBlank())
-            existing.setInfoJson(fresh.getInfoJson());
         if (fresh.getExternalLink() != null && !fresh.getExternalLink().isBlank())
             existing.setExternalLink(fresh.getExternalLink());
+
+        // Merge infoJson: keep manual fields (YouTube, B站, demo_url etc) and only update API fields
+        existing.setInfoJson(mergeInfoJson(existing.getInfoJson(), fresh.getInfoJson()));
         existing.setStatus(0); // Re-queue for approval
         itemMapper.updateById(existing);
     }
