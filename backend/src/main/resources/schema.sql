@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS items (
     source VARCHAR(30) DEFAULT 'manual' COMMENT 'manual, steam, tmdb, itch',
     status TINYINT DEFAULT 1 COMMENT '1-online 0-offline',
     carousel_order INT NULL COMMENT 'NULL=not in carousel, 0,1,2...=display order',
+    recommendations INT DEFAULT 0 COMMENT 'Steam review count for hot ranking',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_type (type),

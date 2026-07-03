@@ -28,6 +28,7 @@ public class Item {
     private String source;
     private Integer status;
     private Integer carouselOrder;
+    private Integer recommendations;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -95,6 +95,7 @@ const info = computed(() => {
     }
 });
 const hasDemo = computed(() => !!info.value.demo_url);
+const hasBenchmark = computed(() => !!info.value.benchmark_url);
 const currentStatusLabel = computed(
     () => statusOptions.find((s) => s.key === myStatus.value)?.label || "收藏",
 );
@@ -269,11 +270,12 @@ const infoFields = computed(() => {
     const i = info.value;
     const map = {
         game: [
-            ["开发商", i.developer],
+            ["开发商", i.developer || i.publisher],
+            ["发行商", i.publisher && i.publisher !== (i.developer || i.publisher) ? i.publisher : null],
             ["发行日期", i.release_date],
             ["类型", i.genre],
             ["平台", i.platform],
-            ["价格", i.free ? "Free" : i.price],
+            ["价格", i.demo_available ? "Demo 阶段暂不收费" : i.free ? "Free" : i.price],
         ].filter(f => f[1] != null && f[1] !== ''),
         movie: [
             ["导演", i.director],
@@ -823,10 +825,17 @@ const coffeeFlavors = computed(() => {
                             </div>
                         </div>
 
-                        <!-- External link: all types -->
-                        <div v-if="item.externalLink" class="flex gap-3 mb-6">
+                        <!-- Steam review count -->
+                        <div v-if="item.type==='game' && item.recommendations > 0" class="mb-4 flex items-center gap-2 text-sm text-gray-400">
+                          <span class="text-amber-400">🔥</span>
+                          <span class="text-gray-500">Steam 好评</span>
+                          <span class="text-gray-300 font-semibold">{{ item.recommendations.toLocaleString() }}</span>
+                        </div>
+
+                        <!-- Action buttons: external link + demo + benchmark -->
+                        <div v-if="item.externalLink || (item.type==='game' && hasDemo) || (item.type==='game' && hasBenchmark)" class="flex gap-3 mb-6">
                             <a
-                                v-if="isMusic"
+                                v-if="item.externalLink && isMusic"
                                 :href="item.externalLink"
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-fuchsia-900/20"
@@ -834,26 +843,28 @@ const coffeeFlavors = computed(() => {
                                 <TypeIcon :type="item.type" size="16" /> 在 Apple Music 中打开
                             </a>
                             <a
-                                v-else
+                                v-if="item.externalLink && !isMusic"
                                 :href="item.externalLink"
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white text-sm transition-all"
                             >
                                 <TypeIcon :type="item.type" size="16" /> 了解更多 →
                             </a>
-                        </div>
-
-                        <div
-                            v-if="item.type==='game' && hasDemo"
-                            class="flex gap-3 mb-6"
-                        >
                             <a
-                                v-if="hasDemo"
+                                v-if="item.type==='game' && hasDemo"
                                 :href="info.demo_url"
                                 target="_blank"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-emerald-900/20"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-emerald-600 hover:bg-emerald-600 text-emerald-400 hover:text-white text-sm transition-all"
                             >
                                 <TypeIcon :type="item.type" size="16" /> 免费试玩
+                            </a>
+                            <a
+                                v-if="item.type==='game' && hasBenchmark"
+                                :href="info.benchmark_url"
+                                target="_blank"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white text-sm transition-all"
+                            >
+                                <TypeIcon :type="item.type" size="16" /> 性能测试
                             </a>
                         </div>
 

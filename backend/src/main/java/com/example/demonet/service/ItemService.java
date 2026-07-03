@@ -141,6 +141,8 @@ public class ItemService {
         // Merge infoJson: keep manual fields (YouTube, B站, demo_url etc) and only update API fields
         existing.setInfoJson(mergeInfoJson(existing.getInfoJson(), fresh.getInfoJson()));
         existing.setStatus(0); // Re-queue for approval
+        if (fresh.getRecommendations() != null && fresh.getRecommendations() > 0)
+            existing.setRecommendations(fresh.getRecommendations());
         itemMapper.updateById(existing);
     }
 
@@ -150,6 +152,7 @@ public class ItemService {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Item::getStatus, 1);
         filterByType(wrapper, type);
+        wrapper.orderByDesc(Item::getRecommendations);
         wrapper.orderByDesc(Item::getCreatedAt);
         return itemMapper.selectPage(p, wrapper).getRecords();
     }
