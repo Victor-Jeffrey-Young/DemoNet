@@ -8,6 +8,7 @@ import AdminTagManager from '../components/admin/AdminTagManager.vue'
 import AdminCarouselManager from '../components/admin/AdminCarouselManager.vue'
 import AdminFetchPanel from '../components/admin/AdminFetchPanel.vue'
 import AdminCategoryManager from '../components/admin/AdminCategoryManager.vue'
+import AdminUserManager from '../components/admin/AdminUserManager.vue'
 import { getAppSettings, updateAppSetting, getInviteCodes, generateInviteCodes } from '../api/admin'
 import { ElMessage } from 'element-plus'
 
@@ -48,6 +49,7 @@ const itemListRef = ref(null)
 const tagManagerRef = ref(null)
 const carouselRef = ref(null)
 const fetchPanelRef = ref(null)
+const userManagerRef = ref(null)
 
 function handleTabChange(tab) {
   switch (tab) {
@@ -56,6 +58,7 @@ function handleTabChange(tab) {
     case 'tags': tagManagerRef.value?.refresh(); break
     case 'carousel': carouselRef.value?.refresh(); break
     case 'fetch': fetchPanelRef.value?.refresh(); break
+    case 'users': userManagerRef.value?.refresh(); break
     case 'settings': loadSettings(); loadInviteCodes(); break
   }
 }
@@ -102,6 +105,9 @@ onMounted(() => {
         </el-tab-pane>
         <el-tab-pane label="频道管理" name="categories">
           <AdminCategoryManager />
+        </el-tab-pane>
+        <el-tab-pane label="用户管理" name="users">
+          <AdminUserManager ref="userManagerRef" />
         </el-tab-pane>
         <el-tab-pane label="API 设置" name="settings">
           <div v-loading="settingsLoading" class="max-w-2xl">

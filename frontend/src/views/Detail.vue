@@ -276,7 +276,7 @@ const infoFields = computed(() => {
             ["发行日期", i.release_date],
             ["类型", i.genre],
             ["平台", i.platform],
-            ["价格", i.demo_available ? "Demo 阶段暂不收费" : i.free ? "Free" : i.price],
+            ["价格", i.demo_available ? (i.price != null ? i.price : "Demo 阶段暂不收费") : i.free ? "Free" : i.price],
         ].filter(f => f[1] != null && f[1] !== ''),
         movie: [
             ["导演", i.director],
@@ -386,16 +386,16 @@ const ssLightboxUrl = computed(() => ssLightbox.value != null ? screenshots.valu
 // Keyboard nav for screenshot lightbox
 function ssPrev() { if (ssLightbox.value > 0) ssLightbox.value--; }
 function ssNext() { if (ssLightbox.value < screenshots.value.length - 1) ssLightbox.value++; }
+const ssKeyHandler = (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); ssPrev() }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); ssNext() }
+    else if (e.key === 'Escape') { ssLightbox.value = null }
+}
 watch(ssLightbox, (val) => {
     if (val != null) {
-        const handler = (e) => {
-            if (e.key === 'ArrowLeft') { e.preventDefault(); ssPrev() }
-            else if (e.key === 'ArrowRight') { e.preventDefault(); ssNext() }
-            else if (e.key === 'Escape') { ssLightbox.value = null }
-        }
-        window.addEventListener('keydown', handler)
-        // clean up on close
-        const unwatch = watch(ssLightbox, (newVal) => { if (newVal == null) { window.removeEventListener('keydown', handler); unwatch() } })
+        window.addEventListener('keydown', ssKeyHandler)
+    } else {
+        window.removeEventListener('keydown', ssKeyHandler)
     }
 })
 

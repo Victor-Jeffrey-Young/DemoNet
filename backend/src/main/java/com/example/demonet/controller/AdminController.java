@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.cache.annotation.CacheEvict;
@@ -48,6 +49,7 @@ public class AdminController {
     private final JdbcTemplate jdbcTemplate;
     private final SteamService steamService;
     private final SteamGridDBService steamGridDBService;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -513,5 +515,31 @@ public class AdminController {
             codes.add(code);
         }
         return Map.of("codes", codes, "message", "已生成 " + count + " 个邀请码");
+    }
+
+    // ========== User management ==========
+
+    @GetMapping("/users")
+    public List<Map<String, Object>> listUsers() {
+        return jdbcTemplate.queryForList(
+            "SELECT id, username, email, role, enabled, created_at FROM users ORDER BY created_at DESC");
+    }
+
+    @PutMapping("/users/{id}/ban")
+    public void toggleBan(@PathVariable Long id, @RequestBody Map<String, Integer> body, Authentication auth) {
+        Long currentUserId = (Long) auth.getPrincipal();
+        if (id.equals(currentUserId)) throw new RuntimeException("不能封禁自己");
+        String role = jdbcTemplate.queryForObject("SELECT role FROM users WHERE id=?", String.class, id);
+        if ("ADMIN".equals(role)) throw new RuntimeException("不能封禁管理员");
+        int enabled = body.getOrDefault("enabled", 1);
+        jdbcTemplate.update("UPDATE users SET enabled=? WHERE id=?", enabled, id);
+    }
+
+    @PutMapping("/users/{id}/reset-password")
+    public Map<String, String> resetPassword(@PathVariable Long id) {
+        String newPassword = UUID.randomUUID().toString().substring(0, 10);
+        String hash = passwordEncoder.encode(newPassword);
+        jdbcTemplate.update("UPDATE users SET password_hash=? WHERE id=?", hash, id);
+        return Map.of("password", newPassword);
     }
 }
