@@ -39,6 +39,7 @@ public class AuthService {
         user.setEmail(finalEmail);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole("USER");
+        user.setEnabled(1);
         userMapper.insert(user);
         return user.getId();
     }
@@ -54,6 +55,9 @@ public class AuthService {
                 new LambdaQueryWrapper<User>().eq(User::getUsername, username));
         if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new RuntimeException("用户名或密码错误");
+        }
+        if (user.getEnabled() != null && user.getEnabled() == 0) {
+            throw new RuntimeException("账号已被封禁，请联系管理员");
         }
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername(), user.getRole());
         return Map.of("token", token, "user", UserDTO.fromEntity(user));

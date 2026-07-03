@@ -32,6 +32,7 @@ const form = ref(getDefaultForm())
 const selectedTagIds = ref([])
 const itemTags = ref([])
 const currentId = ref(null)
+const filteredTags = ref(null)
 
 function getDefaultForm() {
   return {
@@ -414,8 +415,8 @@ watch(() => form.value.type, () => {
 
         <!-- ===== 标签 ===== -->
         <el-form-item label="标签">
-          <el-select v-model="selectedTagIds" multiple filterable placeholder="选择标签" :teleported="false" popper-class="admin-select-drop" style="width:100%">
-            <el-option v-for="tag in allTags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          <el-select v-model="selectedTagIds" multiple filterable :filter-method="(q) => filteredTags = allTags.filter(t => t.name.includes(q))" placeholder="搜索或选择标签" :teleported="false" popper-class="admin-select-drop" style="width:100%">
+            <el-option v-for="tag in (filteredTags || allTags)" :key="tag.id" :label="tag.name" :value="tag.id" />
           </el-select>
         </el-form-item>
 
@@ -464,6 +465,14 @@ watch(() => form.value.type, () => {
 }
 .el-select .el-input__inner { color: #f3f4f6 !important; }
 .el-select .el-select__caret { color: #9ca3af !important; }
+/* Fix filterable select search input in dropdown */
+.el-select-dropdown .el-select-dropdown__item { color: #e5e7eb; }
+.el-select-dropdown__wrap { padding: 4px; }
+.el-select-dropdown__search .el-input__wrapper {
+  background-color: #374151 !important;
+  box-shadow: 0 0 0 1px #4b5563 !important;
+}
+.el-select-dropdown__search .el-input__inner { color: #f3f4f6 !important; }
 .el-button--default {
   --el-button-bg-color: #374151; --el-button-border-color: #4b5563; --el-button-text-color: #d1d5db;
 }

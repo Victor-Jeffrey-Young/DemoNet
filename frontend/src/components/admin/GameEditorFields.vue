@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { uploadImage } from '../../api/admin'
+import { ElMessage } from 'element-plus'
 import TypeIcon from '../TypeIcon.vue'
 
-const props = defineProps({ modelValue: Object })
+const props = defineProps({ modelValue: Object, itemId: Number })
 const emit = defineEmits(['update:modelValue'])
 
 const data = computed(() => props.modelValue || {})
@@ -61,6 +63,16 @@ function updateScreenshot(idx, val) {
   ss[idx] = val
   set('screenshots', ss)
 }
+async function uploadScreenshot(idx, event) {
+  const file = event.target.files[0]
+  if (!file || !props.itemId) { ElMessage.warning('请先保存内容后再上传截图'); return }
+  const fd = new FormData(); fd.append('file', file); fd.append('type', 'cover')
+  try {
+    const res = await uploadImage(props.itemId, fd)
+    updateScreenshot(idx, res.url)
+    ElMessage.success('上传成功')
+  } catch (e) { ElMessage.error(e.response?.data?.error || '上传失败') }
+}
 
 // ---- DLC ----
 const dlcList = computed(() => {
@@ -89,7 +101,7 @@ const langList = computed(() => {
   const raw = data.value.languages || ''
   return raw.split(',').map(s => s.trim())
 })
-function addLang() { 
+function addLang() {
   const current = data.value.languages || ''
   set('languages', current + (current && !current.endsWith(',') ? ', ' : '') + '新语言')
 }
@@ -130,7 +142,7 @@ function toggleAudio(i) {
           <el-input :model-value="data.release_date || ''" @input="set('release_date', $event)" placeholder="2024-05-06" />
         </el-form-item>
         <el-form-item label="价格" size="small">
-          <el-input :model-value="data.free ? 'Free' : (data.price || '')" @input="set('price', $event)" placeholder="CNY 268.00" :disabled="!!data.free" />
+          <el-input :model-value="data.demo_available ? (data.price != null ? data.price : 'Demo 阶段暂不收费') : data.free ? 'Free' : (data.price || '')" @input="set('price', $event)" placeholder="CNY 268.00" :disabled="!!data.free" />
         </el-form-item>
         <el-form-item label="类型" size="small">
           <el-input :model-value="data.genre || ''" @input="set('genre', $event)" placeholder="Action, RPG" />
@@ -184,7 +196,10 @@ function toggleAudio(i) {
         <div v-for="(ss, i) in data.screenshots" :key="i" class="flex items-start gap-2">
           <img v-if="ss" :src="ss" class="w-16 h-10 object-cover rounded border border-gray-600 shrink-0" />
           <span v-else class="w-16 h-10 bg-gray-700 rounded border border-gray-600 shrink-0 flex items-center justify-center text-gray-500 text-xs">无图</span>
-          <el-input :model-value="ss" @input="updateScreenshot(i, $event)" placeholder="https://...jpg" size="small" class="flex-1" />
+          <el-input :model-value="ss" @input="updateScreenshot(i, $event)" placeholder="https://...jpg 或上传" size="small" class="flex-1" />
+          <label class="el-button el-button--small el-button--default cursor-pointer shrink-0">本地上传
+            <input type="file" accept="image/*,.webp" class="hidden" @change="uploadScreenshot(i, $event)" />
+          </label>
           <el-button size="small" type="danger" @click="removeScreenshot(i)" plain>×</el-button>
         </div>
       </div>

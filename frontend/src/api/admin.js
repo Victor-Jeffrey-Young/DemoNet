@@ -170,3 +170,14 @@ export function getInviteCodes() {
 export function generateInviteCodes(count) {
   return request.post('/admin/invite-codes/generate', { count })
 }
+
+// ── User management ──
+export function getAdminUsers() {
+  return request.get('/admin/users')
+}
+export function toggleUserBan(id, enabled) {
+  return request.put(`/admin/users/${id}/ban`, { enabled })
+}
+export function resetUserPassword(id) {
+  return request.put(`/admin/users/${id}/reset-password`)
+}
