@@ -5,32 +5,21 @@
     // 1. Docker 基础设施（MySQL / Redis / RabbitMQ）
     // =========================================================
     {
-      "label": "🐳 Docker: 启动基础设施",
+      "label": "🐳 Docker: 启动",
       "type": "shell",
       "command": "docker compose up -d && echo '等待 MySQL 就绪...' && until docker exec demonet-mysql mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD:-changeme} --silent 2>/dev/null; do sleep 1; done && echo '✅ MySQL/Redis/RabbitMQ 已就绪'",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     },
     {
       "label": "🐳 Docker: 停止",
       "type": "shell",
       "command": "docker compose down",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      }
+      "presentation": { "reveal": "always", "panel": "dedicated" }
     },
 
     // =========================================================
@@ -40,15 +29,9 @@
       "label": "🔧 后端: 编译",
       "type": "shell",
       "command": "mvn clean compile -q",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "options": { "cwd": "${workspaceFolder}/backend" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": ["$javac"]
     },
 
@@ -59,29 +42,22 @@
       "label": "🔧 后端: 启动 Dev",
       "type": "shell",
       "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=\"-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005\"",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "options": { "cwd": "${workspaceFolder}/backend" },
       "isBackground": true,
       "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true,
-        "showReuseMessage": false
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "showReuseMessage": false },
       "problemMatcher": {
         "owner": "spring-boot",
         "pattern": [
           {
-            "regexp": "^(.*)$",
-            "file": 1
+            "regexp": "^(.+)$",
+            "file": 1,
+            "message": 1
           }
         ],
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*Started DemoNetApplication.*",
-          "endsPattern": ".*"
+          "beginsPattern": ".*Started DemoNetApplication.*"
         }
       }
     },
@@ -93,48 +69,39 @@
       "label": "🎨 前端: 启动 Dev",
       "type": "shell",
       "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "options": { "cwd": "${workspaceFolder}/frontend" },
       "isBackground": true,
       "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true,
-        "showReuseMessage": false
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "showReuseMessage": false },
       "problemMatcher": {
         "owner": "vite",
-        "pattern": [{ "regexp": "^(.*)$", "file": 1 }],
+        "pattern": [
+          {
+            "regexp": "^(.+)$",
+            "file": 1,
+            "message": 1
+          }
+        ],
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*VITE.*",
-          "endsPattern": ".*Local:.*"
+          "beginsPattern": ".*VITE.*"
         }
       }
     },
 
     // =========================================================
-    // 5. 一键启动组合
+    // 5. 一键启动全部
     // =========================================================
     {
-      "label": "🚀 启动全部: Docker + 后端 + 前端",
+      "label": "🚀 启动全部",
       "dependsOn": [
-        "🐳 Docker: 启动基础设施",
+        "🐳 Docker: 启动",
         "🔧 后端: 启动 Dev",
         "🎨 前端: 启动 Dev"
       ],
       "dependsOrder": "sequence",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     }
   ]
