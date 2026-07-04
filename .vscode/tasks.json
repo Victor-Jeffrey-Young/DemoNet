@@ -2,14 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     // =========================================================
-    // 1. Docker 基础设施（MySQL / Redis / RabbitMQ）
+    // Docker 基础设施（MySQL / Redis / RabbitMQ）
     // =========================================================
     {
       "label": "🐳 Docker: 启动",
       "type": "shell",
       "command": "docker compose up -d && echo '等待 MySQL 就绪...' && until docker exec demonet-mysql mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD:-changeme} --silent 2>/dev/null; do sleep 1; done && echo '✅ MySQL/Redis/RabbitMQ 已就绪'",
       "options": { "cwd": "${workspaceFolder}" },
-      "group": "none",
       "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     },
@@ -18,12 +17,11 @@
       "type": "shell",
       "command": "docker compose down",
       "options": { "cwd": "${workspaceFolder}" },
-      "group": "none",
       "presentation": { "reveal": "always", "panel": "dedicated" }
     },
 
     // =========================================================
-    // 2. 后端：编译
+    // 后端：编译
     // =========================================================
     {
       "label": "🔧 后端: 编译",
@@ -36,61 +34,31 @@
     },
 
     // =========================================================
-    // 3. 后端：开发模式（热重载 + Debug 端口 5005）
+    // 后端：开发模式（热重载 + Debug 端口 5005）
     // =========================================================
     {
       "label": "🔧 后端: 启动 Dev",
       "type": "shell",
       "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005",
       "options": { "cwd": "${workspaceFolder}/backend" },
-      "isBackground": true,
-      "group": "none",
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "showReuseMessage": false },
-      "problemMatcher": {
-        "owner": "spring-boot",
-        "pattern": [
-          {
-            "regexp": "^(.+)$",
-            "file": 1,
-            "message": 1
-          }
-        ],
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*Started DemoNetApplication.*"
-        }
-      }
+      "presentation": { "reveal": "always", "panel": "new", "clear": true, "showReuseMessage": true },
+      "problemMatcher": []
     },
 
     // =========================================================
-    // 4. 前端：开发模式（Vite HMR）
+    // 前端：开发模式（Vite HMR）
     // =========================================================
     {
       "label": "🎨 前端: 启动 Dev",
       "type": "shell",
       "command": "npm run dev",
       "options": { "cwd": "${workspaceFolder}/frontend" },
-      "isBackground": true,
-      "group": "none",
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "showReuseMessage": false },
-      "problemMatcher": {
-        "owner": "vite",
-        "pattern": [
-          {
-            "regexp": "^(.+)$",
-            "file": 1,
-            "message": 1
-          }
-        ],
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*VITE.*"
-        }
-      }
+      "presentation": { "reveal": "always", "panel": "new", "clear": true, "showReuseMessage": true },
+      "problemMatcher": []
     },
 
     // =========================================================
-    // 5. 一键启动全部
+    // 一键启动：Docker → 后端 + 前端（自动分终端）
     // =========================================================
     {
       "label": "🚀 启动全部",
@@ -101,7 +69,7 @@
       ],
       "dependsOrder": "sequence",
       "group": { "kind": "build", "isDefault": true },
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "presentation": { "reveal": "never" },
       "problemMatcher": []
     }
   ]
