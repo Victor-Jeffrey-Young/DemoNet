@@ -75,7 +75,7 @@
         "▶️ 后端: 直接启动",
         "🌐 前端: Edge"
       ],
-      "preLaunchTask": "🐳 Docker: 启动基础设施",
+      "preLaunchTask": "🐳 Docker: 启动",
       "stopAll": true
     }
   ]
