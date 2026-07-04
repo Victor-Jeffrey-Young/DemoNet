@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "vscjava.vscode-java-pack",           // Java 开发套件（Maven + 调试 + 语法）
+    "Vue.volar",                           // Vue 3 语言支持
+    "bradlc.vscode-tailwindcss",           // Tailwind CSS 智能补全
+    "esbenp.prettier-vscode",              // 代码格式化
+    "ms-edgedevtools.vscode-edge-devtools" // Edge 浏览器调试（可选）
+  ]
+}
