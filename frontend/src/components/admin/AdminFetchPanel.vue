@@ -122,92 +122,134 @@ defineExpose({ refresh: loadPending })
 <template>
   <div>
     <!-- Fetch Panels -->
-    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
+      
       <!-- Steam -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="game" size="14" /> Steam</h4>
-        <el-select v-model="steamTarget"  style="width:100%" :teleported="false" class="mb-1">
-          <el-option v-for="t in ['game']" :key="t" :label="getMeta(t).label" :value="t" />
-        </el-select>
-        <el-input v-model="steamQuery" placeholder="搜索游戏名称..."  class="mb-1" @input="debounceSearchSteam" clearable />
-        <div v-if="steamSearching" class="text-xs text-gray-500 mb-1">搜索中...</div>
-        <div v-if="steamResults.length" class="max-h-[120px] overflow-y-auto mb-1 space-y-0.5">
-          <div v-for="g in steamResults" :key="g.id" @click="fetchSteamResult(g)"
-            class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-gray-700 text-xs text-gray-300">
-            <img v-if="g.tinyImage" :src="g.tinyImage" class="w-6 h-6 object-cover rounded" />
-            <span class="flex-1 truncate">{{ g.name }}</span>
-            <span class="text-blue-400 shrink-0">抓取</span>
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-blue-500/50 transition-colors md:col-span-2 xl:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-blue-400 flex items-center gap-2"><TypeIcon type="game" size="16" /> Steam</h4>
+          <el-select v-model="steamTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['game']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <div class="flex flex-col md:flex-row gap-3">
+          <div class="flex-1 relative">
+            <el-input v-model="steamQuery" placeholder="搜索游戏名称 (回车自动搜索)..." @input="debounceSearchSteam" clearable />
+            <div v-if="steamSearching || steamResults.length" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+              <div v-if="steamSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+              <div v-else class="max-h-[250px] overflow-y-auto">
+                <div v-for="g in steamResults" :key="g.id" @click="fetchSteamResult(g)"
+                  class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                  <img v-if="g.tinyImage" :src="g.tinyImage" class="w-10 h-10 object-cover rounded shadow-sm" />
+                  <span class="flex-1 text-sm text-gray-200 truncate">{{ g.name }}</span>
+                  <el-button size="small" type="primary" plain>抓取</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1">
+            <el-input v-model="steamIds" placeholder="或输入 AppID (用逗号分隔)" clearable @keyup.enter="handleSteamFetch">
+              <template #append>
+                <el-button @click="handleSteamFetch" type="primary">按 ID 抓取</el-button>
+              </template>
+            </el-input>
           </div>
         </div>
-        <el-input v-model="steamIds" type="textarea" :rows="1" placeholder="或直接输入 AppID, 逗号分隔"  class="mb-1" />
-        <el-button type="primary"  @click="handleSteamFetch" style="width:100%">提交</el-button>
       </div>
-      <!-- TMDB Movie -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="movie" size="14" /> TMDB 电影</h4>
-        <el-select v-model="tmdbTarget"  style="width:100%" :teleported="false" class="mb-1">
-          <el-option v-for="t in ['movie','anime']" :key="t" :label="getMeta(t).label" :value="t" />
-        </el-select>
-        <el-input v-model="tmdbQuery" placeholder="电影关键词"  class="mb-1" @keyup.enter="handleTMDBFetch" />
-        <el-button type="primary"  @click="handleTMDBFetch" style="width:100%">提交</el-button>
-      </div>
-      <!-- TMDB TV -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2">📺 TMDB 剧集</h4>
-        <el-select v-model="tmdbTVTarget"  style="width:100%" :teleported="false" class="mb-1">
-          <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
-        </el-select>
-        <el-input v-model="tmdbTVQuery" placeholder="剧集/动漫关键词"  class="mb-1" @keyup.enter="handleTMDBTVFetch" />
-        <el-button type="primary"  @click="handleTMDBTVFetch" style="width:100%">提交</el-button>
-      </div>
-      <!-- AniList -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="anime" size="14" /> AniList</h4>
-        <el-select v-model="aniTarget"  style="width:100%" :teleported="false" class="mb-1">
-          <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
-        </el-select>
-        <el-input v-model="aniQuery" placeholder="动漫关键词(英/日)"  class="mb-1" @keyup.enter="handleAniListFetch" />
-        <el-button type="primary"  @click="handleAniListFetch" style="width:100%">提交</el-button>
-      </div>
-      <!-- Bangumi -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2">🍥 Bangumi</h4>
-        <el-select v-model="bangumiTarget"  style="width:100%" :teleported="false" class="mb-1">
-          <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
-        </el-select>
-        <el-input v-model="bangumiQuery" placeholder="动漫关键词(中文)"  class="mb-1" @keyup.enter="handleBangumiFetch" />
-        <el-button type="primary"  @click="handleBangumiFetch" style="width:100%">提交</el-button>
-      </div>
-      <!-- iTunes -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
-        <h4 class="text-xs font-semibold text-gray-200 mb-2"><TypeIcon type="music" size="14" /> iTunes</h4>
-        <el-select v-model="itunesTarget"  style="width:100%" :teleported="false" class="mb-1">
-          <el-option v-for="t in ['music','anime']" :key="t" :label="getMeta(t).label" :value="t" />
-        </el-select>
-        <el-input v-model="itunesQuery" placeholder="专辑/艺人关键词"  class="mb-1" @keyup.enter="handleItunesFetch" />
-        <el-button type="primary"  @click="handleItunesFetch" style="width:100%">提交</el-button>
-      </div>
+
       <!-- IGDB -->
-      <div class="bg-gray-800 rounded-lg p-3 border border-emerald-700 md:col-span-2 lg:col-span-3">
-        <h4 class="text-xs font-semibold text-emerald-400 mb-2"><TypeIcon type="game" size="14" /> IGDB 游戏数据库</h4>
-        <div class="flex gap-2 mb-1">
-          <el-select v-model="igdbEndpoint"  style="width:120px" :teleported="false">
-            <el-option label="🔍 搜索" value="search" />
-            <el-option label="🔥 热门" value="popular" />
-            <el-option label="🆕 新品" value="recent" />
-          </el-select>
-          <el-select v-model="igdbLimit"  style="width:90px" :teleported="false">
-            <el-option v-for="n in [5,10,20,50]" :key="n" :label="'上限 '+n" :value="n" />
-          </el-select>
-          <el-select v-model="igdbTarget"  style="width:100px" :teleported="false">
+      <div class="bg-gray-800 rounded-lg p-4 border border-emerald-700/50 hover:border-emerald-500 transition-colors md:col-span-2 xl:col-span-1">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-emerald-400 flex items-center gap-2"><TypeIcon type="game" size="16" /> IGDB 数据库</h4>
+          <el-select v-model="igdbTarget" style="width:100px" size="small" :teleported="false">
             <el-option v-for="t in ['game','anime']" :key="t" :label="getMeta(t).label" :value="t" />
           </el-select>
-          <el-button type="primary"  @click="handleIGDBFetch(igdbEndpoint)" style="width:100%">
-            {{ igdbEndpoint === 'search' ? '搜索' : igdbEndpoint === 'popular' ? '拉取热门' : '拉取新品' }}
-          </el-button>
         </div>
-        <el-input v-if="igdbEndpoint === 'search'" v-model="igdbQuery" placeholder="游戏名（英文更准，如 Hades / GTA V）"  @keyup.enter="handleIGDBFetch('search')" />
+        <div class="flex flex-col gap-3">
+          <div class="flex gap-2">
+            <el-select v-model="igdbEndpoint" style="width:130px" :teleported="false">
+              <el-option label="🔍 精确搜索" value="search" />
+              <el-option label="🔥 热门榜单" value="popular" />
+              <el-option label="🆕 最新发布" value="recent" />
+            </el-select>
+            <el-select v-model="igdbLimit" style="width:100px" :teleported="false" class="flex-1">
+              <el-option v-for="n in [5,10,20,50]" :key="n" :label="'上限 '+n+'条'" :value="n" />
+            </el-select>
+          </div>
+          <div class="flex gap-2">
+            <el-input v-if="igdbEndpoint === 'search'" v-model="igdbQuery" placeholder="游戏英文名 (如 Hades)" class="flex-1" @keyup.enter="handleIGDBFetch('search')" clearable />
+            <el-button type="primary" @click="handleIGDBFetch(igdbEndpoint)" :class="{'flex-1': igdbEndpoint !== 'search'}">
+              {{ igdbEndpoint === 'search' ? '搜索并拉取' : igdbEndpoint === 'popular' ? '批量拉取热门' : '批量拉取新品' }}
+            </el-button>
+          </div>
+        </div>
       </div>
+
+      <!-- TMDB Movie -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-500 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-gray-200 flex items-center gap-2"><TypeIcon type="movie" size="16" /> TMDB 电影</h4>
+          <el-select v-model="tmdbTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['movie','anime']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <el-input v-model="tmdbQuery" placeholder="电影名称或关键词..." @keyup.enter="handleTMDBFetch" clearable>
+          <template #append><el-button @click="handleTMDBFetch">拉取</el-button></template>
+        </el-input>
+      </div>
+
+      <!-- TMDB TV -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-indigo-500/50 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-indigo-300 flex items-center gap-2">📺 TMDB 剧集</h4>
+          <el-select v-model="tmdbTVTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <el-input v-model="tmdbTVQuery" placeholder="剧集或动漫关键词..." @keyup.enter="handleTMDBTVFetch" clearable>
+          <template #append><el-button @click="handleTMDBTVFetch">拉取</el-button></template>
+        </el-input>
+      </div>
+
+      <!-- AniList -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-blue-400/50 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-blue-300 flex items-center gap-2"><TypeIcon type="anime" size="16" /> AniList</h4>
+          <el-select v-model="aniTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <el-input v-model="aniQuery" placeholder="动漫英文或罗马音..." @keyup.enter="handleAniListFetch" clearable>
+          <template #append><el-button @click="handleAniListFetch">拉取</el-button></template>
+        </el-input>
+      </div>
+
+      <!-- Bangumi -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-pink-500/50 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-pink-300 flex items-center gap-2">🍥 Bangumi</h4>
+          <el-select v-model="bangumiTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <el-input v-model="bangumiQuery" placeholder="动漫中文名..." @keyup.enter="handleBangumiFetch" clearable>
+          <template #append><el-button @click="handleBangumiFetch">拉取</el-button></template>
+        </el-input>
+      </div>
+
+      <!-- iTunes -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-purple-500/50 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-purple-300 flex items-center gap-2"><TypeIcon type="music" size="16" /> iTunes</h4>
+          <el-select v-model="itunesTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['music','anime']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <el-input v-model="itunesQuery" placeholder="专辑/艺人/歌曲..." @keyup.enter="handleItunesFetch" clearable>
+          <template #append><el-button @click="handleItunesFetch">拉取</el-button></template>
+        </el-input>
+      </div>
+
     </div>
 
     <!-- Pending Queue -->
@@ -216,24 +258,33 @@ defineExpose({ refresh: loadPending })
       <el-button  text @click="loadPending" :loading="loading">刷新</el-button>
       <el-button v-if="selectedIds.length" type="danger"  @click="handleBatchReject">批量拒绝 ({{ selectedIds.length }})</el-button>
     </div>
-    <el-table :data="pendingList" v-loading="loading" style="width: 100%" @selection-change="selectedIds = $event.map(r => r.id)">
-      <el-table-column type="selection" width="40" />
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column label="封面" width="80">
+    <el-table :data="pendingList" v-loading="loading" stripe border style="width: 100%" @selection-change="selectedIds = $event.map(r => r.id)">
+      <el-table-column type="selection" width="45" align="center" />
+      <el-table-column prop="id" label="ID" width="80" align="center" />
+      <el-table-column label="封面" width="120" align="center">
         <template #default="{ row }">
-          <img v-if="row.wideCoverUrl || row.coverUrl" :src="row.wideCoverUrl || row.coverUrl" class="w-12 h-8 object-cover rounded" />
-          <span v-else class="text-gray-400 text-xs">无封面</span>
+          <img v-if="row.wideCoverUrl || row.coverUrl" :src="row.wideCoverUrl || row.coverUrl" class="w-20 h-12 object-cover rounded shadow-sm mx-auto" />
+          <span v-else class="text-gray-500 text-xs">暂无封面</span>
         </template>
       </el-table-column>
-      <el-table-column prop="title" label="标题" min-width="140" />
-      <el-table-column label="品类" width="80">
-        <template #default="{ row }"><el-tag ><TypeIcon :type="row.type" size="14" /> {{ getMeta(row.type).label }}</el-tag></template>
-      </el-table-column>
-      <el-table-column prop="source" label="来源" width="75" />
-      <el-table-column label="操作" width="160">
+      <el-table-column prop="title" label="条目名称" min-width="250">
         <template #default="{ row }">
-          <el-button type="success"  @click="handleApprove(row)">通过</el-button>
-          <el-button type="danger"  @click="handleReject(row)">拒绝</el-button>
+          <div class="font-medium text-gray-200 truncate">{{ row.title }}</div>
+          <div v-if="row.originalTitle && row.originalTitle !== row.title" class="text-xs text-gray-500 truncate">{{ row.originalTitle }}</div>
+        </template>
+      </el-table-column>
+      <el-table-column label="分类" width="130" align="center">
+        <template #default="{ row }">
+          <el-tag effect="dark" :type="row.type === 'game' ? 'success' : row.type === 'movie' ? 'primary' : 'warning'" class="flex items-center justify-center gap-1 mx-auto w-max">
+            <TypeIcon :type="row.type" size="14" /> {{ getMeta(row.type).label }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="source" label="抓取源" width="100" align="center" />
+      <el-table-column label="操作" width="180" align="center" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" type="success" plain @click="handleApprove(row)">通过</el-button>
+          <el-button size="small" type="danger" plain @click="handleReject(row)">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>

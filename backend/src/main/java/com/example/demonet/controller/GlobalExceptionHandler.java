@@ -9,7 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
+import com.example.demonet.common.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -17,36 +18,39 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateKeyException.class)
-    public ResponseEntity<Map<String, String>> handleDuplicate(DuplicateKeyException e) {
+    public ResponseEntity<ApiResponse<Void>> handleDuplicate(DuplicateKeyException e, HttpServletRequest req) {
+        log.warn("DuplicateKey at {}: {}", req.getRequestURI(), e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", "数据已存在"));
+                .body(ApiResponse.error(409, "数据已存在"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException e) {
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException e, HttpServletRequest req) {
+        log.warn("AccessDenied at {}: {}", req.getRequestURI(), e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("error", "无权访问"));
+                .body(ApiResponse.error(403, "无权访问"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e, HttpServletRequest req) {
         String msg = e.getBindingResult().getFieldErrors().stream()
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        return ResponseEntity.badRequest().body(Map.of("error", msg));
+        log.warn("Validation failed at {}: {}", req.getRequestURI(), msg);
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, msg));
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException e) {
-        log.warn("Request error: {}", e.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException e, HttpServletRequest req) {
+        log.warn("Request error at {}: {}", req.getRequestURI(), e.getMessage());
         return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "请求处理失败"));
+                .body(ApiResponse.error(400, e.getMessage() != null ? e.getMessage() : "请求处理失败"));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGeneral(Exception e) {
-        log.error("Server error", e);
+    public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception e, HttpServletRequest req) {
+        log.error("Server error at {}", req.getRequestURI(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "服务器内部错误"));
+                .body(ApiResponse.error(500, "服务器内部错误"));
     }
 }

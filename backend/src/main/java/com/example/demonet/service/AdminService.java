@@ -1,6 +1,7 @@
 package com.example.demonet.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Item;
@@ -102,16 +103,9 @@ public class AdminService {
 
     public int batchUpdateStatus(List<Long> ids, Integer status) {
         if (ids == null || ids.isEmpty()) return 0;
-        int count = 0;
-        for (Long id : ids) {
-            Item item = itemMapper.selectById(id);
-            if (item != null) {
-                item.setStatus(status);
-                itemMapper.updateById(item);
-                count++;
-            }
-        }
-        return count;
+        LambdaUpdateWrapper<Item> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.in(Item::getId, ids).set(Item::getStatus, status);
+        return itemMapper.update(null, wrapper);
     }
 
     public List<Item> getCarouselItems(String type) {

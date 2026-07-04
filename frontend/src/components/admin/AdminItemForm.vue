@@ -1,21 +1,24 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, defineAsyncComponent } from 'vue'
 import { createItem, updateItem, uploadImage, associateItemTags, getAdminItem } from '../../api/admin'
 import { fetchSgdbPoster } from '../../api/admin'
 import { ElMessage } from 'element-plus'
-import { TYPE_LIST, getMeta } from '../../constants/types'
-import GameEditorFields from './GameEditorFields.vue'
-import MovieEditorFields from './MovieEditorFields.vue'
-import AnimeEditorFields from './AnimeEditorFields.vue'
-import BoardgameEditorFields from './BoardgameEditorFields.vue'
-import ModelEditorFields from './ModelEditorFields.vue'
-import BookEditorFields from './BookEditorFields.vue'
-import MusicEditorFields from './MusicEditorFields.vue'
-import DigitalEditorFields from './DigitalEditorFields.vue'
-import CoffeeEditorFields from './CoffeeEditorFields.vue'
-import OfflineEditorFields from './OfflineEditorFields.vue'
-import GenericEditorFields from './GenericEditorFields.vue'
+import { TYPE_LIST, getMeta, TYPE_INFO_DEFAULTS } from '../../constants/types'
 import TypeIcon from '../TypeIcon.vue'
+
+const editorComponents = {
+  game: defineAsyncComponent(() => import('./GameEditorFields.vue')),
+  movie: defineAsyncComponent(() => import('./MovieEditorFields.vue')),
+  anime: defineAsyncComponent(() => import('./AnimeEditorFields.vue')),
+  boardgame: defineAsyncComponent(() => import('./BoardgameEditorFields.vue')),
+  model: defineAsyncComponent(() => import('./ModelEditorFields.vue')),
+  book: defineAsyncComponent(() => import('./BookEditorFields.vue')),
+  music: defineAsyncComponent(() => import('./MusicEditorFields.vue')),
+  digital: defineAsyncComponent(() => import('./DigitalEditorFields.vue')),
+  coffee: defineAsyncComponent(() => import('./CoffeeEditorFields.vue')),
+  offline: defineAsyncComponent(() => import('./OfflineEditorFields.vue')),
+  generic: defineAsyncComponent(() => import('./GenericEditorFields.vue')),
+}
 
 const props = defineProps({
   visible: Boolean,
@@ -29,6 +32,7 @@ const isEdit = computed(() => !!currentId.value)
 const formRef = ref(null)
 const loading = ref(false)
 const form = ref(getDefaultForm())
+const formInfo = ref({}) // Local state for infoJson content
 const selectedTagIds = ref([])
 const itemTags = ref([])
 const currentId = ref(null)
@@ -60,123 +64,18 @@ function parseInfoJson(jsonStr) {
   }
 }
 
-function stringifyInfoJson(obj) {
-  return JSON.stringify(obj)
-}
-
-const infoObj = computed({
-  get: () => parseInfoJson(form.value.infoJson),
-  set: (val) => { form.value.infoJson = stringifyInfoJson(val) },
-})
-
-// Dynamic fields based on type
-const isGameType = computed(() => form.value.type === 'game')
-const isMovieType = computed(() => form.value.type === 'movie')
-const isOtherType = computed(() => !isGameType.value && !isMovieType.value)
-
 const editorComponent = computed(() => {
-  if (isGameType.value) return GameEditorFields
-  if (isMovieType.value) return MovieEditorFields
-  if (form.value.type === 'anime') return AnimeEditorFields
-  if (form.value.type === 'boardgame') return BoardgameEditorFields
-  if (form.value.type === 'model') return ModelEditorFields
-  if (form.value.type === 'book') return BookEditorFields
-  if (form.value.type === 'music') return MusicEditorFields
-  if (form.value.type === 'digital') return DigitalEditorFields
-  if (form.value.type === 'coffee') return CoffeeEditorFields
-  if (form.value.type === 'offline') return OfflineEditorFields
-  return GenericEditorFields
+  return editorComponents[form.value.type] || editorComponents.generic
 })
 
 function initInfoFields() {
-  const info = parseInfoJson(form.value.infoJson)
-  if (isGameType.value) {
-    // Preserve ALL existing fields, only ensure videos object exists
-    form.value.infoJson = stringifyInfoJson({
-      ...info,
-      videos: { steam: '', youtube: '', bilibili: '', ...(info.videos || {}) },
-    })
-  } else if (isMovieType.value) {
-    form.value.infoJson = stringifyInfoJson({
-      director: info.director || '',
-      year: info.year || '',
-      duration: info.duration || '',
-      genre: info.genre || '',
-      videos: info.videos || { youtube: '', bilibili: '' },
-    })
-  } else if (form.value.type === 'book') {
-    form.value.infoJson = stringifyInfoJson({
-      author: info.author || '',
-      year: info.year || '',
-      pages: info.pages || '',
-      category: info.category || '',
-      reader_url: info.reader_url || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'music') {
-    form.value.infoJson = stringifyInfoJson({
-      artist: info.artist || '',
-      year: info.year || '',
-      genre: info.genre || '',
-      tracks: info.tracks || '',
-      preview_url: info.preview_url || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'digital') {
-    form.value.infoJson = stringifyInfoJson({
-      brand: info.brand || '',
-      category: info.category || '',
-      year: info.year || '',
-      features: info.features || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'coffee') {
-    form.value.infoJson = stringifyInfoJson({
-      origin: info.origin || '',
-      roast: info.roast || '',
-      process: info.process || '',
-      variety: info.variety || '',
-      flavor: info.flavor || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'offline') {
-    form.value.infoJson = stringifyInfoJson({
-      event_type: info.event_type || '',
-      venue: info.venue || '',
-      date: info.date || '',
-      time: info.time || '',
-      price: info.price || '',
-      capacity: info.capacity || '',
-      difficulty: info.difficulty || '',
-      highlights: info.highlights || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'anime') {
-    form.value.infoJson = stringifyInfoJson({
-      studio: info.studio || '',
-      year: info.year || '',
-      genre: info.genre || '',
-      origin: info.origin || '',
-      episodes: info.episodes || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'boardgame') {
-    form.value.infoJson = stringifyInfoJson({
-      players: info.players || '',
-      playtime: info.playtime || '',
-      weight: info.weight || '',
-      rule_text: info.rule_text || '',
-      rule_images: info.rule_images || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
-  } else if (form.value.type === 'model') {
-    form.value.infoJson = stringifyInfoJson({
-      grade: info.grade || '',
-      scale: info.scale || '',
-      material: info.material || '',
-      series: info.series || '',
-      videos: info.videos || { bilibili: '', youtube: '' },
-    })
+  const existingInfo = parseInfoJson(form.value.infoJson)
+  const defaults = TYPE_INFO_DEFAULTS[form.value.type] || {}
+  formInfo.value = { ...defaults, ...existingInfo }
+  
+  // Ensure nested objects like videos exist
+  if (defaults.videos) {
+    formInfo.value.videos = { ...defaults.videos, ...(existingInfo.videos || {}) }
   }
 }
 
@@ -188,12 +87,6 @@ function autoSlug() {
       .replace(/^-|-$/g, '')
       + '-' + Date.now().toString(36)
   }
-}
-
-function updateInfoField(key, value) {
-  const info = parseInfoJson(form.value.infoJson)
-  info[key] = value
-  form.value.infoJson = stringifyInfoJson(info)
 }
 
 // File upload handler
@@ -213,7 +106,7 @@ async function handleUpload(event, field) {
   try {
     const res = await uploadImage(currentId.value, formData)
     if (field === 'readerUrl') {
-      updateInfoField('reader_url', res.url)
+      formInfo.value.reader_url = res.url
     } else {
       form.value[field] = res.url
     }
@@ -248,6 +141,9 @@ async function handleSubmit() {
   loading.value = true
   try {
     const payload = { ...form.value }
+    // Stringify local formInfo back into infoJson
+    payload.infoJson = JSON.stringify(formInfo.value)
+    
     delete payload.id
     delete payload.createdAt
     delete payload.updatedAt
@@ -315,8 +211,8 @@ watch(() => props.visible, (val) => {
 })
 
 // Watch type changes to init info fields
-watch(() => form.value.type, () => {
-  if (props.visible && !isEdit.value) {
+watch(() => form.value.type, (newType, oldType) => {
+  if (props.visible && newType !== oldType) {
     initInfoFields()
   }
 })
@@ -333,7 +229,7 @@ watch(() => form.value.type, () => {
     destroy-on-close
   >
     <div class="admin-item-form max-h-[75vh] overflow-y-auto pr-2">
-      <el-form label-position="top" >
+      <el-form label-position="top">
         <!-- ===== 基本信息 ===== -->
         <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-2">基本信息</h5>
         <div class="grid grid-cols-4 gap-3 mb-4">
@@ -351,7 +247,7 @@ watch(() => form.value.type, () => {
               </span>
             </template>
             <div v-else class="flex flex-wrap gap-1.5">
-              <button v-for="t in TYPE_LIST" :key="t" @click="form.type = t"
+              <button v-for="t in TYPE_LIST" :key="t" @click="form.type = t; $event.preventDefault()"
                 :class="form.type === t
                   ? 'bg-blue-600 text-white border-blue-500 ring-1 ring-blue-400'
                   : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600 hover:text-white'"
@@ -361,7 +257,7 @@ watch(() => form.value.type, () => {
             </div>
           </el-form-item>
           <el-form-item label="状态">
-            <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上线" inactive-text="下架"  />
+            <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="上线" inactive-text="下架" />
           </el-form-item>
           <el-form-item label="描述" class="col-span-4">
             <el-input v-model="form.description" type="textarea" :rows="2" placeholder="内容描述" />
@@ -379,7 +275,7 @@ watch(() => form.value.type, () => {
             <el-input v-model="form.externalId" placeholder="AppID / TMDB ID" />
           </el-form-item>
           <el-form-item label="热门加权">
-            <el-input-number v-model="form.hotBoost" :min="0" :step="50"  style="width:100%" />
+            <el-input-number v-model="form.hotBoost" :min="0" :step="50" style="width:100%" />
           </el-form-item>
         </div>
 
@@ -387,26 +283,26 @@ watch(() => form.value.type, () => {
         <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">封面图</h5>
         <div class="grid grid-cols-3 gap-3 mb-4">
           <el-form-item label="横版封面">
-            <el-input v-model="form.coverUrl" placeholder="https://... 或上传"  />
-            <label class="el-button  el-button--default cursor-pointer mt-1" style="width:100%">上传
+            <el-input v-model="form.coverUrl" placeholder="https://... 或上传" />
+            <label class="el-button el-button--default cursor-pointer mt-1" style="width:100%">上传
               <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'coverUrl')" />
             </label>
             <img v-if="form.coverUrl" :src="form.coverUrl" class="w-full aspect-video object-cover rounded mt-1 border border-gray-600" />
           </el-form-item>
           <el-form-item label="宽封面">
-            <el-input v-model="form.wideCoverUrl" placeholder="https://... 或上传"  />
-            <label class="el-button  el-button--default cursor-pointer mt-1" style="width:100%">上传
+            <el-input v-model="form.wideCoverUrl" placeholder="https://... 或上传" />
+            <label class="el-button el-button--default cursor-pointer mt-1" style="width:100%">上传
               <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'wideCoverUrl')" />
             </label>
             <img v-if="form.wideCoverUrl" :src="form.wideCoverUrl" class="w-full aspect-video object-cover rounded mt-1 border border-gray-600" />
           </el-form-item>
           <el-form-item label="竖版海报">
-            <el-input v-model="form.posterUrl" placeholder="https://... 或上传"  />
+            <el-input v-model="form.posterUrl" placeholder="https://... 或上传" />
             <div class="flex gap-1 mt-1">
-              <label class="el-button  el-button--default cursor-pointer flex-1">上传
+              <label class="el-button el-button--default cursor-pointer flex-1">上传
                 <input type="file" accept="image/*,.webp" class="hidden" @change="handleUpload($event, 'posterUrl')" />
               </label>
-              <button type="button" class="el-button  el-button--primary flex-1" @click="handleFetchSgdbPoster">SGDB 拉取</button>
+              <button type="button" class="el-button el-button--primary flex-1" @click="handleFetchSgdbPoster">SGDB 拉取</button>
             </div>
             <img v-if="form.posterUrl" :src="form.posterUrl" class="w-full object-cover rounded mt-1 border border-gray-600" style="aspect-ratio: 2/3" />
           </el-form-item>
@@ -421,14 +317,14 @@ watch(() => form.value.type, () => {
 
         <!-- ===== 书稿上传 ===== -->
         <el-form-item v-if="form.type === 'book'" label="上传书稿 (PDF/EPUB)">
-          <label class="el-button  el-button--default cursor-pointer">选择文件
+          <label class="el-button el-button--default cursor-pointer">选择文件
             <input type="file" accept=".pdf,.epub" class="hidden" @change="handleUpload($event, 'readerUrl')" />
           </label>
-          <span class="text-xs text-gray-500 ml-2">{{ infoObj.reader_url || '未上传' }}</span>
+          <span class="text-xs text-gray-500 ml-2">{{ formInfo.reader_url || '未上传' }}</span>
         </el-form-item>
 
         <!-- ===== 品类详情编辑器 ===== -->
-        <component :is="editorComponent" v-model="infoObj" :type="form.type" :item-id="currentId" />
+        <component :is="editorComponent" :info="formInfo" :type="form.type" :item-id="currentId" />
       </el-form>
     </div>
 

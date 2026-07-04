@@ -9,30 +9,44 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SteamService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private final JdbcTemplate jdbcTemplate;
     private final SteamGridDBService steamGridDBService;
+    private final StringRedisTemplate redisTemplate;
+    
+    private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
     @Value("${app.steam.api-key:}")
     private String apiKey;
 
     public List<Item> fetchByAppIds(List<Long> appIds) {
-        List<Item> items = new ArrayList<>();
-        for (Long appId : appIds) {
-            try {
-                Item item = fetchAppDetail(appId);
-                if (item != null) items.add(item);
-            } catch (Exception e) {
-                log.error("Steam fetch failed for appid {}: {}", appId, e.getMessage());
-            }
-        }
-        return items;
+        List<CompletableFuture<Item>> futures = appIds.stream()
+                .map(appId -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return fetchAppDetail(appId);
+                    } catch (Exception e) {
+                        log.error("Steam fetch failed for appid {}: {}", appId, e.getMessage());
+                        return null;
+                    }
+                }, executor))
+                .toList();
+
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public Item fetchAppDetail(Long appId) {
@@ -125,29 +139,35 @@ public class SteamService {
     }
 
     
-    /** Backfill poster_url for existing games that have a Steam AppID */
     public int backfillPosterUrls() {
         List<Map<String, Object>> games = jdbcTemplate.queryForList(
                 "SELECT id, external_id, cover_url FROM items WHERE type='game' AND external_id IS NOT NULL AND (poster_url IS NULL OR poster_url = '')");
-        int updated = 0;
-        for (Map<String, Object> row : games) {
+        
+        List<CompletableFuture<Integer>> futures = games.stream().map(row -> CompletableFuture.supplyAsync(() -> {
             try {
                 Long id = (Long) row.get("id");
                 Long appId = Long.valueOf(row.get("external_id").toString());
                 String fallback = (String) row.get("cover_url");
                 String posterUrl = resolvePosterUrl(appId, fallback);
                 jdbcTemplate.update("UPDATE items SET poster_url=? WHERE id=?", posterUrl, id);
-                updated++;
+                return 1;
             } catch (Exception e) {
                 log.warn("Backfill poster failed for row {}: {}", row.get("id"), e.getMessage());
+                return 0;
             }
-        }
+        }, executor)).toList();
+
+        int updated = futures.stream().mapToInt(CompletableFuture::join).sum();
         log.info("Backfilled poster_url for {} games", updated);
         return updated;
     }
 
     /** Resolve vertical poster URL: try 4 CDN variants, then SteamGridDB, fallback to horizontal cover */
     private String resolvePosterUrl(Long appId, String fallbackUrl) {
+        String cacheKey = "steam:poster:" + appId;
+        String cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) return cached.isEmpty() ? fallbackUrl : cached;
+
         String[] candidates = {
             "https://cdn.cloudflare.steamstatic.com/steam/apps/" + appId + "/library_600x900_2x.jpg",
             "https://cdn.cloudflare.steamstatic.com/steam/apps/" + appId + "/library_600x900.jpg",
@@ -157,13 +177,20 @@ public class SteamService {
         for (String url : candidates) {
             try {
                 int status = restClient.head().uri(url).retrieve().toBodilessEntity().getStatusCode().value();
-                if (status == 200) return url;
+                if (status == 200) {
+                    redisTemplate.opsForValue().set(cacheKey, url, 7, TimeUnit.DAYS);
+                    return url;
+                }
             } catch (Exception ignored) {}
         }
         // Try SteamGridDB community covers (600×900 vertical)
         String sgdbUrl = steamGridDBService.findPosterUrl(appId);
-        if (sgdbUrl != null) return sgdbUrl;
+        if (sgdbUrl != null) {
+            redisTemplate.opsForValue().set(cacheKey, sgdbUrl, 7, TimeUnit.DAYS);
+            return sgdbUrl;
+        }
         // Last resort: horizontal header_image
+        redisTemplate.opsForValue().set(cacheKey, "", 7, TimeUnit.DAYS);
         return fallbackUrl != null ? fallbackUrl : "";
     }
 
@@ -362,18 +389,13 @@ public class SteamService {
         List<?> list = (List<?>) raw;
         if (list.isEmpty()) return "[]";
         
-        // Take up to 5 DLCs and fetch their names individually
         List<Long> ids = new ArrayList<>();
         for (Object o : list) {
             if (ids.size() >= 5) break;
             if (o instanceof Number) ids.add(((Number) o).longValue());
         }
         
-        // Fetch each DLC name individually (Steam API doesn't support batch)
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < ids.size(); i++) {
-            if (i > 0) sb.append(",");
-            Long id = ids.get(i);
+        List<CompletableFuture<String>> futures = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {
             String name = "";
             try {
                 Map<String, Object> dlcResp = restClient.get()
@@ -391,7 +413,13 @@ public class SteamService {
                 log.warn("DLC fetch failed for id {}: {}", id, e.getMessage());
             }
             if (name.isEmpty()) name = "DLC App " + id;
-            sb.append("{\"id\":").append(id).append(",\"name\":\"").append(esc(name)).append("\"}");
+            return "{\"id\":" + id + ",\"name\":\"" + esc(name) + "\"}";
+        }, executor)).toList();
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < futures.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(futures.get(i).join());
         }
         sb.append("]");
         return sb.toString();

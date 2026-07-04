@@ -12,13 +12,18 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
+@lombok.RequiredArgsConstructor
 public class IGDBService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${app.igdb.client-id:}")
     private String clientId;
@@ -26,17 +31,15 @@ public class IGDBService {
     @Value("${app.igdb.client-secret:}")
     private String clientSecret;
 
-    private String accessToken;
-    private long tokenExpiry;
-
     private static final String TOKEN_URL = "https://id.twitch.tv/oauth2/token";
     private static final String API_BASE = "https://api.igdb.com/v4";
 
     // ---- OAuth ----
 
-    private synchronized String getAccessToken() {
-        if (accessToken != null && Instant.now().getEpochSecond() < tokenExpiry - 60) {
-            return accessToken;
+    private String getAccessToken() {
+        String cachedToken = redisTemplate.opsForValue().get("igdb:token");
+        if (cachedToken != null && !cachedToken.isBlank()) {
+            return cachedToken;
         }
         if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
             log.warn("IGDB credentials missing — set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET");
@@ -55,10 +58,11 @@ public class IGDBService {
                     .retrieve()
                     .body(Map.class);
             if (resp != null) {
-                accessToken = String.valueOf(resp.get("access_token"));
-                tokenExpiry = Instant.now().getEpochSecond() + ((Number) resp.get("expires_in")).longValue();
-                log.info("IGDB token obtained, expires in {}s", resp.get("expires_in"));
-                return accessToken;
+                String token = String.valueOf(resp.get("access_token"));
+                long expiresIn = ((Number) resp.get("expires_in")).longValue();
+                redisTemplate.opsForValue().set("igdb:token", token, Math.max(expiresIn - 60, 60), TimeUnit.SECONDS);
+                log.info("IGDB token obtained and cached, expires in {}s", expiresIn);
+                return token;
             }
         } catch (Exception e) {
             log.error("IGDB auth failed: {}", e.getMessage());

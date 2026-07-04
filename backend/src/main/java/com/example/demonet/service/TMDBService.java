@@ -10,12 +10,13 @@ import org.springframework.web.client.RestClient;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
 public class TMDBService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private final JdbcTemplate jdbcTemplate;
 
     @Value("${app.tmdb.api-key:}")
@@ -24,7 +25,8 @@ public class TMDBService {
     private static final String BASE = "https://api.themoviedb.org/3";
     private static final String IMG_BASE = "https://image.tmdb.org/t/p";
 
-    public TMDBService(JdbcTemplate jdbcTemplate) {
+    public TMDBService(RestClient restClient, JdbcTemplate jdbcTemplate) {
+        this.restClient = restClient;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -39,9 +41,12 @@ public class TMDBService {
             if (resp == null) return items;
             List<Map<String, Object>> results = (List<Map<String, Object>>) resp.get("results");
             if (results == null) return items;
-            for (Map<String, Object> r : results) {
+            List<CompletableFuture<Item>> futures = results.stream().map(r -> CompletableFuture.supplyAsync(() -> {
                 Integer tmdbId = (Integer) r.get("id");
-                Item item = fetchMovieDetail(tmdbId);
+                return fetchMovieDetail(tmdbId);
+            })).toList();
+            for (CompletableFuture<Item> f : futures) {
+                Item item = f.join();
                 if (item != null) items.add(item);
             }
         } catch (Exception e) { log.error("TMDB search failed: {}", e.getMessage()); }
@@ -103,9 +108,12 @@ public class TMDBService {
             if (resp == null) return items;
             List<Map<String, Object>> results = (List<Map<String, Object>>) resp.get("results");
             if (results == null) return items;
-            for (Map<String, Object> r : results) {
+            List<CompletableFuture<Item>> futures = results.stream().map(r -> CompletableFuture.supplyAsync(() -> {
                 Integer tvId = (Integer) r.get("id");
-                Item item = fetchTVDetail(tvId);
+                return fetchTVDetail(tvId);
+            })).toList();
+            for (CompletableFuture<Item> f : futures) {
+                Item item = f.join();
                 if (item != null) items.add(item);
             }
         } catch (Exception e) { log.error("TMDB TV search failed: {}", e.getMessage()); }

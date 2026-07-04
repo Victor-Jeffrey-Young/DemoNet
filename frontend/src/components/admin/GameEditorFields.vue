@@ -1,68 +1,20 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { uploadImage } from '../../api/admin'
 import { ElMessage } from 'element-plus'
 import TypeIcon from '../TypeIcon.vue'
+import AdminVideoFields from './AdminVideoFields.vue'
 defineOptions({ inheritAttrs: false })
 
-const props = defineProps({ modelValue: Object, itemId: Number })
-const emit = defineEmits(['update:modelValue'])
-
-const data = computed(() => props.modelValue || {})
-
-// ---- helpers ----
-function set(k, v) {
-  const obj = JSON.parse(JSON.stringify(data.value))
-  if (k.includes('.')) {
-    const [parent, child] = k.split('.')
-    if (!obj[parent]) obj[parent] = {}
-    obj[parent][child] = v
-  } else {
-    obj[k] = v
-  }
-  emit('update:modelValue', obj)
-}
-
-function setVideos(platform, raw) {
-  if (!raw || !raw.trim()) { set('videos.' + platform, ''); return }
-  raw = raw.trim()
-  if (platform === 'steam') { set('videos.steam', raw); return }
-  if (platform === 'bilibili') {
-    if (raw.includes('player.bilibili.com')) set('videos.bilibili', raw)
-    else if (raw.startsWith('BV')) set('videos.bilibili', '//player.bilibili.com/player.html?bvid=' + raw)
-    else set('videos.bilibili', '//player.bilibili.com/player.html?bvid=' + raw)
-    return
-  }
-  if (platform === 'youtube') {
-    if (raw.includes('youtube.com/embed/')) set('videos.youtube', raw)
-    else if (raw.includes('watch?v=')) {
-      const m = raw.match(/[?&]v=([a-zA-Z0-9_-]{11})/)
-      if (m) set('videos.youtube', 'https://www.youtube.com/embed/' + m[1])
-      else set('videos.youtube', raw)
-    } else if (raw.includes('youtu.be/')) {
-      const m = raw.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)
-      if (m) set('videos.youtube', 'https://www.youtube.com/embed/' + m[1])
-      else set('videos.youtube', raw)
-    } else if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) set('videos.youtube', 'https://www.youtube.com/embed/' + raw)
-    else set('videos.youtube', raw)
-  }
-}
+const props = defineProps({ info: Object, itemId: Number })
 
 // ---- Screenshots ----
 function addScreenshot() {
-  const ss = Array.isArray(data.value.screenshots) ? [...data.value.screenshots] : []
-  ss.push('')
-  set('screenshots', ss)
+  if (!Array.isArray(props.info.screenshots)) props.info.screenshots = []
+  props.info.screenshots.push('')
 }
 function removeScreenshot(idx) {
-  const ss = [...data.value.screenshots]
-  ss.splice(idx, 1)
-  set('screenshots', ss)
-}
-function updateScreenshot(idx, val) {
-  const ss = [...data.value.screenshots]
-  ss[idx] = val
-  set('screenshots', ss)
+  props.info.screenshots.splice(idx, 1)
 }
 async function uploadScreenshot(idx, event) {
   const file = event.target.files[0]
@@ -70,138 +22,134 @@ async function uploadScreenshot(idx, event) {
   const fd = new FormData(); fd.append('file', file); fd.append('type', 'cover')
   try {
     const res = await uploadImage(props.itemId, fd)
-    updateScreenshot(idx, res.url)
+    props.info.screenshots[idx] = res.url
     ElMessage.success('上传成功')
   } catch (e) { ElMessage.error(e.response?.data?.error || '上传失败') }
 }
 
 // ---- DLC ----
-const dlcList = computed(() => {
-  try {
-    const d = data.value.dlc
+const dlcList = computed({
+  get: () => {
+    const d = props.info.dlc
     if (Array.isArray(d)) return d.map(x => typeof x === 'object' ? { ...x } : { id: x, name: 'App ' + x })
-    if (typeof d === 'string') return JSON.parse(d)
-    return []
-  } catch { return [] }
+    try { return typeof d === 'string' ? JSON.parse(d) : [] } catch { return [] }
+  },
+  set: (val) => { props.info.dlc = val }
 })
-function addDlc() { set('dlc', [...dlcList.value, { id: '', name: '' }]) }
+function addDlc() { dlcList.value = [...dlcList.value, { id: '', name: '' }] }
 function removeDlc(idx) {
   const d = [...dlcList.value]
   d.splice(idx, 1)
-  set('dlc', d)
+  dlcList.value = d
 }
 function updateDlc(idx, field, val) {
   const d = [...dlcList.value]
   d[idx] = { ...d[idx], [field]: val }
-  set('dlc', d)
+  dlcList.value = d
 }
 
-
 // ---- Languages ----
-const langList = computed(() => {
-  const raw = data.value.languages || ''
-  return raw.split(',').map(s => s.trim())
+const langList = computed({
+  get: () => {
+    const raw = props.info.languages || ''
+    return raw ? raw.split(',').map(s => s.trim()) : []
+  },
+  set: (val) => { props.info.languages = val.join(', ') }
 })
 function addLang() {
-  const current = data.value.languages || ''
-  set('languages', current + (current && !current.endsWith(',') ? ', ' : '') + '新语言')
+  langList.value = [...langList.value, '新语言']
 }
 function updateLang(i, val) {
   const langs = [...langList.value]
   langs[i] = val
-  set('languages', langs.join(', '))
+  langList.value = langs
 }
 function removeLang(i) {
   const langs = [...langList.value]
   langs.splice(i, 1)
-  set('languages', langs.join(', '))
+  langList.value = langs
 }
 function toggleAudio(i) {
   const langs = [...langList.value]
   const name = langs[i].replace('*', '').trim()
   langs[i] = langs[i].includes('*') ? name : name + '*'
-  set('languages', langs.join(', '))
+  langList.value = langs
+}
+
+function toggleFree(v) {
+  props.info.free = v
+  if (v) props.info.price = 'Free'
+  else props.info.price = ''
 }
 </script>
 
 <template>
   <div class="game-editor space-y-5">
-
     <!-- ====== 开发信息 ====== -->
     <section>
       <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
         <span><TypeIcon type="game" size="16" /></span> 开发信息
       </h4>
       <div class="grid grid-cols-4 gap-3">
-        <el-form-item label="开发商"  class="col-span-2">
-          <el-input :model-value="data.developer || ''" @input="set('developer', $event)" placeholder="Supergiant Games" />
+        <el-form-item label="开发商" class="col-span-2">
+          <el-input v-model="info.developer" placeholder="Supergiant Games" />
         </el-form-item>
-        <el-form-item label="发行商"  class="col-span-2">
-          <el-input :model-value="data.publisher || ''" @input="set('publisher', $event)" placeholder="发行商" />
+        <el-form-item label="发行商" class="col-span-2">
+          <el-input v-model="info.publisher" placeholder="发行商" />
         </el-form-item>
-        <el-form-item label="发行日期" >
-          <el-input :model-value="data.release_date || ''" @input="set('release_date', $event)" placeholder="2024-05-06" />
+        <el-form-item label="发行日期">
+          <el-input v-model="info.release_date" placeholder="2024-05-06" />
         </el-form-item>
-        <el-form-item label="价格" >
-          <el-input :model-value="data.demo_available ? (data.price != null ? data.price : 'Demo 阶段暂不收费') : data.free ? 'Free' : (data.price || '')" @input="set('price', $event)" placeholder="CNY 268.00" :disabled="!!data.free" />
+        <el-form-item label="价格">
+          <el-input v-model="info.price" placeholder="CNY 268.00" :disabled="!!info.free" />
         </el-form-item>
-        <el-form-item label="类型" >
-          <el-input :model-value="data.genre || ''" @input="set('genre', $event)" placeholder="Action, RPG" />
+        <el-form-item label="类型">
+          <el-input v-model="info.genre" placeholder="Action, RPG" />
         </el-form-item>
-        <el-form-item label="平台" >
-          <el-input :model-value="data.platform || ''" @input="set('platform', $event)" placeholder="PC, PS5, Xbox" />
+        <el-form-item label="平台">
+          <el-input v-model="info.platform" placeholder="PC, PS5, Xbox" />
         </el-form-item>
-        <el-form-item label="免费" >
-          <el-checkbox :model-value="!!data.free" @update:model-value="v => { set('free', v); if (v) set('price', 'Free'); else set('price', ''); }" />
+        <el-form-item label="免费">
+          <el-checkbox :model-value="!!info.free" @update:model-value="toggleFree" />
         </el-form-item>
-        <el-form-item label="试玩版" >
-          <el-checkbox :model-value="!!data.demo_available" @update:model-value="v => set('demo_available', v)" />
+        <el-form-item label="试玩版">
+          <el-checkbox v-model="info.demo_available" />
         </el-form-item>
       </div>
-      <el-form-item label="DEMO 链接"  class="mt-2" v-if="data.demo_available">
-        <el-input :model-value="data.demo_url || ''" @input="set('demo_url', $event)" placeholder="steam://install/APPID 或 https://..." />
+      <el-form-item label="DEMO 链接" class="mt-2" v-if="info.demo_available">
+        <el-input v-model="info.demo_url" placeholder="steam://install/APPID 或 https://..." />
       </el-form-item>
       <div class="flex items-center gap-4 mt-2">
-        <el-form-item label="性能测试工具" >
-          <el-checkbox :model-value="!!data.has_benchmark" @update:model-value="v => set('has_benchmark', v)" />
+        <el-form-item label="性能测试工具">
+          <el-checkbox v-model="info.has_benchmark" />
         </el-form-item>
       </div>
-      <el-form-item label="测试工具链接"  v-if="data.has_benchmark">
-        <el-input :model-value="data.benchmark_url || ''" @input="set('benchmark_url', $event)" placeholder="steam://run/APPID 或 https://..." />
+      <el-form-item label="测试工具链接" v-if="info.has_benchmark">
+        <el-input v-model="info.benchmark_url" placeholder="steam://run/APPID 或 https://..." />
       </el-form-item>
     </section>
 
     <!-- ====== 视频 ====== -->
     <section>
       <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4">视频</h4>
-      <div class="grid grid-cols-1 gap-3">
-        <el-form-item label="Steam 视频" >
-          <el-input :model-value="data?.videos?.steam || ''" @input="setVideos('steam', $event)" placeholder="Steam mp4/movie_max.mp4 URL" />
-        </el-form-item>
-        <el-form-item label="YouTube" >
-          <el-input :model-value="data?.videos?.youtube || ''" @input="setVideos('youtube', $event)" placeholder="粘贴链接或 video ID" />
-        </el-form-item>
-        <el-form-item label="Bilibili" >
-          <el-input :model-value="data?.videos?.bilibili || ''" @input="setVideos('bilibili', $event)" placeholder="粘贴 BV 号或链接" />
-        </el-form-item>
-      </div>
+      <AdminVideoFields v-model="info.videos" :show-steam="true" />
     </section>
 
     <!-- ====== 截图库 ====== -->
     <section>
       <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4 flex items-center justify-between">
-        截图 ({{ (data.screenshots || []).length }})
-        <el-button  type="primary" @click="addScreenshot" plain>+ 添加</el-button>
+        截图 ({{ (info.screenshots || []).length }})
+        <el-button type="primary" @click="addScreenshot" plain>+ 添加</el-button>
       </h4>
-      <div v-if="(data.screenshots || []).length" class="space-y-2">
-        <div v-for="(ss, i) in data.screenshots" :key="i" class="flex items-start gap-2">
+      <div v-if="(info.screenshots || []).length" class="space-y-2">
+        <div v-for="(ss, i) in info.screenshots" :key="i" class="flex items-start gap-2">
           <img v-if="ss" :src="ss" class="w-16 h-10 object-cover rounded border border-gray-600 shrink-0" />
           <span v-else class="w-16 h-10 bg-gray-700 rounded border border-gray-600 shrink-0 flex items-center justify-center text-gray-500 text-xs">无图</span>
-          <el-input :model-value="ss" @input="updateScreenshot(i, $event)" placeholder="https://...jpg 或上传"  class="flex-1" />
-          <label class="el-button  el-button--default cursor-pointer shrink-0">本地上传
+          <el-input v-model="info.screenshots[i]" placeholder="https://...jpg 或上传" class="flex-1" />
+          <label class="el-button el-button--default cursor-pointer shrink-0">本地上传
             <input type="file" accept="image/*,.webp" class="hidden" @change="uploadScreenshot(i, $event)" />
           </label>
-          <el-button  type="danger" @click="removeScreenshot(i)" plain>×</el-button>
+          <el-button type="danger" @click="removeScreenshot(i)" plain>×</el-button>
         </div>
       </div>
       <div v-else class="text-xs text-gray-500">暂无截图</div>
@@ -211,13 +159,13 @@ function toggleAudio(i) {
     <section>
       <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4 flex items-center justify-between">
         DLC ({{ dlcList.length }})
-        <el-button  type="primary" @click="addDlc" plain>+ 添加</el-button>
+        <el-button type="primary" @click="addDlc" plain>+ 添加</el-button>
       </h4>
       <div v-if="dlcList.length" class="space-y-2">
         <div v-for="(d, i) in dlcList" :key="i" class="flex items-center gap-2">
-          <el-input :model-value="d.name" @input="updateDlc(i, 'name', $event)" placeholder="DLC 名称"  class="flex-1" />
-          <el-input :model-value="d.id" @input="updateDlc(i, 'id', $event)" placeholder="AppID"  style="width:100px" />
-          <el-button  type="danger" @click="removeDlc(i)" plain>×</el-button>
+          <el-input :model-value="d.name" @input="updateDlc(i, 'name', $event)" placeholder="DLC 名称" class="flex-1" />
+          <el-input :model-value="d.id" @input="updateDlc(i, 'id', $event)" placeholder="AppID" style="width:100px" />
+          <el-button type="danger" @click="removeDlc(i)" plain>×</el-button>
         </div>
       </div>
       <div v-else class="text-xs text-gray-500">暂无 DLC</div>
@@ -227,7 +175,7 @@ function toggleAudio(i) {
     <section>
       <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4 flex items-center justify-between">
         语言支持 ({{ langList.length }})
-        <el-button  type="primary" @click="addLang" plain>+ 添加</el-button>
+        <el-button type="primary" @click="addLang" plain>+ 添加</el-button>
       </h4>
       <div v-if="langList.length" class="flex flex-wrap gap-2">
         <span v-for="(lang, i) in langList" :key="i"
@@ -246,15 +194,14 @@ function toggleAudio(i) {
     <section>
       <h4 class="text-sm font-semibold text-emerald-400 mb-3 border-t border-gray-700 pt-4">系统配置要求</h4>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <el-form-item label="最低配置" >
-          <el-input :model-value="data.min_requirements || ''" @input="set('min_requirements', $event)" type="textarea" :rows="6" placeholder="操作系统: Windows 10&#10;处理器: Intel i5-3570K&#10;内存: 8 GB&#10;显卡: GTX 1050" />
+        <el-form-item label="最低配置">
+          <el-input v-model="info.min_requirements" type="textarea" :rows="6" placeholder="操作系统: Windows 10&#10;处理器: Intel i5-3570K&#10;内存: 8 GB&#10;显卡: GTX 1050" />
         </el-form-item>
-        <el-form-item label="推荐配置" >
-          <el-input :model-value="data.rec_requirements || ''" @input="set('rec_requirements', $event)" type="textarea" :rows="6" placeholder="操作系统: Windows 10&#10;处理器: Intel i7-9700K&#10;内存: 16 GB&#10;显卡: RTX 2060" />
+        <el-form-item label="推荐配置">
+          <el-input v-model="info.rec_requirements" type="textarea" :rows="6" placeholder="操作系统: Windows 10&#10;处理器: Intel i7-9700K&#10;内存: 16 GB&#10;显卡: RTX 2060" />
         </el-form-item>
       </div>
     </section>
-
   </div>
 </template>
 

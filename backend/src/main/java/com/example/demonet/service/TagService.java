@@ -86,10 +86,13 @@ public class TagService {
     }
 
     public List<Long> getItemIdsByTagNames(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        String placeholders = String.join(",", java.util.Collections.nCopies(tagNames.size(), "?"));
         String sql = "SELECT DISTINCT itm.item_id FROM item_tag_mapping itm " +
-                     "JOIN tags t ON t.id = itm.tag_id WHERE t.name IN (" +
-                     String.join(",", tagNames.stream().map(s -> "'" + s + "'").toList()) + ")";
-        return jdbcTemplate.queryForList(sql, Long.class);
+                     "JOIN tags t ON t.id = itm.tag_id WHERE t.name IN (" + placeholders + ")";
+        return jdbcTemplate.queryForList(sql, Long.class, tagNames.toArray());
     }
 
     public List<Tag> getTagsForItem(Long itemId) {

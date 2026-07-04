@@ -9,9 +9,10 @@ import java.util.*;
 
 @Slf4j
 @Service
+@lombok.RequiredArgsConstructor
 public class BangumiService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private static final String BASE = "https://api.bgm.tv/v0";
 
     public List<Item> searchSubjects(String keyword, String targetType) {

@@ -15,6 +15,7 @@ import java.util.Map;
 public class ReviewService {
 
     private final ReviewMapper reviewMapper;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public Review create(Long userId, Long itemId, Integer rating, String comment) {
         Review r = new Review();
@@ -35,12 +36,11 @@ public class ReviewService {
     }
 
     public Map<String, Object> stats(Long itemId) {
-        var qw = new LambdaQueryWrapper<Review>().eq(Review::getItemId, itemId);
-        Long count = reviewMapper.selectCount(qw);
-        if (count == null || count == 0) return Map.of("count", 0, "avgRating", 0);
-        var reviews = reviewMapper.selectList(qw);
-        double avg = reviews.stream().filter(r -> r.getRating() != null).mapToInt(Review::getRating).average().orElse(0);
-        return Map.of("count", count, "avgRating", Math.round(avg * 10) / 10.0);
+        Map<String, Object> result = jdbcTemplate.queryForMap(
+                "SELECT COUNT(*) as count, COALESCE(AVG(rating), 0) as avgRating FROM reviews WHERE item_id = ?", itemId);
+        Number count = (Number) result.get("count");
+        Number avg = (Number) result.get("avgRating");
+        return Map.of("count", count.longValue(), "avgRating", Math.round(avg.doubleValue() * 10) / 10.0);
     }
 
     public void delete(Long reviewId, Long userId) {

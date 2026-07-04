@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     // =========================================================
-    // 后端：Attach（先 Ctrl+Shift+B 启动后端 Dev，再 F5 Attach）
+    // 后端：Attach（先启动后端 Dev，再 F5 Attach）
     // =========================================================
     {
       "type": "java",
@@ -32,36 +32,20 @@
     },
 
     // =========================================================
-    // 前端：Edge 调试（先运行"🎨 前端: 启动 Dev"，再 F5）
+    // 前端：Edge 调试（自动启动 Vite Dev → 打开 Edge）
     // =========================================================
     {
       "type": "msedge",
       "name": "🌐 前端: Edge",
       "request": "launch",
       "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}/frontend",
-      "sourceMapPathOverrides": {
-        "webpack:///./src/*": "${webRoot}/src/*"
-      }
-    },
-
-    // =========================================================
-    // 前端：Chrome 调试
-    // =========================================================
-    {
-      "type": "chrome",
-      "name": "🌐 前端: Chrome",
-      "request": "launch",
-      "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}/frontend",
-      "sourceMapPathOverrides": {
-        "webpack:///./src/*": "${webRoot}/src/*"
-      }
+      "webRoot": "${workspaceFolder}/frontend/src",
+      "preLaunchTask": "🎨 前端: 启动 Dev"
     }
   ],
 
   // =========================================================
-  // 组合：一键全栈（前提是前端 Dev 已手动启动）
+  // 组合：一键全栈
   // =========================================================
   "compounds": [
     {

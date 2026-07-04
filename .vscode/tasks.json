@@ -1,5 +1,11 @@
 {
   "version": "2.0.0",
+  "options": {
+    "shell": {
+      "executable": "cmd.exe",
+      "args": ["/d", "/c"]
+    }
+  },
   "tasks": [
     // =========================================================
     // Docker 基础设施（MySQL / Redis / RabbitMQ）
@@ -7,7 +13,7 @@
     {
       "label": "🐳 Docker: 启动",
       "type": "shell",
-      "command": "docker compose up -d && echo '等待 MySQL 就绪...' && until docker exec demonet-mysql mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD:-changeme} --silent 2>/dev/null; do sleep 1; done && echo '✅ MySQL/Redis/RabbitMQ 已就绪'",
+      "command": "docker compose up -d && echo ✅ Docker 容器已启动",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
@@ -39,10 +45,11 @@
     {
       "label": "🔧 后端: 启动 Dev",
       "type": "shell",
-      "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005",
+      "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005\"",
       "options": { "cwd": "${workspaceFolder}/backend" },
       "presentation": { "reveal": "always", "panel": "new", "clear": true, "showReuseMessage": true },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "isBackground": true
     },
 
     // =========================================================
@@ -54,7 +61,20 @@
       "command": "npm run dev",
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "presentation": { "reveal": "always", "panel": "new", "clear": true, "showReuseMessage": true },
-      "problemMatcher": []
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "Local:.*http"
+        }
+      }
     },
 
     // =========================================================

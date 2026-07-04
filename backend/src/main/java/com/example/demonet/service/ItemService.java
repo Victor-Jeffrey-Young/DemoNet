@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Item;
 import com.example.demonet.mapper.ItemMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,6 +26,7 @@ public class ItemService {
 
     private final ItemMapper itemMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper;
 
     /** Types visible in the frontend */
     @Cacheable(value = "visibleTypes")
@@ -94,10 +96,9 @@ public class ItemService {
     @SuppressWarnings("unchecked")
     private String mergeInfoJson(String existingJson, String freshJson) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> e = mapper.readValue(
+            Map<String, Object> e = objectMapper.readValue(
                     existingJson != null && !existingJson.isBlank() ? existingJson : "{}", Map.class);
-            Map<String, Object> f = mapper.readValue(
+            Map<String, Object> f = objectMapper.readValue(
                     freshJson != null && !freshJson.isBlank() ? freshJson : "{}", Map.class);
 
             String[] apiFields = {"developer","publisher","genre","platform","price",
@@ -116,7 +117,7 @@ public class ItemService {
             ev.putIfAbsent("bilibili", "");
             e.put("videos", ev);
 
-            return mapper.writeValueAsString(e);
+            return objectMapper.writeValueAsString(e);
         } catch (Exception ex) {
             return freshJson != null ? freshJson : existingJson;
         }
@@ -153,10 +154,25 @@ public class ItemService {
 
     @Cacheable(value = "hotItems", key = "#type + '_' + #limit")
     public List<Item> listHotItems(String type, Integer limit) {
-        String sql = "SELECT i.*, (SELECT COUNT(*) FROM reviews r WHERE r.item_id = i.id AND r.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)) AS recent_reviews FROM items i WHERE i.status = 1";
-        if (type != null && !type.isBlank()) sql += " AND i.type = '" + type.replace("'", "''") + "'";
-        sql += " ORDER BY (LN(i.recommendations + 1) * 100 + i.hot_boost + recent_reviews * 500) / GREATEST(DATEDIFF(NOW(), i.created_at), 1) DESC LIMIT " + (limit != null ? limit : 6);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+        StringBuilder sql = new StringBuilder(
+                "SELECT i.id, i.type, i.title, i.slug, i.cover_url, i.wide_cover_url, i.poster_url, " +
+                "i.recommendations, i.hot_boost, i.created_at, i.status, COUNT(r.id) AS recent_reviews " +
+                "FROM items i LEFT JOIN reviews r ON i.id = r.item_id AND r.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) " +
+                "WHERE i.status = 1");
+        List<Object> params = new java.util.ArrayList<>();
+        if (type != null && !type.isBlank()) {
+            sql.append(" AND i.type = ?");
+            params.add(type);
+        }
+        sql.append(" GROUP BY i.id ");
+        sql.append(" ORDER BY (LN(i.recommendations + 1) * 100 + i.hot_boost + COUNT(r.id) * 500) / GREATEST(DATEDIFF(NOW(), i.created_at), 1) DESC LIMIT ?");
+        params.add(limit != null ? limit : 6);
+
+        return jdbcTemplate.query(sql.toString(), ps -> {
+            for (int j = 0; j < params.size(); j++) {
+                ps.setObject(j + 1, params.get(j));
+            }
+        }, (rs, rowNum) -> {
             Item item = new Item();
             item.setId(rs.getLong("id"));
             item.setType(rs.getString("type"));
@@ -184,6 +200,7 @@ public class ItemService {
     @Cacheable(value = "featured", key = "#type != null ? #type : 'all'")
     public List<Item> listFeatured(String type) {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Item.class, info -> !info.getColumn().equals("description") && !info.getColumn().equals("info_json"));
         wrapper.eq(Item::getStatus, 1);
         wrapper.isNotNull(Item::getCarouselOrder);
         filterByType(wrapper, type);
@@ -193,6 +210,7 @@ public class ItemService {
 
     public List<Item> listByType(String type) {
         LambdaQueryWrapper<Item> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Item.class, info -> !info.getColumn().equals("description") && !info.getColumn().equals("info_json"));
         wrapper.eq(Item::getStatus, 1);
         filterByType(wrapper, type);
         wrapper.orderByDesc(Item::getCreatedAt);
@@ -202,7 +220,8 @@ public class ItemService {
     @Cacheable(value = "recommended", key = "#type + '_' + #limit")
     public List<Item> listRecommended(String type, Integer limit) {
         StringBuilder sql = new StringBuilder(
-                "SELECT i.* FROM items i LEFT JOIN " +
+                "SELECT i.id, i.type, i.title, i.slug, i.cover_url, i.wide_cover_url, i.poster_url, " +
+                "i.recommendations, i.hot_boost, i.created_at, i.status FROM items i LEFT JOIN " +
                 "(SELECT item_id, COUNT(*) AS cnt FROM user_items GROUP BY item_id) ui " +
                 "ON i.id = ui.item_id WHERE i.status = 1");
         boolean hasType = type != null && !type.isBlank();

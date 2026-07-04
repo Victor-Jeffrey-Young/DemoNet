@@ -1,60 +1,29 @@
 <script setup>
 import TypeIcon from '../TypeIcon.vue'
-const props = defineProps({ modelValue: Object })
-const emit = defineEmits(['update:modelValue'])
+import AdminVideoFields from './AdminVideoFields.vue'
 
-function normalizeVideo(raw, platform) {
-  if (!raw || !raw.trim()) return raw; raw = raw.trim()
-  if (platform === 'bilibili') return raw.includes('player.bilibili.com') ? raw : '//player.bilibili.com/player.html?bvid=' + raw
-  if (platform === 'youtube') {
-    if (raw.includes('youtube.com/embed/')) return raw
-    const m = raw.match(/[?&]v=([a-zA-Z0-9_-]{11})/); if (m) return 'https://www.youtube.com/embed/' + m[1]
-    const m2 = raw.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/); if (m2) return 'https://www.youtube.com/embed/' + m2[1]
-    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return 'https://www.youtube.com/embed/' + raw
-    return raw
-  }
-  return raw
-}
-
-function set(k, v) {
-  const obj = JSON.parse(JSON.stringify(props.modelValue || {}))
-  if (k.startsWith('videos.')) {
-    const platform = k.split('.')[1]
-    v = normalizeVideo(v, platform)
-    if (!obj.videos) obj.videos = {}
-    obj.videos[platform] = v
-  } else {
-    obj[k] = v
-  }
-  emit('update:modelValue', obj)
-}
+const props = defineProps({ info: Object })
 </script>
 
 <template>
-  <h4 class="text-sm font-medium text-amber-400 mt-4 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
+  <h4 class="text-sm font-medium text-amber-500 mt-4 mb-3 border-t border-gray-700 pt-4 flex items-center gap-2">
     <span><TypeIcon type="book" size="16" /></span> 书籍信息
   </h4>
   <div class="grid grid-cols-2 gap-4">
-    <el-form-item label="作者" size="default">
-      <el-input :model-value="modelValue?.author || ''" @input="set('author', $event)" placeholder="如: 刘慈欣" />
+    <el-form-item label="作者">
+      <el-input v-model="info.author" placeholder="如: J.K. Rowling" />
     </el-form-item>
-    <el-form-item label="年份">
-      <el-input :model-value="modelValue?.year || ''" @input="set('year', $event)" placeholder="如: 2008" />
+    <el-form-item label="出版年份">
+      <el-input v-model="info.year" placeholder="如: 1997" />
     </el-form-item>
     <el-form-item label="页数">
-      <el-input :model-value="modelValue?.pages || ''" @input="set('pages', $event)" placeholder="如: 312" />
+      <el-input v-model="info.pages" placeholder="如: 350" />
     </el-form-item>
     <el-form-item label="分类">
-      <el-input :model-value="modelValue?.category || ''" @input="set('category', $event)" placeholder="如: 科幻, 文学" />
-    </el-form-item>
-    <el-form-item label="试读链接" class="col-span-2">
-      <el-input :model-value="modelValue?.reader_url || ''" @input="set('reader_url', $event)" placeholder="PDF 链接或在线试读地址" />
-    </el-form-item>
-    <el-form-item label="Bilibili 视频" class="col-span-2">
-      <el-input :model-value="modelValue?.videos?.bilibili || ''" @input="set('videos.bilibili', $event)" placeholder="BV 号或 B站链接" />
-    </el-form-item>
-    <el-form-item label="YouTube 视频" class="col-span-2">
-      <el-input :model-value="modelValue?.videos?.youtube || ''" @input="set('videos.youtube', $event)" placeholder="YouTube 链接或 ID" />
+      <el-input v-model="info.category" placeholder="如: 奇幻, 文学" />
     </el-form-item>
   </div>
+  
+  <h4 class="text-sm font-semibold text-amber-500 mt-4 mb-3 border-t border-gray-700 pt-4">相关视频</h4>
+  <AdminVideoFields v-model="info.videos" />
 </template>

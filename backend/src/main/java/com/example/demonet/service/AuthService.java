@@ -27,7 +27,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AppSettingMapper appSettingMapper;
     private final InviteCodeMapper inviteCodeMapper;
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
 
     /** Registers user, returns the created user ID. */
     public Long register(String username, String email, String password, String turnstileToken, String inviteCode) {
@@ -53,7 +53,8 @@ public class AuthService {
                     throw new RuntimeException("人机验证失败，请重试");
             } catch (RuntimeException e) { throw e; }
             catch (Exception e) {
-                // Network / SSL errors: degrade gracefully, don't block registration
+                org.slf4j.LoggerFactory.getLogger(AuthService.class).warn("Turnstile API error: {}", e.getMessage());
+                throw new RuntimeException("验证码服务不可用，请稍后重试");
             }
         }
 
