@@ -41,8 +41,8 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestClient;
-import org.springframework.jdbc.core.JdbcTemplate;
+import jakarta.validation.Valid;
+import com.example.demonet.dto.request.AdminRequests.*;
 
 @Slf4j
 @RestController
@@ -58,9 +58,11 @@ public class AdminController {
     private final CategorySettingMapper categorySettingMapper;
     private final InviteCodeMapper inviteCodeMapper;
     private final UserMapper userMapper;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     private final SteamService steamService;
     private final SteamGridDBService steamGridDBService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final org.springframework.web.client.RestClient restClient;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -103,8 +105,8 @@ public class AdminController {
     }
 
     @PutMapping("/items/{id}/status")
-    public Item updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
-        Integer status = body.get("status");
+    public Item updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusReq body) {
+        Integer status = body.getStatus();
         return adminService.updateStatus(id, status);
     }
 
@@ -116,18 +118,17 @@ public class AdminController {
 
     @PostMapping("/items/batch-delete")
     @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
-    public Map<String, Object> batchDelete(@RequestBody Map<String, List<Long>> body) {
-        List<Long> ids = body.get("ids");
+    public Map<String, Object> batchDelete(@Valid @RequestBody BatchDeleteReq body) {
+        List<Long> ids = body.getIds();
         int count = adminService.batchDelete(ids);
         return Map.of("message", "已删除 " + count + " 条内容", "count", count);
     }
 
     @PostMapping("/items/batch-status")
     @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
-    public Map<String, Object> batchUpdateStatus(@RequestBody Map<String, Object> body) {
-        List<Integer> rawIds = (List<Integer>) body.get("ids");
-        List<Long> ids = rawIds.stream().map(Integer::longValue).toList();
-        Integer status = (Integer) body.get("status");
+    public Map<String, Object> batchUpdateStatus(@Valid @RequestBody BatchStatusUpdateReq body) {
+        List<Long> ids = body.getIds();
+        Integer status = body.getStatus();
         int count = adminService.batchUpdateStatus(ids, status);
         String label = status == 1 ? "已上线" : "已下架";
         return Map.of("message", label + " " + count + " 条内容", "count", count);
@@ -142,8 +143,8 @@ public class AdminController {
 
     @PostMapping("/carousel/{type}")
     @CacheEvict(value = {"featured", "hotItems", "recommended"}, allEntries = true)
-    public Map<String, String> saveCarousel(@PathVariable String type, @RequestBody Map<String, List<Long>> body) {
-        adminService.saveCarouselOrder(type, body.get("itemIds"));
+    public Map<String, String> saveCarousel(@PathVariable String type, @Valid @RequestBody CarouselSaveReq body) {
+        adminService.saveCarouselOrder(type, body.getItemIds());
         return Map.of("message", "ok");
     }
 
@@ -200,18 +201,15 @@ public class AdminController {
                 case "poster" -> item.setPosterUrl(url);
                 case "reader" -> {
                     String info = item.getInfoJson();
-                    if (info == null || info.isBlank()) {
-                        item.setInfoJson("{\"reader_url\":\"" + url + "\"}");
-                    } else {
-                        String cleaned = info
-                            .replaceAll(",\\s*\"reader_url\"\\s*:\\s*\"[^\"]*\"", "")
-                            .replaceAll("\"reader_url\"\\s*:\\s*\"[^\"]*\"\\s*,?\\s*", "");
-                        if (cleaned.strip().equals("{}")) {
-                            item.setInfoJson("{\"reader_url\":\"" + url + "\"}");
-                        } else {
-                            String inner = cleaned.strip().replaceAll("^\\{|}$", "");
-                            item.setInfoJson("{" + inner + ",\"reader_url\":\"" + url + "\"}");
+                    try {
+                        Map<String, Object> map = new LinkedHashMap<>();
+                        if (info != null && !info.isBlank()) {
+                            map = objectMapper.readValue(info, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
                         }
+                        map.put("reader_url", url);
+                        item.setInfoJson(objectMapper.writeValueAsString(map));
+                    } catch (Exception e) {
+                        log.error("Failed to update reader_url in infoJson", e);
                     }
                 }
                 default -> item.setCoverUrl(url);
@@ -240,8 +238,8 @@ public class AdminController {
     }
 
     @PostMapping("/tags")
-    public Tag createTag(@RequestBody Map<String, String> body) {
-        return tagService.create(body.get("name"));
+    public Tag createTag(@Valid @RequestBody TagCreateReq body) {
+        return tagService.create(body.getName());
     }
 
     @DeleteMapping("/tags/{id}")
@@ -311,9 +309,9 @@ public class AdminController {
         return Map.of("message", "Backfilled poster_url for " + count + " games", "count", count);
     }
     @PostMapping("/fetch/steam")
-    public Map<String, Object> triggerSteam(@RequestBody Map<String, Object> body) {
-        List<Integer> appIds = (List<Integer>) body.get("appIds");
-        String targetType = (String) body.getOrDefault("targetType", "game");
+    public Map<String, Object> triggerSteam(@Valid @RequestBody TriggerSteamReq body) {
+        List<Integer> appIds = body.getAppIds();
+        String targetType = body.getTargetType();
         // Check which appIds already exist
         List<String> existingNames = new ArrayList<>();
         List<Integer> newIds = new ArrayList<>();
@@ -346,7 +344,7 @@ public class AdminController {
 
     @GetMapping("/steam/search")
     public List<Map<String, Object>> searchSteam(@RequestParam String q) {
-        Map<String, Object> resp = RestClient.create().get()
+        Map<String, Object> resp = restClient.get()
                 .uri("https://store.steampowered.com/api/storesearch/?term={q}&cc=cn&l=schinese", q)
                 .retrieve()
                 .body(Map.class);
@@ -359,9 +357,9 @@ public class AdminController {
         if (!items.isEmpty()) {
             String ids = items.stream()
                     .map(it -> String.valueOf(it.get("id")))
-                    .collect(java.util.stream.Collectors.joining(","));
+                    .collect(Collectors.joining(","));
             try {
-                Map<String, Object> check = RestClient.create().get()
+                Map<String, Object> check = restClient.get()
                         .uri("https://store.steampowered.com/api/appdetails?appids=" + ids + "&cc=cn&l=schinese")
                         .retrieve()
                         .body(Map.class);
@@ -396,56 +394,56 @@ public class AdminController {
     }
 
     @PostMapping("/fetch/tmdb")
-    public Map<String, String> triggerTMDB(@RequestBody Map<String, Object> body) {
-        String query = (String) body.get("query");
-        String targetType = (String) body.getOrDefault("targetType", "movie");
+    public Map<String, String> triggerTMDB(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        String targetType = body.getTargetType() != null ? body.getTargetType() : "movie";
         Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_TMDB, payload);
         return Map.of("message", "TMDB fetch queued: " + query + " → " + targetType);
     }
 
     @PostMapping("/fetch/anilist")
-    public Map<String, String> triggerAniList(@RequestBody Map<String, Object> body) {
-        String query = (String) body.get("query");
-        String targetType = (String) body.getOrDefault("targetType", "anime");
+    public Map<String, String> triggerAniList(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        String targetType = body.getTargetType() != null ? body.getTargetType() : "anime";
         Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_ANILIST, payload);
         return Map.of("message", "AniList fetch queued: " + query + " → " + targetType);
     }
 
     @PostMapping("/fetch/bangumi")
-    public Map<String, String> triggerBangumi(@RequestBody Map<String, Object> body) {
-        String query = (String) body.get("query");
-        String targetType = (String) body.getOrDefault("targetType", "anime");
+    public Map<String, String> triggerBangumi(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        String targetType = body.getTargetType() != null ? body.getTargetType() : "anime";
         Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_BANGUMI, payload);
         return Map.of("message", "Bangumi fetch queued: " + query + " → " + targetType);
     }
 
     @PostMapping("/fetch/tmdb-tv")
-    public Map<String, String> triggerTMDBTV(@RequestBody Map<String, Object> body) {
-        String query = (String) body.get("query");
-        String targetType = (String) body.getOrDefault("targetType", "anime");
+    public Map<String, String> triggerTMDBTV(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        String targetType = body.getTargetType() != null ? body.getTargetType() : "anime";
         Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_TMDB_TV, payload);
         return Map.of("message", "TMDB TV fetch queued: " + query + " → " + targetType);
     }
 
     @PostMapping("/fetch/itunes")
-    public Map<String, String> triggerItunes(@RequestBody Map<String, Object> body) {
-        String query = (String) body.get("query");
-        String targetType = (String) body.getOrDefault("targetType", "music");
+    public Map<String, String> triggerItunes(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        String targetType = body.getTargetType() != null ? body.getTargetType() : "music";
         Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_ITUNES, payload);
         return Map.of("message", "iTunes fetch queued: " + query + " → " + targetType);
     }
 
     @PostMapping("/fetch/igdb")
-    public Map<String, String> triggerIGDB(@RequestBody Map<String, Object> body) {
-        String query = (String) body.get("query");
-        String endpoint = (String) body.getOrDefault("endpoint", "search");
-        int limit = body.get("limit") != null ? ((Number) body.get("limit")).intValue() : 10;
-        String targetType = (String) body.getOrDefault("targetType", "game");
+    public Map<String, String> triggerIGDB(@Valid @RequestBody TriggerIGDBReq body) {
+        String query = body.getQuery();
+        String endpoint = body.getEndpoint();
+        int limit = body.getLimit();
+        String targetType = body.getTargetType();
         Map<String, Object> payload = Map.of(
                 "query", query != null ? query : "",
                 "endpoint", endpoint,
@@ -504,8 +502,8 @@ public class AdminController {
     }
 
     @PutMapping("/settings/{key}")
-    public void updateSetting(@PathVariable String key, @RequestBody Map<String, String> body) {
-        String value = body.getOrDefault("value", "");
+    public void updateSetting(@PathVariable String key, @Valid @RequestBody SettingUpdateReq body) {
+        String value = body.getValue() != null ? body.getValue() : "";
         AppSetting as = new AppSetting();
         as.setSettingKey(key);
         as.setSettingValue(value);
@@ -542,8 +540,8 @@ public class AdminController {
     }
 
     @PostMapping("/invite-codes/generate")
-    public Map<String, Object> generateInviteCodes(@RequestBody Map<String, Integer> body) {
-        int count = body.getOrDefault("count", 1);
+    public Map<String, Object> generateInviteCodes(@Valid @RequestBody InviteCodeGenerateReq body) {
+        int count = body.getCount() != null ? body.getCount() : 1;
         List<String> codes = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -563,13 +561,13 @@ public class AdminController {
     }
 
     @PutMapping("/users/{id}/ban")
-    public void toggleBan(@PathVariable Long id, @RequestBody Map<String, Integer> body, Authentication auth) {
+    public void toggleBan(@PathVariable Long id, @Valid @RequestBody ToggleBanReq body, Authentication auth) {
         Long currentUserId = (Long) auth.getPrincipal();
         if (id.equals(currentUserId)) throw new RuntimeException("不能封禁自己");
         User user = userMapper.selectById(id);
         if (user == null) throw new RuntimeException("用户不存在");
         if ("ADMIN".equals(user.getRole())) throw new RuntimeException("不能封禁管理员");
-        int enabled = body.getOrDefault("enabled", 1);
+        int enabled = body.getEnabled() != null ? body.getEnabled() : 1;
         user.setEnabled(enabled);
         userMapper.updateById(user);
     }

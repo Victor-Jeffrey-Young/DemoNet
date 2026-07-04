@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import router from '../router'
 
 const request = axios.create({
   baseURL: '/api',
@@ -15,12 +16,29 @@ request.interceptors.request.use((config) => {
 })
 
 request.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const res = response.data
+    // If we have a standardized API response structure
+    if (res && res.code !== undefined) {
+      if (res.code === 200) {
+        return res.data
+      } else {
+        ElMessage.error(res.message || '业务处理失败')
+        return Promise.reject(new Error(res.message || 'Error'))
+      }
+    }
+    // Fallback for endpoints that haven't been wrapped yet
+    return res
+  },
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       ElMessage.warning('登录已过期，请重新登录')
       localStorage.removeItem('token')
-      setTimeout(() => { window.location.href = '/login' }, 800)
+      router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+    } else {
+      // Show backend error message
+      const msg = error.response?.data?.message || error.message || '请求失败'
+      ElMessage.error(msg)
     }
     return Promise.reject(error)
   },

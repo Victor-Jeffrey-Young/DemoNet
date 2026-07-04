@@ -9,9 +9,10 @@ import java.util.*;
 
 @Slf4j
 @Service
+@lombok.RequiredArgsConstructor
 public class AniListService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private static final String ENDPOINT = "https://graphql.anilist.co";
 
     public List<Item> searchAnime(String query, String targetType) {

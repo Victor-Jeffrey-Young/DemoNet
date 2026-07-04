@@ -18,13 +18,13 @@ public class ItunesService {
     private final RestClient restClient;
     private static final String BASE = "https://itunes.apple.com/search";
 
-    public ItunesService() {
+    public ItunesService(RestClient defaultRestClient) {
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setSupportedMediaTypes(Arrays.asList(
                 MediaType.APPLICATION_JSON,
                 new MediaType("text", "javascript")
         ));
-        this.restClient = RestClient.builder()
+        this.restClient = defaultRestClient.mutate()
                 .messageConverters(c -> c.add(0, converter))
                 .build();
     }

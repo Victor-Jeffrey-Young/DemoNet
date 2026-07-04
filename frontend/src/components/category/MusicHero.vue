@@ -4,11 +4,6 @@ import { useRouter } from "vue-router";
 import { getFeatured, getHotItems } from "../../api/item";
 import { getMeta } from "../../constants/types";
 
-// ── Geometry ──
-const STEP = 20; // degrees between adjacent covers
-const RADIUS = 650; // arc radius (px)
-const VIS_RANGE = 5; // visible offset range
-
 const router = useRouter();
 const meta = getMeta("music");
 const albums = ref([]);
@@ -19,6 +14,17 @@ const viewportRef = ref(null);
 const itemsRef = ref([]);
 let prevDiffs = [];
 let isFirstRender = true;
+
+// ── Responsive Geometry ──
+const windowWidth = ref(window.innerWidth);
+function onResize() {
+    windowWidth.value = window.innerWidth;
+    renderAll(false);
+}
+const isMobile = computed(() => windowWidth.value <= 768);
+const RADIUS = computed(() => isMobile.value ? 400 : 650);
+const STEP = computed(() => isMobile.value ? 25 : 20);
+const VIS_RANGE = 5; 
 
 onMounted(async () => {
     try {
@@ -36,14 +42,11 @@ onMounted(async () => {
         if (N.value > 1) startAutoPlay();
     }
 
-    // 手动挂载非 passive 的滚轮监听
     if (viewportRef.value) {
-        viewportRef.value.addEventListener("wheel", onWheel, {
-            passive: false,
-        });
+        viewportRef.value.addEventListener("wheel", onWheel, { passive: false });
     }
-    // 挂载可见性监听
     document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("resize", onResize);
 });
 
 let autoTimer = null;
@@ -53,34 +56,28 @@ onUnmounted(() => {
         viewportRef.value.removeEventListener("wheel", onWheel);
     }
     document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.removeEventListener("resize", onResize);
 });
 
 function startAutoPlay() {
     clearInterval(autoTimer);
-    autoTimer = setInterval(
-        () => navigateTo((activeIdx.value + 1) % N.value),
-        4000,
-    );
+    autoTimer = setInterval(() => navigateTo((activeIdx.value + 1) % N.value), 4000);
 }
 function resetAutoPlay() {
     if (N.value <= 1) return;
     clearInterval(autoTimer);
-    autoTimer = setInterval(
-        () => navigateTo((activeIdx.value + 1) % N.value),
-        4000,
-    );
+    autoTimer = setInterval(() => navigateTo((activeIdx.value + 1) % N.value), 4000);
 }
 
 // ── Arc wheel transform ──
 function wheelTransform(offset) {
-    const angle = (offset * STEP * Math.PI) / 180;
-    const x = RADIUS * Math.sin(angle);
-    const z = RADIUS * (Math.cos(angle) - 1);
-    const ry = -offset * STEP;
+    const angle = (offset * STEP.value * Math.PI) / 180;
+    const x = RADIUS.value * Math.sin(angle);
+    const z = RADIUS.value * (Math.cos(angle) - 1);
+    const ry = -offset * STEP.value;
     return `translate3d(${x.toFixed(1)}px, 0, ${z.toFixed(1)}px) rotateY(${ry.toFixed(1)}deg)`;
 }
 
-// ── Shortest-path diff (circular) ──
 function shortestDiff(i) {
     let d = i - activeIdx.value;
     if (d > N.value / 2) d -= N.value;
@@ -92,13 +89,12 @@ function shortestDiff(i) {
 let startX = 0;
 let dragOffsetPx = 0;
 let dragging = false;
-let hasMoved = false; // 状态锁：用于阻止拖拽释放时触发意外跳转
+let hasMoved = false;
 
 function gapPx() {
-    return RADIUS * Math.sin((STEP * Math.PI) / 180);
+    return RADIUS.value * Math.sin((STEP.value * Math.PI) / 180);
 }
 
-// ── Render all ──
 function renderAll(animate) {
     const items = itemsRef.value;
     if (!items || !items.length) return;
@@ -109,100 +105,77 @@ function renderAll(animate) {
         const offset = diff + dragOffsetPx / gapPx();
         const absOff = Math.abs(offset);
 
-        // 检测是否需要瞬移
-        const didWrap =
-            !isFirstRender && Math.abs(prevDiffs[i] - diff) > N.value / 2;
+        const didWrap = !isFirstRender && Math.abs(prevDiffs[i] - diff) > N.value / 2;
 
-        if (animate) {
-            el.classList.add("cf-anim");
-        } else {
-            el.classList.remove("cf-anim");
-        }
+        if (animate) el.classList.add("cf-anim");
+        else el.classList.remove("cf-anim");
 
         if (absOff > VIS_RANGE) {
             el.style.opacity = "0";
             el.style.pointerEvents = "none";
         } else {
-            el.style.opacity = Math.max(
-                0,
-                1 - Math.pow(absOff / VIS_RANGE, 2.2),
-            );
-            el.style.pointerEvents =
-                absOff <= VIS_RANGE * 0.7 ? "auto" : "none";
+            el.style.opacity = Math.max(0, 1 - Math.pow(absOff / VIS_RANGE, 2.2));
+            el.style.pointerEvents = absOff <= VIS_RANGE * 0.7 ? "auto" : "none";
         }
 
         if (didWrap) {
-            // 1. 瞬间关闭过渡动画
             el.style.transition = "none";
-            // 2. 立即应用瞬移后的 3D 坐标（不使用 offsetHeight，完全不阻塞主线程）
             el.style.transform = wheelTransform(offset);
             el.style.zIndex = Math.floor(100 - absOff * 20);
-
-            // 3. 异步恢复过渡动画，避开当前渲染帧
-            setTimeout(() => {
-                el.style.transition = "";
-            }, 30);
+            setTimeout(() => { el.style.transition = ""; }, 30);
         } else {
-            // 正常卡片的 3D 变换
             el.style.transform = wheelTransform(offset);
             el.style.zIndex = Math.floor(100 - absOff * 20);
         }
-
         prevDiffs[i] = diff;
     });
 }
 
-// ── Navigate ──
 function navigateTo(targetIdx) {
     let delta = targetIdx - activeIdx.value;
     if (delta > N.value / 2) delta -= N.value;
     if (delta < -N.value / 2) delta += N.value;
-    activeIdx.value =
-        (((activeIdx.value + delta) % N.value) + N.value) % N.value;
+    activeIdx.value = (((activeIdx.value + delta) % N.value) + N.value) % N.value;
     renderAll(true);
 }
 
-function prev() {
-    navigateTo((activeIdx.value - 1 + N.value) % N.value);
-}
-function next() {
-    navigateTo((activeIdx.value + 1) % N.value);
+function prev() { navigateTo((activeIdx.value - 1 + N.value) % N.value); }
+function next() { navigateTo((activeIdx.value + 1) % N.value); }
+
+function getClientX(e) {
+    return e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
 }
 
-// ── Mouse drag ──
-function onMouseDown(e) {
+function onPointerDown(e) {
     if (N.value <= 1) return;
     dragging = true;
-    startX = e.clientX;
+    startX = getClientX(e);
     dragOffsetPx = 0;
     hasMoved = false;
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    
+    document.addEventListener("mousemove", onPointerMove);
+    document.addEventListener("mouseup", onPointerUp);
+    document.addEventListener("touchmove", onPointerMove, { passive: false });
+    document.addEventListener("touchend", onPointerUp);
 }
 
-function onMouseMove(e) {
+function onPointerMove(e) {
     if (!dragging) return;
-
-    // 1. 引入 0.8 的阻尼系数（Friction）
-    // 增加滑动阻力，让手势感觉更有厚重质感、更沉稳
-    const rawOffset = (startX - e.clientX) * 0.8;
-
-    // 2. 核心限幅（Clamp）：限制最大拖拽位移为 1 张卡片的物理间距
-    // 这样无论鼠标在屏幕上拖得多远，画面在视觉上最多也只会滑动一格，完美实现“拽一下，只动一张”
+    const rawOffset = (startX - getClientX(e)) * 0.8;
     const maxDrag = gapPx();
     dragOffsetPx = Math.max(-maxDrag, Math.min(maxDrag, rawOffset));
 
-    if (Math.abs(dragOffsetPx) > 5) {
-        hasMoved = true;
-    }
-    renderAll(false); // 实时重绘（无动画延迟，卡片紧贴指尖）
+    if (Math.abs(dragOffsetPx) > 5) hasMoved = true;
+    renderAll(false);
 }
 
-function onMouseUp() {
+function onPointerUp() {
     if (!dragging) return;
     dragging = false;
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("mousemove", onPointerMove);
+    document.removeEventListener("mouseup", onPointerUp);
+    document.removeEventListener("touchmove", onPointerMove);
+    document.removeEventListener("touchend", onPointerUp);
 
     const g = gapPx();
     if (Math.abs(dragOffsetPx) > g * 0.3) {
@@ -213,19 +186,15 @@ function onMouseUp() {
         dragOffsetPx = 0;
         renderAll(true);
     }
-    // 延迟重置滑动状态，确保 onClickCover 执行时能正确拦截
-    setTimeout(() => {
-        hasMoved = false;
-    }, 50);
+    setTimeout(() => { hasMoved = false; }, 50);
     resetAutoPlay();
 }
 
-// ── Scroll Wheel ──
 let lastWheelTime = 0;
 function onWheel(e) {
-    e.preventDefault(); // 阻止默认的页面滚动行为
+    e.preventDefault();
     const now = Date.now();
-    if (now - lastWheelTime < 250) return; // 节流
+    if (now - lastWheelTime < 250) return;
 
     if (e.deltaX > 20 || e.deltaY > 20) {
         next();
@@ -237,145 +206,62 @@ function onWheel(e) {
     resetAutoPlay();
 }
 
-// ── Click side covers ──
 function onClickCover(e, i) {
-    if (hasMoved) return; // 如果是滑动释放，则在此处拦截，不触发跳转
+    if (hasMoved) return;
     const diff = shortestDiff(i);
     const abs = Math.abs(diff);
-    if (abs === 0) {
-        goDetail(albums.value[i].slug);
-    } else if (abs <= 2) {
-        navigateTo(i);
-        resetAutoPlay();
-    }
+    if (abs === 0) goDetail(albums.value[i].slug);
+    else if (abs <= 2) { navigateTo(i); resetAutoPlay(); }
 }
 
-// ── GPU layer restore ──
 function onVisibilityChange() {
     if (document.visibilityState !== "visible" || !viewportRef.value) return;
     const scene = viewportRef.value.querySelector(".cf-scene");
     if (!scene) return;
     scene.style.display = "none";
-    scene.offsetHeight; // force reflow
+    scene.offsetHeight;
     scene.style.display = "";
     renderAll(false);
 }
 
-// ── Helpers ──
-function goDetail(slug) {
-    router.push({ name: "Detail", params: { slug } });
-}
+function goDetail(slug) { router.push({ name: "Detail", params: { slug } }); }
 function parseInfo(item) {
-    try {
-        return JSON.parse(item.infoJson || "{}");
-    } catch {
-        return {};
-    }
+    try { return JSON.parse(item.infoJson || "{}"); } catch { return {}; }
 }
 const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
 </script>
 
 <template>
     <div v-if="N > 0" class="cf-root">
-        <div ref="viewportRef" class="cf-viewport" @mousedown="onMouseDown">
+        <div ref="viewportRef" class="cf-viewport" @mousedown="onPointerDown" @touchstart="onPointerDown">
             <div class="cf-scene">
-                <div
-                    v-for="(album, i) in albums"
-                    :key="album.id || i"
-                    :ref="
-                        (el) => {
-                            if (el) itemsRef[i] = el;
-                        }
-                    "
-                    class="cf-item"
-                    @click="onClickCover($event, i)"
-                >
+                <div v-for="(album, i) in albums" :key="album.id || i" :ref="(el) => { if (el) itemsRef[i] = el; }" class="cf-item" @click="onClickCover($event, i)">
                     <div class="cf-cover">
-                        <img
-                            v-if="album.wideCoverUrl || album.coverUrl"
-                            :src="album.wideCoverUrl || album.coverUrl"
-                            class="cf-img"
-                        />
-                        <div
-                            v-else
-                            class="cf-img cf-fallback flex items-center justify-center text-4xl text-white/20"
-                        >
-                            🎵
-                        </div>
+                        <img v-if="album.wideCoverUrl || album.coverUrl" :src="album.wideCoverUrl || album.coverUrl" class="cf-img" />
+                        <div v-else class="cf-img cf-fallback flex items-center justify-center text-4xl text-white/20">🎵</div>
                         <div class="cf-shine" />
                     </div>
                     <div class="cf-reflect">
-                        <img
-                            v-if="album.wideCoverUrl || album.coverUrl"
-                            :src="album.wideCoverUrl || album.coverUrl"
-                            class="cf-reflect-img"
-                        />
+                        <img v-if="album.wideCoverUrl || album.coverUrl" :src="album.wideCoverUrl || album.coverUrl" class="cf-reflect-img" />
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Controls + info overlaid at bottom -->
         <div class="cf-bottom">
             <div class="cf-now-playing">
                 <div class="cf-now-title">{{ currentAlbum.title || "" }}</div>
-                <div class="cf-now-artist">
-                    {{ parseInfo(currentAlbum).artist || "" }}
-                </div>
+                <div class="cf-now-artist">{{ parseInfo(currentAlbum).artist || "" }}</div>
             </div>
             <div class="cf-controls">
-                <button
-                    @click="
-                        prev();
-                        resetAutoPlay();
-                    "
-                    class="cf-btn"
-                >
-                    <svg
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
+                <button @click="prev(); resetAutoPlay();" class="cf-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </button>
                 <div class="cf-dots">
-                    <button
-                        v-for="(_, i) in albums"
-                        :key="i"
-                        @click="
-                            navigateTo(i);
-                            resetAutoPlay();
-                        "
-                        :class="i === activeIdx ? 'cf-dot-active' : 'cf-dot'"
-                    />
+                    <button v-for="(_, i) in albums" :key="i" @click="navigateTo(i); resetAutoPlay();" :class="i === activeIdx ? 'cf-dot-active' : 'cf-dot'" />
                 </div>
-                <button
-                    @click="
-                        next();
-                        resetAutoPlay();
-                    "
-                    class="cf-btn"
-                >
-                    <svg
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 5l7 7-7 7"
-                        />
-                    </svg>
+                <button @click="next(); resetAutoPlay();" class="cf-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </button>
             </div>
         </div>
@@ -427,10 +313,7 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     cursor: pointer;
 }
 .cf-item.cf-anim {
-    /* 缩短至 0.45s 级别，使用更符合物理规律的贝塞尔曲线 */
-    transition:
-        transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1),
-        opacity 0.45s ease;
+    transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.45s ease;
 }
 
 .cf-cover {
@@ -456,19 +339,12 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     inset: 0;
     pointer-events: none;
     border-radius: 10px;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.12) 0%,
-        rgba(255, 255, 255, 0.02) 35%,
-        transparent 55%,
-        rgba(0, 0, 0, 0.1) 100%
-    );
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 35%, transparent 55%, rgba(0, 0, 0, 0.1) 100%);
 }
 
 .cf-reflect {
     position: absolute;
     left: 0;
-    /* 1. 还原旧版 below 15px 的间距设计 */
     top: calc(100% + 15px);
     width: 100%;
     height: 120px;
@@ -477,18 +353,8 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     pointer-events: none;
     border-radius: 0 0 10px 10px;
     overflow: hidden;
-    -webkit-mask-image: linear-gradient(
-        to top,
-        #000 0%,
-        rgba(0, 0, 0, 0.3) 70%,
-        transparent 100%
-    );
-    mask-image: linear-gradient(
-        to top,
-        #000 0%,
-        rgba(0, 0, 0, 0.3) 70%,
-        transparent 100%
-    );
+    -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);
+    mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);
 }
 
 .cf-reflect-img {
@@ -496,8 +362,6 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     height: 360px;
     object-fit: cover;
     position: absolute;
-    /* 2. 关键：将 top: 0 改为 bottom: 0 */
-    /* 这能确保容器截取并倒置的是专辑最底部的画面，从而使倒影内容完全物理对称 */
     bottom: 0;
 }
 
@@ -506,11 +370,11 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 0 24px;
+    padding: 12px 24px 32px 24px;
 }
 .cf-now-playing {
     position: absolute;
-    left: 24px;
+    left: 32px;
     text-align: left;
     max-width: 280px;
 }
@@ -547,10 +411,7 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition:
-        background 0.2s,
-        border-color 0.2s,
-        transform 0.15s;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
 .cf-btn:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -584,5 +445,45 @@ const currentAlbum = computed(() => albums.value[activeIdx.value] || {});
     transition: all 0.3s;
     cursor: pointer;
     border: none;
+}
+
+/* ── Mobile Optimizations ── */
+@media (max-width: 768px) {
+    .cf-item {
+        width: 240px;
+        height: 240px;
+        margin-left: -120px;
+        margin-top: -150px;
+    }
+    .cf-reflect-img {
+        height: 240px;
+    }
+    .cf-bottom {
+        flex-direction: column;
+        padding: 16px;
+        justify-content: flex-end;
+    }
+    .cf-now-playing {
+        position: relative;
+        left: 0;
+        text-align: center;
+        max-width: 100%;
+        margin-bottom: 24px;
+    }
+    .cf-now-title {
+        font-size: 18px;
+    }
+    .cf-now-artist {
+        font-size: 14px;
+    }
+    .cf-controls {
+        width: 100%;
+        justify-content: center;
+        gap: 24px;
+    }
+    .cf-btn {
+        width: 48px;
+        height: 48px;
+    }
 }
 </style>

@@ -2,19 +2,12 @@
   // ===== Java / Maven =====
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
-  "java.configuration.maven.userSettings": null,
 
   // ===== Vue / Volar =====
   "vue.server.hybridMode": true,
-  "vue.server.includeLanguages": ["vue"],
-  "typescript.tsdk": "node_modules/typescript/lib",
 
   // ===== Tailwind CSS =====
   "tailwindCSS.includeLanguages": { "vue": "html" },
-  "tailwindCSS.experimental.classRegex": [
-    ["class=\"([^\"]*)\""],
-    [":class=\"([^\"]*)\""]
-  ],
 
   // ===== 编辑器 =====
   "editor.formatOnSave": true,
@@ -33,12 +26,5 @@
   },
   "files.associations": {
     "*.vue": "vue"
-  },
-
-  // ===== 调试 =====
-  "debug.javascript.terminalOptions": {
-    "sourceMapPathOverrides": {
-      "webpack:///./src/*": "${workspaceFolder}/frontend/src/*"
-    }
   }
 }

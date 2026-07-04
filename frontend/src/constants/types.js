@@ -1,4 +1,4 @@
-﻿export const TYPE_META = {
+export const TYPE_META = {
   game:      { label:'游戏', emoji:'🎮', icon:'game', heroColor:'from-emerald-950 via-emerald-900 to-gray-950', accent:'emerald', desc:'试玩版 & 浏览器可玩' },
   movie:     { label:'电影', emoji:'🎬', icon:'movie', heroColor:'from-red-950 via-neutral-950 to-stone-900', accent:'red', desc:'预告片 & 导演访谈' },
   anime:     { label:'动漫', emoji:'🎭', icon:'anime', heroColor:'from-violet-950 via-fuchsia-950 to-gray-950', accent:'violet', desc:'先导PV & 前5分钟试看' },
@@ -31,4 +31,17 @@ export function getMeta(type) {
     pagBg: defaults[type] || 'bg-gray-600',
     ...(TYPE_META[type] ? {} : { label:type, emoji:'📦', heroColor:'from-gray-950 to-gray-900', accent:'gray', desc:'' })
   }
+}
+
+export const TYPE_INFO_DEFAULTS = {
+  game: { videos: { steam: '', youtube: '', bilibili: '' } },
+  movie: { director: '', year: '', duration: '', genre: '', videos: { youtube: '', bilibili: '' } },
+  book: { author: '', year: '', pages: '', category: '', reader_url: '', videos: { youtube: '', bilibili: '' } },
+  music: { artist: '', year: '', genre: '', tracks: '', preview_url: '', videos: { youtube: '', bilibili: '' } },
+  digital: { brand: '', category: '', year: '', features: '', videos: { youtube: '', bilibili: '' } },
+  coffee: { origin: '', roast: '', process: '', variety: '', flavor: '', videos: { youtube: '', bilibili: '' } },
+  offline: { event_type: '', venue: '', date: '', time: '', price: '', capacity: '', difficulty: '', highlights: '', videos: { youtube: '', bilibili: '' } },
+  anime: { studio: '', year: '', genre: '', origin: '', episodes: '', videos: { youtube: '', bilibili: '' } },
+  boardgame: { players: '', playtime: '', weight: '', rule_text: '', rule_images: '', videos: { youtube: '', bilibili: '' } },
+  model: { grade: '', scale: '', material: '', series: '', videos: { youtube: '', bilibili: '' } }
 }

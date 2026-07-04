@@ -21,19 +21,31 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SteamGridDBService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private final JdbcTemplate jdbcTemplate;
 
     @Value("${app.steamgriddb.api-key:}")
     private String apiKeyFromConfig;
 
+    private String cachedApiKey = null;
+    private long lastKeyFetchTime = 0;
+
     /** Returns API key from DB (set via admin panel), falling back to env var. */
     private String getApiKey() {
+        if (System.currentTimeMillis() - lastKeyFetchTime < 300000 && cachedApiKey != null) {
+            return cachedApiKey;
+        }
         try {
             String dbKey = jdbcTemplate.queryForObject(
                 "SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'", String.class);
-            if (dbKey != null && !dbKey.isBlank()) return dbKey;
+            if (dbKey != null && !dbKey.isBlank()) {
+                cachedApiKey = dbKey;
+                lastKeyFetchTime = System.currentTimeMillis();
+                return dbKey;
+            }
         } catch (Exception ignored) {}
+        cachedApiKey = apiKeyFromConfig;
+        lastKeyFetchTime = System.currentTimeMillis();
         return apiKeyFromConfig;
     }
 

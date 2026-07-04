@@ -12,6 +12,7 @@ import { TYPE_LIST, getMeta } from "../../constants/types";
 import TypeIcon from "../../components/TypeIcon.vue";
 import AdminItemForm from "./AdminItemForm.vue";
 import { batchDeleteItems, batchUpdateStatus } from "../../api/admin";
+import { Icon } from "@iconify/vue";
 
 const items = ref([]);
 const total = ref(0);
@@ -342,90 +343,61 @@ defineExpose({ refresh: loadItems });
             <!-- Empty -->
             <div
                 v-if="items.length === 0"
-                class="col-span-full text-center py-16 text-gray-300"
+                class="col-span-full text-center py-16 text-gray-400 flex flex-col items-center"
             >
-                <div class="text-4xl mb-2">📭</div>
-                <p>暂无内容</p>
+                <Icon icon="lucide:inbox" class="w-16 h-16 mb-3 opacity-30" />
+                <p class="text-sm">暂无内容数据</p>
             </div>
         </div>
 
         <!-- Table View -->
         <div v-else v-loading="loading">
-            <el-table :data="items" style="width: 100%" @selection-change="handleSelectionChange">
-                <el-table-column type="selection" width="40" />
-                <el-table-column label="封面" width="90">
+            <el-table :data="items" style="width: 100%" stripe border @selection-change="handleSelectionChange">
+                <el-table-column type="selection" width="45" align="center" />
+                <el-table-column label="封面" width="110" align="center">
                     <template #default="{ row }">
-                        <div
-                            class="w-16 h-10 rounded overflow-hidden bg-gray-900 flex items-center justify-center"
-                        >
-                            <img
-                                v-if="row.wideCoverUrl || row.coverUrl"
-                                :src="row.wideCoverUrl || row.coverUrl"
-                                class="w-full h-full object-cover"
-                            />
-                            <span v-else class="text-lg">{{
-                                getMeta(row.type).emoji
-                            }}</span>
+                        <div class="w-16 h-10 mx-auto rounded overflow-hidden bg-gray-900 flex items-center justify-center shadow-sm">
+                            <img v-if="row.wideCoverUrl || row.coverUrl" :src="row.wideCoverUrl || row.coverUrl" class="w-full h-full object-cover" />
+                            <TypeIcon v-else :type="row.type" size="20" class="opacity-50" />
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column
-                    prop="title"
-                    label="标题"
-                    min-width="160"
-                    show-overflow-tooltip
-                />
-                <el-table-column label="品类" width="100">
+                <el-table-column prop="title" label="条目名称" min-width="220" show-overflow-tooltip>
                     <template #default="{ row }">
-                        <el-tag 
-                            >{{ getMeta(row.type).emoji }}
-                            {{ getMeta(row.type).label }}</el-tag
-                        >
+                        <div class="font-medium text-gray-200 truncate">{{ row.title }}</div>
+                        <div v-if="row.originalTitle && row.originalTitle !== row.title" class="text-xs text-gray-500 truncate">{{ row.originalTitle }}</div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="source" label="来源" width="70" />
-                <el-table-column label="状态" width="90">
+                <el-table-column label="分类" width="120" align="center">
                     <template #default="{ row }">
-                        <el-tag
-                            :type="formatStatus(row.status).type"
-                            
-                            >{{ formatStatus(row.status).text }}</el-tag
-                        >
+                        <el-tag effect="dark" :type="row.type === 'game' ? 'success' : row.type === 'movie' ? 'primary' : 'warning'" class="flex items-center justify-center gap-1 mx-auto w-max">
+                            <TypeIcon :type="row.type" size="14" />
+                            {{ getMeta(row.type).label }}
+                        </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="创建日期" width="110">
+                <el-table-column prop="source" label="抓取源" width="100" align="center" />
+                <el-table-column label="状态" width="100" align="center">
                     <template #default="{ row }">
-                        <span class="text-xs text-gray-300">{{
-                            formatDate(row.createdAt)
-                        }}</span>
+                        <el-tag :type="formatStatus(row.status).type" effect="plain">{{ formatStatus(row.status).text }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="上下架" width="80">
+                <el-table-column label="入库日期" width="110" align="center">
                     <template #default="{ row }">
-                        <el-switch
-                            :model-value="row.status === 1"
-                            @change="handleStatusChange(row)"
-                            
-                        />
+                        <span class="text-xs text-gray-400">{{ formatDate(row.createdAt) }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="140" fixed="right">
+                <el-table-column label="上下架" width="80" align="center">
                     <template #default="{ row }">
-                        <el-button
-                            type="primary"
-                            
-                            text
-                            @click="handleEdit(row)"
-                            >编辑</el-button
-                        >
-                        <el-popconfirm
-                            :title="`确定删除「${row.title}」？`"
-                            @confirm="handleDelete(row)"
-                        >
+                        <el-switch :model-value="row.status === 1" @change="handleStatusChange(row)" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="160" align="center">
+                    <template #default="{ row }">
+                        <el-button size="small" type="primary" plain @click="handleEdit(row)">编辑</el-button>
+                        <el-popconfirm :title="`确定删除「${row.title}」？`" @confirm="handleDelete(row)">
                             <template #reference>
-                                <el-button type="danger"  text
-                                    >删除</el-button
-                                >
+                                <el-button size="small" type="danger" plain>删除</el-button>
                             </template>
                         </el-popconfirm>
                     </template>
