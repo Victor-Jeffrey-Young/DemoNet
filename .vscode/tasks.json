@@ -32,7 +32,7 @@
       "options": { "cwd": "${workspaceFolder}/backend" },
       "group": "build",
       "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
-      "problemMatcher": ["$javac"]
+      "problemMatcher": []
     },
 
     // =========================================================
