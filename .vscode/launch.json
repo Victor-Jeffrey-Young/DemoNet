@@ -1,17 +1,82 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "启动程序",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${file}"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    // =========================================================
+    // 后端：Attach Debug（先运行任务"🔧 后端: 启动 Dev"）
+    // =========================================================
+    {
+      "type": "java",
+      "name": "🔌 后端: Attach (端口 5005)",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "projectName": "DemoNet",
+      "preLaunchTask": "🔧 后端: 启动 Dev",
+      "postDebugTask": ""
+    },
+
+    // =========================================================
+    // 后端：直接启动（编译 + 运行，内置 debug）
+    // =========================================================
+    {
+      "type": "java",
+      "name": "▶️ 后端: 直接启动",
+      "request": "launch",
+      "mainClass": "com.example.demonet.DemoNetApplication",
+      "projectName": "DemoNet",
+      "cwd": "${workspaceFolder}/backend",
+      "vmArgs": "-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005",
+      "env": {
+        "MYSQL_HOST": "localhost",
+        "REDIS_HOST": "localhost",
+        "RABBITMQ_HOST": "localhost"
+      },
+      "preLaunchTask": "🔧 后端: 编译"
+    },
+
+    // =========================================================
+    // 前端：Edge 调试（需先运行任务"🎨 前端: 启动 Dev"）
+    // =========================================================
+    {
+      "type": "msedge",
+      "name": "🌐 前端: Edge",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*"
+      },
+      "preLaunchTask": "🎨 前端: 启动 Dev"
+    },
+
+    // =========================================================
+    // 前端：Chrome 调试
+    // =========================================================
+    {
+      "type": "chrome",
+      "name": "🌐 前端: Chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*"
+      },
+      "preLaunchTask": "🎨 前端: 启动 Dev"
+    }
+  ],
+
+  // =========================================================
+  // 组合：一键调试全栈
+  // =========================================================
+  "compounds": [
+    {
+      "name": "🚀 全栈调试 (后端 + 前端)",
+      "configurations": [
+        "▶️ 后端: 直接启动",
+        "🌐 前端: Edge"
+      ],
+      "preLaunchTask": "🐳 Docker: 启动基础设施",
+      "stopAll": true
+    }
+  ]
 }
