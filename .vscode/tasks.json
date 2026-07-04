@@ -41,7 +41,7 @@
     {
       "label": "🔧 后端: 启动 Dev",
       "type": "shell",
-      "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=\"-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005\"",
+      "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005",
       "options": { "cwd": "${workspaceFolder}/backend" },
       "isBackground": true,
       "group": "none",
