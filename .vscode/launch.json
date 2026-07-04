@@ -25,7 +25,6 @@
       "mainClass": "com.example.demonet.DemoNetApplication",
       "projectName": "DemoNet",
       "cwd": "${workspaceFolder}/backend",
-      "vmArgs": "-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005",
       "env": {
         "MYSQL_HOST": "localhost",
         "REDIS_HOST": "localhost",
