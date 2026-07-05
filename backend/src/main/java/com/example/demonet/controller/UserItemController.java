@@ -2,9 +2,11 @@ package com.example.demonet.controller;
 
 import com.example.demonet.entity.UserItem;
 import com.example.demonet.service.UserItemService;
+import com.example.demonet.dto.UserItemSaveRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -17,11 +19,9 @@ public class UserItemController {
     private final UserItemService userItemService;
 
     @PostMapping("/items")
-    public UserItem save(@RequestBody Map<String, Object> body, Authentication auth) {
+    public UserItem save(@Valid @RequestBody UserItemSaveRequest body, Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        Long itemId = Long.valueOf(body.get("itemId").toString());
-        String status = body.get("status").toString();
-        return userItemService.saveOrUpdate(userId, itemId, status);
+        return userItemService.saveOrUpdate(userId, body.getItemId(), body.getStatus());
     }
 
     @GetMapping("/items")

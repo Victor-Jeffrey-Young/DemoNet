@@ -1,7 +1,7 @@
-import sys, json, requests
+import sys, json, requests, os
 
 # Fetch items with broken picsum URLs
-API = "http://localhost:8080/api"
+API = os.environ.get("DEMONET_API", "http://localhost:8080/api")
 
 # Get all items page by page
 items = []
@@ -46,8 +46,13 @@ cover_images = {
 idx = {'coffee': 0, 'anime': 0, 'offline': 0, 'game': 0}
 updated = 0
 session = requests.Session()
-# Use admin auth - get a token first
-login = session.post(f"{API}/auth/login", json={"username": "admin", "password": "changeme"})
+# Use admin auth - get a token first（审计报告 SEC-5：密码从环境变量读取，不再硬编码）
+admin_user = os.environ.get("DEMONET_ADMIN_USER", "admin")
+admin_pass = os.environ.get("DEMONET_ADMIN_PASS")
+if not admin_pass:
+    print("❌ 请设置环境变量 DEMONET_ADMIN_PASS 后再运行此脚本", file=sys.stderr)
+    sys.exit(1)
+login = session.post(f"{API}/auth/login", json={"username": admin_user, "password": admin_pass})
 token = login.json().get("token")
 session.headers.update({"Authorization": f"Bearer {token}"})
 
