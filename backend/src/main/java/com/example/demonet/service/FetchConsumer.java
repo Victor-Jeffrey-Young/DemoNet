@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
 
@@ -23,6 +24,7 @@ public class FetchConsumer {
     private final IGDBService igdbService;
     private final ItemService itemService;
     private final TagService tagService;
+    private final ObjectMapper objectMapper;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_STEAM)
     public void handleSteamFetch(Map<String, Object> payload) {
@@ -124,7 +126,7 @@ public class FetchConsumer {
     @SuppressWarnings("unchecked")
     private void autoTag(Item item) {
         try {
-            Map<String, Object> info = new com.fasterxml.jackson.databind.ObjectMapper()
+            Map<String, Object> info = objectMapper
                     .readValue(item.getInfoJson() != null ? item.getInfoJson() : "{}", Map.class);
             Set<String> keywords = new LinkedHashSet<>();
             String genre = (String) info.get("genre");
@@ -136,6 +138,8 @@ public class FetchConsumer {
                 if (f instanceof String s) { s = s.trim(); if (!s.isEmpty() && s.length() <= 20) keywords.add(s); }
             }
             for (String kw : keywords) tagService.addItemTag(item.getId(), kw);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("自动打标签失败，itemId={} title={}: {}", item.getId(), item.getTitle(), e.getMessage());
+        }
     }
 }

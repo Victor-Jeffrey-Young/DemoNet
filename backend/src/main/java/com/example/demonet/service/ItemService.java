@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Item;
 import com.example.demonet.mapper.ItemMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -156,7 +154,9 @@ public class ItemService {
     public List<Item> listHotItems(String type, Integer limit) {
         StringBuilder sql = new StringBuilder(
                 "SELECT i.id, i.type, i.title, i.slug, i.cover_url, i.wide_cover_url, i.poster_url, " +
-                "i.recommendations, i.hot_boost, i.created_at, i.status, COUNT(r.id) AS recent_reviews " +
+                "i.description, i.info_json, i.media_url, i.external_link, i.external_id, i.source, " +
+                "i.carousel_order, i.recommendations, i.hot_boost, i.created_at, i.updated_at, i.status, " +
+                "COUNT(r.id) AS recent_reviews " +
                 "FROM items i LEFT JOIN reviews r ON i.id = r.item_id AND r.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) " +
                 "WHERE i.status = 1");
         List<Object> params = new java.util.ArrayList<>();
@@ -221,7 +221,8 @@ public class ItemService {
     public List<Item> listRecommended(String type, Integer limit) {
         StringBuilder sql = new StringBuilder(
                 "SELECT i.id, i.type, i.title, i.slug, i.cover_url, i.wide_cover_url, i.poster_url, " +
-                "i.recommendations, i.hot_boost, i.created_at, i.status FROM items i LEFT JOIN " +
+                "i.description, i.info_json, i.external_id, i.source, " +
+                "i.recommendations, i.hot_boost, i.created_at, i.updated_at, i.status FROM items i LEFT JOIN " +
                 "(SELECT item_id, COUNT(*) AS cnt FROM user_items GROUP BY item_id) ui " +
                 "ON i.id = ui.item_id WHERE i.status = 1");
         boolean hasType = type != null && !type.isBlank();

@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.Valid;
 import com.example.demonet.dto.request.AdminRequests.*;
+import com.example.demonet.common.BusinessException;
+import org.springframework.http.HttpStatus;
 
 @Slf4j
 @RestController
@@ -58,7 +60,7 @@ public class AdminController {
     private final CategorySettingMapper categorySettingMapper;
     private final InviteCodeMapper inviteCodeMapper;
     private final UserMapper userMapper;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final tools.jackson.databind.ObjectMapper objectMapper;
     private final SteamService steamService;
     private final SteamGridDBService steamGridDBService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -188,7 +190,14 @@ public class AdminController {
             String originalName = file.getOriginalFilename();
             String ext = "";
             if (originalName != null && originalName.contains(".")) {
-                ext = originalName.substring(originalName.lastIndexOf("."));
+                ext = originalName.substring(originalName.lastIndexOf(".")).toLowerCase();
+            }
+            // 扩展名白名单校验（审计报告 SEC-4）：防止上传 .html/.svg 等含脚本的文件
+            Set<String> allowedExts = "reader".equals(type)
+                ? Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf", ".epub")
+                : Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif");
+            if (!allowedExts.contains(ext)) {
+                return Map.of("error", "不支持的文件扩展名: " + ext + "，允许: " + String.join(", ", allowedExts));
             }
             String filename = UUID.randomUUID().toString() + ext;
             Path filePath = uploadPath.resolve(filename);
@@ -204,7 +213,7 @@ public class AdminController {
                     try {
                         Map<String, Object> map = new LinkedHashMap<>();
                         if (info != null && !info.isBlank()) {
-                            map = objectMapper.readValue(info, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                            map = objectMapper.readValue(info, new tools.jackson.core.type.TypeReference<Map<String, Object>>() {});
                         }
                         map.put("reader_url", url);
                         item.setInfoJson(objectMapper.writeValueAsString(map));
@@ -563,10 +572,10 @@ public class AdminController {
     @PutMapping("/users/{id}/ban")
     public void toggleBan(@PathVariable Long id, @Valid @RequestBody ToggleBanReq body, Authentication auth) {
         Long currentUserId = (Long) auth.getPrincipal();
-        if (id.equals(currentUserId)) throw new RuntimeException("不能封禁自己");
+        if (id.equals(currentUserId)) throw new BusinessException("不能封禁自己");
         User user = userMapper.selectById(id);
-        if (user == null) throw new RuntimeException("用户不存在");
-        if ("ADMIN".equals(user.getRole())) throw new RuntimeException("不能封禁管理员");
+        if (user == null) throw new BusinessException(HttpStatus.NOT_FOUND, "用户不存在");
+        if ("ADMIN".equals(user.getRole())) throw new BusinessException("不能封禁管理员");
         int enabled = body.getEnabled() != null ? body.getEnabled() : 1;
         user.setEnabled(enabled);
         userMapper.updateById(user);

@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.json.JsonMapper;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
@@ -25,20 +25,20 @@ public class RedisConfig implements CachingConfigurer {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder()
-                        .allowIfBaseType("com.example.demonet")
-                        .allowIfBaseType("java.util")
-                        .allowIfBaseType("java.lang")
-                        .build(),
-                ObjectMapper.DefaultTyping.NON_FINAL
-        );
+        JsonMapper mapper = JsonMapper.builder()
+                .activateDefaultTyping(
+                        BasicPolymorphicTypeValidator.builder()
+                                .allowIfBaseType("com.example.demonet")
+                                .allowIfBaseType("java.util")
+                                .allowIfBaseType("java.lang")
+                                .build(),
+                        DefaultTyping.NON_FINAL
+                )
+                .build();
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)));
+                        .fromSerializer(new GenericJacksonJsonRedisSerializer(mapper)));
                         
         java.util.Map<String, RedisCacheConfiguration> initCaches = new java.util.HashMap<>();
         initCaches.put("visibleTypes", config.entryTtl(Duration.ofDays(1)));

@@ -20,7 +20,7 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<Review> create(Authentication auth, @Valid @RequestBody ReviewCreateRequest req) {
-        Long userId = Long.valueOf(auth.getName());
+        Long userId = (Long) auth.getPrincipal();
         return ResponseEntity.ok(reviewService.create(userId, req.getItemId(), req.getRating(), req.getComment()));
     }
 
@@ -38,7 +38,7 @@ public class ReviewController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> delete(@PathVariable Long id, Authentication auth) {
-        Long userId = Long.valueOf(auth.getName());
+        Long userId = (Long) auth.getPrincipal();
         reviewService.delete(id, userId);
         return ResponseEntity.ok(Map.of("message", "删除成功"));
     }
