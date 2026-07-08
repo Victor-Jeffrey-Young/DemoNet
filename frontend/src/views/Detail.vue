@@ -390,7 +390,7 @@ async function setStatus(newStatus) {
 
             <div class="flex items-start justify-between gap-2 sm:gap-4">
               <h1
-                class="text-2xl sm:text-3xl font-bold mb-4 min-w-0 break-words"
+                class="text-2xl sm:text-3xl font-bold mb-4 min-w-0 wrap-break-word"
               >
                 {{ item.title }}
               </h1>

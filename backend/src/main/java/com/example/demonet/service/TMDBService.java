@@ -3,7 +3,7 @@ package com.example.demonet.service;
 import com.example.demonet.entity.Item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 public class TMDBService {
 
     private final RestClient restClient;
-    private final JdbcTemplate jdbcTemplate;
 
     @Value("${app.tmdb.api-key:}")
     private String apiKey;
@@ -25,11 +24,11 @@ public class TMDBService {
     private static final String BASE = "https://api.themoviedb.org/3";
     private static final String IMG_BASE = "https://image.tmdb.org/t/p";
 
-    public TMDBService(RestClient restClient, JdbcTemplate jdbcTemplate) {
+    public TMDBService(RestClient restClient) {
         this.restClient = restClient;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
+    @SuppressWarnings("unchecked")
     public List<Item> searchMovies(String query) {
         List<Item> items = new ArrayList<>();
         if (apiKey == null || apiKey.isBlank()) { log.warn("TMDB key missing"); return items; }
@@ -37,7 +36,7 @@ public class TMDBService {
             String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
             Map<String, Object> resp = restClient.get()
                     .uri(BASE + "/search/movie?api_key=" + apiKey + "&language=zh-CN&query=" + encoded)
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return items;
             List<Map<String, Object>> results = (List<Map<String, Object>>) resp.get("results");
             if (results == null) return items;
@@ -57,7 +56,7 @@ public class TMDBService {
         try {
             Map<String, Object> resp = restClient.get()
                     .uri(BASE + "/movie/" + tmdbId + "?api_key=" + apiKey + "&language=zh-CN&append_to_response=videos,credits")
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return null;
 
             String title = String.valueOf(resp.getOrDefault("title", "Unknown"));
@@ -97,6 +96,7 @@ public class TMDBService {
 
     // ========== TV Search ==========
 
+    @SuppressWarnings("unchecked")
     public List<Item> searchTV(String query) {
         List<Item> items = new ArrayList<>();
         if (apiKey == null || apiKey.isBlank()) { log.warn("TMDB key missing"); return items; }
@@ -104,7 +104,7 @@ public class TMDBService {
             String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
             Map<String, Object> resp = restClient.get()
                     .uri(BASE + "/search/tv?api_key=" + apiKey + "&language=zh-CN&query=" + encoded)
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return items;
             List<Map<String, Object>> results = (List<Map<String, Object>>) resp.get("results");
             if (results == null) return items;
@@ -124,7 +124,7 @@ public class TMDBService {
         try {
             Map<String, Object> resp = restClient.get()
                     .uri(BASE + "/tv/" + tvId + "?api_key=" + apiKey + "&language=zh-CN&append_to_response=videos,credits")
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return null;
 
             String title = String.valueOf(resp.getOrDefault("name", "Unknown"));
@@ -165,6 +165,7 @@ public class TMDBService {
         } catch (Exception e) { log.error("TMDB TV detail failed for {}: {}", tvId, e.getMessage()); return null; }
     }
 
+    @SuppressWarnings("unchecked")
     private String extractTVCreator(Map<String, Object> data) {
         try {
             List<Map<String, Object>> createdBy = (List<Map<String, Object>>) data.get("created_by");
@@ -175,6 +176,7 @@ public class TMDBService {
         return "";
     }
 
+    @SuppressWarnings("unchecked")
     private String extractTVNetwork(Map<String, Object> data) {
         try {
             List<Map<String, Object>> networks = (List<Map<String, Object>>) data.get("networks");
@@ -191,6 +193,7 @@ public class TMDBService {
         return IMG_BASE + "/" + size + val;
     }
 
+    @SuppressWarnings("unchecked")
     private String extractDirector(Map<String, Object> data) {
         try {
             Map<String, Object> credits = (Map<String, Object>) data.get("credits");
@@ -204,6 +207,7 @@ public class TMDBService {
         return "";
     }
 
+    @SuppressWarnings("unchecked")
     private String extractGenres(Map<String, Object> data) {
         List<Map<String, Object>> genres = (List<Map<String, Object>>) data.get("genres");
         if (genres == null) return "";
@@ -212,6 +216,7 @@ public class TMDBService {
         return String.join(", ", names);
     }
 
+    @SuppressWarnings("unchecked")
     private String extractTrailer(Map<String, Object> data) {
         try {
             Map<String, Object> videos = (Map<String, Object>) data.get("videos");
@@ -227,7 +232,7 @@ public class TMDBService {
         return "";
     }
 
-    private String esc(String s) {
+    private static String esc(String s) {
         return s == null ? "" : s.replace("\\","\\\\").replace("\"","\\\"");
     }
 }

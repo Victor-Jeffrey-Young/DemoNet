@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 
 import java.util.*;
@@ -14,8 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
+@SuppressWarnings("null")
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -49,11 +50,12 @@ public class SteamService {
                 .toList();
     }
 
+    @SuppressWarnings("unchecked")
     public Item fetchAppDetail(Long appId) {
         Map<String, Object> resp = restClient.get()
                 .uri("https://store.steampowered.com/api/appdetails?appids=" + appId + "&cc=cn&l=schinese")
                 .retrieve()
-                .body(Map.class);
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
 
         if (resp == null) return null;
         Map<String, Object> appData = (Map<String, Object>) resp.get(String.valueOf(appId));
@@ -401,7 +403,7 @@ public class SteamService {
                 Map<String, Object> dlcResp = restClient.get()
                         .uri("https://store.steampowered.com/api/appdetails?appids=" + id + "&cc=cn&l=schinese")
                         .retrieve()
-                        .body(Map.class);
+                        .body(new ParameterizedTypeReference<Map<String, Object>>() {});
                 if (dlcResp != null) {
                     Map<String, Object> appData = (Map<String, Object>) dlcResp.get(String.valueOf(id));
                     if (appData != null && Boolean.TRUE.equals(appData.get("success"))) {

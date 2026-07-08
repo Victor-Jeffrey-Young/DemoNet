@@ -84,6 +84,7 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    @SuppressWarnings("removal")
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }

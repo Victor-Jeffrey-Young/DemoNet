@@ -6,10 +6,9 @@ import tools.jackson.databind.json.JsonMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -51,12 +50,11 @@ public class IGDBService {
                     "client_secret", clientSecret,
                     "grant_type", "client_credentials"
             );
-            @SuppressWarnings("unchecked")
             Map<String, Object> resp = restClient.post()
                     .uri(TOKEN_URL)
                     .body(body)
                     .retrieve()
-                    .body(Map.class);
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp != null) {
                 String token = String.valueOf(resp.get("access_token"));
                 long expiresIn = ((Number) resp.get("expires_in")).longValue();
@@ -272,7 +270,6 @@ public class IGDBService {
         return v != null ? v : def;
     }
 
-    @SuppressWarnings("unchecked")
     private String joinNames(List<Map<String, Object>> list) {
         if (list == null || list.isEmpty()) return "";
         List<String> names = new ArrayList<>();
@@ -292,7 +289,6 @@ public class IGDBService {
         return url.startsWith("//") ? "https:" + url.replace("t_thumb", "t_cover_big") : url;
     }
 
-    @SuppressWarnings("unchecked")
     private String extractScreenshots(List<Map<String, Object>> list) {
         if (list == null || list.isEmpty()) return "";
         List<String> urls = new ArrayList<>();
@@ -305,7 +301,6 @@ public class IGDBService {
         return String.join("|", urls);
     }
 
-    @SuppressWarnings("unchecked")
     private String extractVideo(List<Map<String, Object>> list) {
         if (list == null || list.isEmpty()) return "";
         for (Map<String, Object> v : list) {
@@ -317,7 +312,6 @@ public class IGDBService {
         return "";
     }
 
-    @SuppressWarnings("unchecked")
     private String extractWebsites(List<Map<String, Object>> list) {
         if (list == null || list.isEmpty()) return "";
         List<String> urls = new ArrayList<>();
@@ -328,7 +322,6 @@ public class IGDBService {
         return String.join("|", urls);
     }
 
-    @SuppressWarnings("unchecked")
     private String extractSteamUrl(List<Map<String, Object>> list) {
         if (list == null) return null;
         for (Map<String, Object> w : list) {
