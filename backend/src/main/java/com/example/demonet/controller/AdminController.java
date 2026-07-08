@@ -24,6 +24,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.cache.annotation.CacheEvict;
@@ -47,6 +48,7 @@ import com.example.demonet.common.BusinessException;
 import org.springframework.http.HttpStatus;
 
 @Slf4j
+@SuppressWarnings("null")
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -352,11 +354,12 @@ public class AdminController {
     }
 
     @GetMapping("/steam/search")
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> searchSteam(@RequestParam String q) {
         Map<String, Object> resp = restClient.get()
                 .uri("https://store.steampowered.com/api/storesearch/?term={q}&cc=cn&l=schinese", q)
                 .retrieve()
-                .body(Map.class);
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
         if (resp == null) return List.of();
         List<Map<String, Object>> items = (List<Map<String, Object>>) resp.get("items");
         if (items == null) return List.of();
@@ -371,7 +374,7 @@ public class AdminController {
                 Map<String, Object> check = restClient.get()
                         .uri("https://store.steampowered.com/api/appdetails?appids=" + ids + "&cc=cn&l=schinese")
                         .retrieve()
-                        .body(Map.class);
+                        .body(new ParameterizedTypeReference<Map<String, Object>>() {});
                 if (check != null) {
                     for (Map<String, Object> item : items) {
                         Object appId = item.get("id");
@@ -491,7 +494,7 @@ public class AdminController {
 
     @PutMapping("/reject/batch")
     public Map<String, String> rejectBatch(@RequestBody List<Long> ids) {
-        itemMapper.deleteBatchIds(ids);
+        itemMapper.deleteByIds(ids);
         return Map.of("message", "已批量拒绝 " + ids.size() + " 条");
     }
 

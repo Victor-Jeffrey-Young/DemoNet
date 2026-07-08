@@ -2,6 +2,7 @@ package com.example.demonet.service;
 
 import com.example.demonet.entity.Item;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class ItunesService {
     private final RestClient restClient;
     private static final String BASE = "https://itunes.apple.com/search";
 
+    @SuppressWarnings("removal")
     public ItunesService(RestClient defaultRestClient) {
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setSupportedMediaTypes(Arrays.asList(
@@ -29,13 +31,14 @@ public class ItunesService {
                 .build();
     }
 
+    @SuppressWarnings("unchecked")
     public List<Item> searchAlbums(String query, String targetType) {
         List<Item> items = new ArrayList<>();
         try {
             String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
             Map<String, Object> resp = restClient.get()
                     .uri(BASE + "?term=" + encoded + "&country=cn&media=music&entity=album&limit=10")
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return items;
 
             List<Map<String, Object>> results = (List<Map<String, Object>>) resp.get("results");

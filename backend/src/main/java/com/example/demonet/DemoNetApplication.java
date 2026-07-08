@@ -38,6 +38,7 @@ public class DemoNetApplication {
     }
 
     /** 使用 SCAN 迭代匹配的 key，避免 KEYS 阻塞 Redis 主线程 */
+    @SuppressWarnings("deprecation")
     private Set<String> scanKeys(String pattern) {
         Set<String> keys = new HashSet<>();
         try {

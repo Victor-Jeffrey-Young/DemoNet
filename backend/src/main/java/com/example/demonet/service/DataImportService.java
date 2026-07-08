@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("null")
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -516,7 +517,7 @@ public class DataImportService implements CommandLineRunner {
         try (var reader = new BufferedReader(new InputStreamReader(
                 getClass().getClassLoader().getResourceAsStream("data/arabica_coffee.csv"),
                 StandardCharsets.UTF_8))) {
-            String header = reader.readLine(); // skip header
+            reader.readLine(); // skip header
             String line;
             while ((line = reader.readLine()) != null && imported < 100) {
                 String[] cols = parseCsvLine(line);
@@ -642,10 +643,6 @@ public class DataImportService implements CommandLineRunner {
         if (value > 0) {
             sb.append("\"").append(key).append("\":").append(value).append(",");
         }
-    }
-
-    private void appendJsonRaw(StringBuilder sb, String key, String value) {
-        sb.append("\"").append(key).append("\":").append(value).append(",");
     }
 
     private String escapeJson(String s) {

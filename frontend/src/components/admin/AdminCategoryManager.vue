@@ -38,8 +38,8 @@ async function save() {
   saving.value = true
   const body = settings.value.map((s, i) => ({
     type: s.type,
-    visible: !!s.visible,
-    sort_order: i,
+    visible: s.visible ? 1 : 0,
+    sortOrder: i,
   }))
   try {
     await updateCategorySettings(body)

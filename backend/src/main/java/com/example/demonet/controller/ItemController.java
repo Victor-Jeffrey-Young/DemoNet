@@ -4,11 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demonet.entity.Item;
 import com.example.demonet.service.ItemService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/items")

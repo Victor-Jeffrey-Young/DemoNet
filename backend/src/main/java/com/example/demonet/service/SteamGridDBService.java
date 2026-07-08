@@ -3,6 +3,7 @@ package com.example.demonet.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -59,7 +60,7 @@ public class SteamGridDBService {
                     .uri("https://www.steamgriddb.com/api/v2/games/steam/" + steamAppId)
                     .header("Authorization", "Bearer " + apiKey)
                     .retrieve()
-                    .body(Map.class);
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (gameResp == null || !Boolean.TRUE.equals(gameResp.get("success"))) return null;
             Object gameData = gameResp.get("data");
             Long gameId = null;
@@ -74,7 +75,7 @@ public class SteamGridDBService {
                             + "?styles=alternate&dimensions=600x900&mimes=image/jpeg,image/png&types=static&limit=1")
                     .header("Authorization", "Bearer " + apiKey)
                     .retrieve()
-                    .body(Map.class);
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (gridResp == null || !Boolean.TRUE.equals(gridResp.get("success"))) return null;
             Object grids = gridResp.get("data");
             if (grids instanceof List && !((List<?>) grids).isEmpty()) {

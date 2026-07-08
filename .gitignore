@@ -15,9 +15,8 @@ dist/
 .env.local
 .reasonix/
 uploads/
-demonet-coffee-plan.md
-demonet.sql
-# Temp scripts and SQL files
+
+# Temp scripts and SQL files in root
 *.py
 *.sql
 !backend/**
@@ -27,5 +26,3 @@ items.json
 # Explicitly re-exclude compiled files
 backend/target/
 backend/uploads/
-demonet-coffee-plan.md
-fix_images.py

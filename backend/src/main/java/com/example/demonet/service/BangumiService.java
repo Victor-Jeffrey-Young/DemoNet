@@ -2,6 +2,7 @@ package com.example.demonet.service;
 
 import com.example.demonet.entity.Item;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -15,13 +16,14 @@ public class BangumiService {
     private final RestClient restClient;
     private static final String BASE = "https://api.bgm.tv/v0";
 
+    @SuppressWarnings("unchecked")
     public List<Item> searchSubjects(String keyword, String targetType) {
         List<Item> items = new ArrayList<>();
         try {
             Map<String, Object> resp = restClient.get()
                     .uri(BASE + "/search/subjects?keyword=" + java.net.URLEncoder.encode(keyword, java.nio.charset.StandardCharsets.UTF_8) + "&type=2&limit=10")
                     .header("User-Agent", "DemoNet/1.0 (demonet.local)")
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return items;
 
             List<Map<String, Object>> data = (List<Map<String, Object>>) resp.get("data");
@@ -38,6 +40,7 @@ public class BangumiService {
         return items;
     }
 
+    @SuppressWarnings("unchecked")
     private Item buildItem(Map<String, Object> d, String type) {
         try {
             int id = (int) d.get("id");

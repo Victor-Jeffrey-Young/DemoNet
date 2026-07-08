@@ -2,6 +2,7 @@ package com.example.demonet.service;
 
 import com.example.demonet.entity.Item;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -15,6 +16,7 @@ public class AniListService {
     private final RestClient restClient;
     private static final String ENDPOINT = "https://graphql.anilist.co";
 
+    @SuppressWarnings("unchecked")
     public List<Item> searchAnime(String query, String targetType) {
         List<Item> items = new ArrayList<>();
         try {
@@ -24,7 +26,7 @@ public class AniListService {
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
                     .body(graphql)
-                    .retrieve().body(Map.class);
+                    .retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {});
             if (resp == null) return items;
 
             Map<String, Object> data = (Map<String, Object>) resp.get("data");
@@ -45,6 +47,7 @@ public class AniListService {
         return items;
     }
 
+    @SuppressWarnings("unchecked")
     private Item buildItem(Map<String, Object> m, String type) {
         try {
             int id = (int) m.get("id");

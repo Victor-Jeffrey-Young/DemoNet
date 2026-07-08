@@ -4,11 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.demonet.dto.UserDTO;
 import com.example.demonet.entity.User;
 import com.example.demonet.mapper.UserMapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.demonet.entity.AppSetting;
 import com.example.demonet.entity.InviteCode;
 import com.example.demonet.mapper.AppSettingMapper;
 import com.example.demonet.mapper.InviteCodeMapper;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 import com.example.demonet.common.BusinessException;
 import com.example.demonet.common.ConflictException;
@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -57,7 +58,7 @@ public class AuthService {
                         .uri("https://challenges.cloudflare.com/turnstile/v0/siteverify")
                         .body(Map.of("secret", tsSetting.getSettingValue(), "response", turnstileToken))
                         .retrieve()
-                        .body(Map.class);
+                        .body(new ParameterizedTypeReference<Map<String, Object>>() {});
                 if (resp == null || !Boolean.TRUE.equals(resp.get("success")))
                     throw new BusinessException("人机验证失败，请重试");
             } catch (BusinessException e) { throw e; }
