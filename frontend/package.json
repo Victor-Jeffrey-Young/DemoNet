@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@iconify/vue": "^5.0.1",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
@@ -22,5 +23,6 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.6",
     "vite": "^8.0.12"
-  }
+  },
+  "packageManager": "pnpm@11.10.0+sha512.15558e7c14301c3e0a9a5a32d16c8c05cfabd22a2c5057af4673214656532ae2"
 }
