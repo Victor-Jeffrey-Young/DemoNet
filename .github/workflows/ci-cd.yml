@@ -180,6 +180,7 @@ jobs:
       # 测试专用 JWT 密钥（仅 CI，非生产）
       JWT_SECRET: ci-test-jwt-secret-not-for-production-please-override-256bit-min-here
       ADMIN_DEFAULT_PASSWORD: citest
+      SPRING_FLYWAY_ENABLED: 'true'
 
     steps:
       - name: 检出代码
@@ -204,9 +205,18 @@ jobs:
             sleep 2
           done
 
+      - name: 诊断 Flyway 迁移状态
+        working-directory: backend
+        run: |
+          mvn -B -ntp process-resources -q
+          echo "=== 迁移文件（target/classes）==="
+          find target/classes/db/migration -name "*.sql" 2>/dev/null || echo "未找到迁移文件！"
+          echo "=== MySQL 表（测试前）==="
+          mysql -h 127.0.0.1 -P 3306 -uroot -pcitest demonet -e "SHOW TABLES;" 2>&1 || echo "无表或查询失败"
+
       - name: 运行测试
         working-directory: backend
-        run: mvn -B -ntp test
+        run: mvn -B -ntp test -Dlogging.level.org.flywaydb=DEBUG
 
       - name: 上传测试报告
         if: always()
