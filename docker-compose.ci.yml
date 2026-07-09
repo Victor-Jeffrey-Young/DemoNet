@@ -1,0 +1,85 @@
+# =============================================================================
+# DemoNet 生产部署编排（CI 推送镜像版）
+# =============================================================================
+# 与 docker-compose.prod.yml 的区别：
+#   - backend / frontend 使用 GHCR 预构建镜像（image:），而非本地构建（build:）
+#   - 基础设施服务（MySQL/Redis/RabbitMQ）配置与生产保持一致
+#
+# 服务器使用方式：
+#   1. 克隆本仓库到服务器
+#   2. 在项目根目录创建 .env（参考 .env.example，填入生产密钥）
+#   3. 在 .env 中设置：
+#        REGISTRY_OWNER=<你的 GitHub 用户名（小写）>
+#        IMAGE_TAG=latest
+#   4. docker login ghcr.io -u <用户名>（用具 read:packages 权限的 PAT；镜像公开则可跳过）
+#   5. docker compose -f docker-compose.ci.yml pull
+#   6. docker compose -f docker-compose.ci.yml up -d
+#
+# CI 工作流会自动执行步骤 5-6（通过 SSH）。
+# =============================================================================
+services:
+  mysql:
+    image: mariadb:11
+    container_name: demonet-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: demonet
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: demonet-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: demonet-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?请在 .env 中设置 RABBITMQ_PASS}
+
+  backend:
+    image: ghcr.io/${REGISTRY_OWNER:?请在 .env 中设置 REGISTRY_OWNER}/demonet-backend:${IMAGE_TAG:-latest}
+    container_name: demonet-backend
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/demonet?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-root}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:?请在 .env 中设置 RABBITMQ_PASS}
+      APP_JWT_SECRET: ${JWT_SECRET:?请在 .env 中设置 JWT_SECRET}
+      APP_TMDB_API_KEY: ${TMDB_API_KEY:-}
+      APP_STEAM_API_KEY: ${STEAM_API_KEY:-}
+      APP_IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:-}
+      APP_IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:-}
+      APP_STEAMGRIDDB_API_KEY: ${STEAMGRIDDB_API_KEY:-}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:?请在 .env 中设置 ADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
+
+  frontend:
+    image: ghcr.io/${REGISTRY_OWNER:?请在 .env 中设置 REGISTRY_OWNER}/demonet-frontend:${IMAGE_TAG:-latest}
+    container_name: demonet-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  uploads:
+  logs:
