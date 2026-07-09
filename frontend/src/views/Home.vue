@@ -274,7 +274,7 @@ function goItem(slug) {
                 </button>
 
                 <!-- Viewport -->
-                <div class="overflow-hidden" :style="{ paddingLeft: 'calc(5% + 1.5rem)' }">
+                <div class="overflow-hidden py-1" :style="{ paddingLeft: 'calc(5% + 1.5rem)' }">
                     <div
                         class="flex gap-5 transition-transform duration-500 ease-out will-change-transform"
                         :style="{ transform: `translateX(${featOffset}px)` }"
