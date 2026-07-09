@@ -118,6 +118,18 @@ export function triggerIGDBFetch(endpoint, { query, limit, targetType } = {}) {
   return request.post('/admin/fetch/igdb', { endpoint, query, limit, targetType })
 }
 
+export function triggerSpotifyFetch(query, targetType = 'music') {
+  return request.post('/admin/fetch/spotify', { query, targetType })
+}
+
+export function searchQQMusicAlbums(query) {
+  return request.get('/admin/qqmusic/search', { params: { q: query } })
+}
+
+export function triggerQQMusicFetch(query, targetType = 'music', externalId = '') {
+  return request.post('/admin/fetch/qqmusic', { query, targetType, externalId })
+}
+
 export function getPendingItems(params) {
   return request.get('/admin/pending', { params })
 }
