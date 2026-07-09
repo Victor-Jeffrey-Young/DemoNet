@@ -1,0 +1,20 @@
+# =============================================================================
+# DemoNet 前端部署镜像（CI 专用）
+# =============================================================================
+# 复用 CI 阶段已构建好的 dist/，避免在部署阶段重复执行 pnpm build。
+# 构建上下文（context）= frontend/，其中包含：
+#   - dist/      （由 CI 构建产物下载得到）
+#   - nginx.conf （仓库内自带）
+# =============================================================================
+FROM nginx:alpine
+
+LABEL org.opencontainers.image.title="DemoNet Frontend"
+LABEL org.opencontainers.image.description="DemoNet 前端 Nginx 静态服务"
+
+# 复制预构建产物与 Nginx 配置
+COPY dist/ /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

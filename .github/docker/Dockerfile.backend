@@ -1,0 +1,25 @@
+# =============================================================================
+# DemoNet 后端部署镜像（CI 专用）
+# =============================================================================
+# 复用 CI 阶段已构建好的 app.jar，避免在部署阶段重复执行 mvn package。
+# 构建上下文（context）= backend/target/，其中包含 app.jar。
+#
+# 运行时仅含 JRE，镜像体积小（~200MB）。
+# uploads / logs 通过 docker-compose 挂载持久卷，容器重启不丢数据。
+# =============================================================================
+FROM eclipse-temurin:17-jre-alpine
+
+LABEL org.opencontainers.image.title="DemoNet Backend"
+LABEL org.opencontainers.image.description="DemoNet 后端 Spring Boot 服务"
+
+WORKDIR /app
+
+# 预建持久化目录（与 docker-compose.ci.yml 的 volumes 对应）
+RUN mkdir -p /app/uploads /app/logs
+
+# 复制预构建 JAR
+COPY app.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
