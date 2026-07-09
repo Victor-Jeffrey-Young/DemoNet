@@ -362,6 +362,29 @@ async function setStatus(newStatus) {
             </button>
           </div>
 
+          <!-- Music platform switcher -->
+          <div
+            v-else-if="
+              mediaHeroRef?.platformSources?.length > 1 &&
+              mediaHeroRef?.isMusic
+            "
+            class="flex items-center gap-1 overflow-x-auto scrollbar-hide"
+          >
+            <button
+              v-for="src in mediaHeroRef.platformSources"
+              :key="src.key"
+              @click="mediaHeroRef.activePlatform = src.key"
+              :class="
+                mediaHeroRef.activePlatform === src.key
+                  ? 'bg-white/15 text-white ring-1 ring-white/20'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+              "
+              class="text-[11px] px-2.5 py-1 rounded-md transition-all whitespace-nowrap"
+            >
+              {{ src.label }}
+            </button>
+          </div>
+
           <div class="flex-1" />
           <button
             v-if="auth.isAdmin"

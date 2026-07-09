@@ -48,35 +48,69 @@ const isPdf = computed(() => readerUrl.value?.endsWith(".pdf"))
 
 // Music logic
 const isMusic = computed(() => props.item?.type === "music")
-const musicEmbedUrl = computed(() => {
-  if (!isMusic.value || !props.item?.externalLink) return ""
-  const link = props.item.externalLink
-  if (link.includes("music.apple.com")) return link.replace("music.apple.com", "embed.music.apple.com")
-  return ""
+
+const platformSources = computed(() => {
+  const list = []
+  const links = props.info?.links || {}
+  if (links.appleMusic)
+    list.push({ key: 'apple', label: 'Apple Music', type: 'embed',
+      url: links.appleMusic.replace('music.apple.com', 'embed.music.apple.com') })
+  if (links.spotify)
+    list.push({ key: 'spotify', label: 'Spotify', type: 'embed',
+      url: links.spotify.replace('open.spotify.com/album', 'open.spotify.com/embed/album') })
+  if (props.info?.preview_url)
+    list.push({ key: 'preview', label: '试听', type: 'audio', url: props.info.preview_url })
+  if (links.qqMusic)
+    list.push({ key: 'qqmusic', label: 'QQ音乐', type: 'link', url: links.qqMusic })
+  return list
 })
-const musicPreviewActive = computed(() => isMusic.value && !!props.info.preview_url && !activeVideoUrl.value && !musicEmbedUrl.value)
+
+const activePlatform = ref('')
+
+watch(() => [isMusic.value, platformSources.value], () => {
+  if (!isMusic.value) {
+    activePlatform.value = ''
+    return
+  }
+  const pref = props.info?.preferred_platform
+  const hasPref = platformSources.value.some(p => p.key === pref)
+  const first = platformSources.value[0]?.key || ''
+  activePlatform.value = hasPref ? pref : first
+}, { immediate: true })
+
+const currentPlatform = computed(() =>
+  platformSources.value.find(p => p.key === activePlatform.value)
+)
+
+const musicEmbedActive = computed(() =>
+  isMusic.value && currentPlatform.value?.type === 'embed'
+)
+const musicPreviewActive = computed(() =>
+  isMusic.value && currentPlatform.value?.type === 'audio'
+)
 
 // Hero Aspect Ratio
 const heroAspectClass = computed(() => {
   if (activeVideoUrl.value || readerUrl.value) return "aspect-video"
-  if (musicEmbedUrl.value) return "h-[450px]"
+  if (musicEmbedActive.value) return "h-[450px]"
   if (musicPreviewActive.value) return ""
+  if (currentPlatform.value?.type === 'link') return ""
   return "aspect-video"
 })
 
-// Video switch exposed to parent if needed, or we can render tabs inside here? 
-// The original code rendered the video switch buttons in the header of Detail.vue.
-// To keep things clean, let's expose `videoSources`, `activeVideoUrl` so the parent can render the buttons.
+// Expose for parent (Detail.vue)
 defineExpose({
   videoSources,
   activeVideoUrl,
   readerUrl,
-  isMusic
+  isMusic,
+  platformSources,
+  activePlatform
 })
 </script>
 
 <template>
-  <div class="rounded-t-2xl overflow-hidden relative" :class="[heroAspectClass, !activeVideoUrl && !readerUrl && !musicEmbedUrl && !musicPreviewActive ? 'bg-linear-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : '']">
+  <div class="rounded-t-2xl overflow-hidden relative" :class="[heroAspectClass, !activeVideoUrl && !readerUrl && !currentPlatform ? 'bg-linear-to-br from-gray-800 to-gray-950 flex items-center justify-center text-6xl' : '']">
     
     <template v-if="isEpub">
       <EpubReader :item="item" :reader-url="readerUrl" />
@@ -92,7 +126,7 @@ defineExpose({
     
     <video v-else-if="activeVideoUrl && isSteamVideo" :src="activeVideoUrl" class="w-full h-full object-cover" controls autoplay />
     
-    <iframe v-else-if="musicEmbedUrl" :src="musicEmbedUrl" class="w-full h-full" frameborder="0" allow="autoplay *; encrypted-media *; fullscreen *" />
+    <iframe v-else-if="musicEmbedActive" :src="currentPlatform.url" class="w-full h-full" frameborder="0" allow="autoplay *; encrypted-media *; fullscreen *" />
     
     <div v-else-if="musicPreviewActive" class="w-full py-12 bg-linear-to-br from-fuchsia-950 via-gray-900 to-gray-950 flex items-center justify-center relative overflow-hidden">
       <img v-if="item.coverUrl" :src="item.coverUrl" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-2xl scale-110" alt="" />
