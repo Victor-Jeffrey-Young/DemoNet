@@ -16,6 +16,8 @@ import com.example.demonet.mapper.UserMapper;
 import com.example.demonet.entity.Tag;
 import com.example.demonet.mapper.ItemMapper;
 import com.example.demonet.service.AdminService;
+import com.example.demonet.service.QQMusicService;
+import com.example.demonet.service.SpotifyService;
 import com.example.demonet.service.SteamService;
 import com.example.demonet.service.SteamGridDBService;
 import com.example.demonet.service.TagService;
@@ -67,6 +69,8 @@ public class AdminController {
     private final SteamGridDBService steamGridDBService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final org.springframework.web.client.RestClient restClient;
+    private final SpotifyService spotifyService;
+    private final QQMusicService qqMusicService;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -466,6 +470,76 @@ public class AdminController {
         return Map.of("message", "IGDB fetch queued: " + endpoint + " limit=" + limit + " → " + targetType);
     }
 
+    @PostMapping("/fetch/spotify")
+    public Map<String, Object> triggerSpotify(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        if (query == null || query.isBlank()) return Map.of("message", "请输入搜索关键词");
+
+        String albumUrl = spotifyService.searchAlbum(query.trim());
+        if (albumUrl == null) return Map.of("message", "未找到匹配的 Spotify 专辑", "url", "");
+
+        // Find matching music items by title and enrich with Spotify link
+        int updated = 0;
+        List<Item> candidates = itemMapper.selectList(new LambdaQueryWrapper<Item>()
+                .eq(Item::getType, "music")
+                .like(Item::getTitle, query.trim())
+                .last("LIMIT 10"));
+        for (Item item : candidates) {
+            try {
+                Map<String, Object> info = objectMapper.readValue(item.getInfoJson(), Map.class);
+                Map<String, Object> links = (Map<String, Object>) info.computeIfAbsent("links", k -> new LinkedHashMap<>());
+                links.put("spotify", albumUrl);
+                item.setInfoJson(objectMapper.writeValueAsString(info));
+                itemMapper.updateById(item);
+                updated++;
+            } catch (Exception e) {
+                log.warn("Failed to update Spotify link for item {}: {}", item.getId(), e.getMessage());
+            }
+        }
+
+        return Map.of("message", "Spotify 查找完成: " + query + "，已补充 " + updated + " 条记录",
+                "url", albumUrl, "updated", updated);
+    }
+
+    @PostMapping("/fetch/qqmusic")
+    public Map<String, Object> triggerQQMusic(@Valid @RequestBody TriggerSearchReq body) {
+        String query = body.getQuery();
+        if (query == null || query.isBlank()) return Map.of("message", "请输入艺人名称");
+
+        List<Item> items;
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            Item single = qqMusicService.fetchByAlbumId(body.getExternalId(), query.trim(),
+                    body.getTargetType() != null ? body.getTargetType() : "music");
+            items = single != null ? List.of(single) : List.of();
+        } else {
+            items = qqMusicService.searchAlbums(query.trim(),
+                    body.getTargetType() != null ? body.getTargetType() : "music");
+        }
+
+        if (items.isEmpty()) {
+            return Map.of("message", "QQ音乐没有找到匹配的专辑，可能 API 暂时不可用或艺人名称不精确",
+                    "created", 0);
+        }
+
+        int created = 0;
+        for (Item item : items) {
+            try {
+                itemMapper.insert(item);
+                created++;
+            } catch (Exception e) {
+                log.warn("QQMusic item insert failed: {} — {}", item.getTitle(), e.getMessage());
+            }
+        }
+        return Map.of("message", "QQ音乐抓取完成，新增 " + created + " 条",
+                "created", created);
+    }
+
+    @GetMapping("/qqmusic/search")
+    public List<Map<String, Object>> searchQQMusic(@RequestParam String q) {
+        if (q == null || q.isBlank()) return List.of();
+        return qqMusicService.searchPreview(q.trim(), 10);
+    }
+
     @GetMapping("/pending")
     public IPage<Item> listPending(
             @RequestParam(defaultValue = "1") Integer page,
@@ -507,6 +581,7 @@ public class AdminController {
         for (AppSetting row : rows) result.put(row.getSettingKey(), row.getSettingValue());
         // Ensure all known keys exist with defaults
         for (String key : List.of("STEAMGRIDDB_API_KEY", "STEAM_API_KEY", "TMDB_API_KEY", "IGDB_CLIENT_ID", "IGDB_CLIENT_SECRET",
+                "SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET",
                 "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "INVITE_ONLY")) {
             result.putIfAbsent(key, "");
         }

@@ -53,6 +53,7 @@ public class AdminRequests {
         @NotBlank(message = "搜索关键词不能为空")
         private String query;
         private String targetType;
+        private String externalId;
     }
 
     @Data
