@@ -52,5 +52,8 @@ app:
   igdb:
     client-id: ${IGDB_CLIENT_ID:}
     client-secret: ${IGDB_CLIENT_SECRET:}
+  spotify:
+    client-id: ${SPOTIFY_CLIENT_ID:}
+    client-secret: ${SPOTIFY_CLIENT_SECRET:}
   steamgriddb:
     api-key: ${STEAMGRIDDB_API_KEY:}

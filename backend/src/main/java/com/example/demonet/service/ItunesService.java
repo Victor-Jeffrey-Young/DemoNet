@@ -2,6 +2,7 @@ package com.example.demonet.service;
 
 import com.example.demonet.entity.Item;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -17,10 +18,13 @@ import java.util.*;
 public class ItunesService {
 
     private final RestClient restClient;
+    private final SpotifyService spotifyService;
+    private final QQMusicService qqMusicService;
+    private final ObjectMapper objectMapper;
     private static final String BASE = "https://itunes.apple.com/search";
 
     @SuppressWarnings("removal")
-    public ItunesService(RestClient defaultRestClient) {
+    public ItunesService(RestClient defaultRestClient, SpotifyService spotifyService, QQMusicService qqMusicService, ObjectMapper objectMapper) {
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setSupportedMediaTypes(Arrays.asList(
                 MediaType.APPLICATION_JSON,
@@ -29,6 +33,9 @@ public class ItunesService {
         this.restClient = defaultRestClient.mutate()
                 .messageConverters(c -> c.add(0, converter))
                 .build();
+        this.spotifyService = spotifyService;
+        this.qqMusicService = qqMusicService;
+        this.objectMapper = objectMapper;
     }
 
     @SuppressWarnings("unchecked")
@@ -52,6 +59,15 @@ public class ItunesService {
 
                 Item item = buildItem(r, targetType != null ? targetType : "music");
                 if (item != null) items.add(item);
+            }
+
+            // Second pass: enrich with platform links
+            for (Item item : items) {
+                try {
+                    enrichWithLinks(item);
+                } catch (Exception e) {
+                    log.warn("Failed to enrich '{}' with platform links: {}", item.getTitle(), e.getMessage());
+                }
             }
             log.info("iTunes: {} albums fetched for '{}'", items.size(), query);
         } catch (Exception e) {
@@ -106,5 +122,41 @@ public class ItunesService {
 
     private String esc(String s) {
         return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichWithLinks(Item item) throws Exception {
+        Map<String, Object> info = objectMapper.readValue(item.getInfoJson(), Map.class);
+
+        Map<String, Object> links = (Map<String, Object>) info.get("links");
+        if (links == null) {
+            links = new HashMap<>();
+            info.put("links", links);
+        }
+
+        // Apple Music
+        if (item.getExternalLink() != null && !item.getExternalLink().isEmpty()) {
+            links.putIfAbsent("appleMusic", item.getExternalLink());
+        }
+
+        // Spotify
+        if (!links.containsKey("spotify")) {
+            String artist = (String) info.getOrDefault("artist", "");
+            String spotifyUrl = spotifyService.searchAlbum(artist + " " + item.getTitle());
+            if (spotifyUrl != null) {
+                links.put("spotify", spotifyUrl);
+            }
+        }
+
+        // QQ Music
+        if (!links.containsKey("qqMusic")) {
+            String artist = (String) info.getOrDefault("artist", "");
+            String qqUrl = qqMusicService.searchAlbum(item.getTitle() + " " + artist);
+            if (qqUrl != null) {
+                links.put("qqMusic", qqUrl);
+            }
+        }
+
+        item.setInfoJson(objectMapper.writeValueAsString(info));
     }
 }
