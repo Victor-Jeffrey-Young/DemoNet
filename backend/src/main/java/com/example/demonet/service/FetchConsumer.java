@@ -45,8 +45,15 @@ public class FetchConsumer {
     public void handleTMDBFetch(Map<String, Object> payload) {
         String query = (String) payload.get("query");
         String targetType = (String) payload.getOrDefault("targetType", "movie");
-        log.info("TMDB fetch: '{}' → type={}", query, targetType);
-        List<Item> items = tmdbService.searchMovies(query);
+        String externalId = (String) payload.get("externalId");
+        log.info("TMDB fetch: '{}' extId={} → type={}", query, externalId, targetType);
+        List<Item> items;
+        if (externalId != null && !externalId.isBlank()) {
+            try { items = List.of(tmdbService.fetchMovieDetail(Integer.parseInt(externalId))); }
+            catch (Exception e) { log.error("TMDB fetch by id failed: {}", e.getMessage()); items = List.of(); }
+        } else {
+            items = tmdbService.searchMovies(query);
+        }
         saveItems(items, targetType, "TMDB");
     }
 
@@ -54,8 +61,13 @@ public class FetchConsumer {
     public void handleAniListFetch(Map<String, Object> payload) {
         String query = (String) payload.get("query");
         String targetType = (String) payload.getOrDefault("targetType", "anime");
-        log.info("AniList fetch: '{}' → type={}", query, targetType);
+        String externalId = (String) payload.get("externalId");
+        log.info("AniList fetch: '{}' extId={} → type={}", query, externalId, targetType);
         List<Item> items = aniListService.searchAnime(query, targetType);
+        if (externalId != null && !externalId.isBlank()) {
+            String eid = externalId;
+            items = items.stream().filter(i -> eid.equals(i.getExternalId())).toList();
+        }
         saveItems(items, targetType, "AniList");
     }
 
@@ -63,8 +75,13 @@ public class FetchConsumer {
     public void handleBangumiFetch(Map<String, Object> payload) {
         String query = (String) payload.get("query");
         String targetType = (String) payload.getOrDefault("targetType", "anime");
-        log.info("Bangumi fetch: '{}' → type={}", query, targetType);
+        String externalId = (String) payload.get("externalId");
+        log.info("Bangumi fetch: '{}' extId={} → type={}", query, externalId, targetType);
         List<Item> items = bangumiService.searchSubjects(query, targetType);
+        if (externalId != null && !externalId.isBlank()) {
+            String eid = externalId;
+            items = items.stream().filter(i -> eid.equals(i.getExternalId())).toList();
+        }
         saveItems(items, targetType, "Bangumi");
     }
 
@@ -72,8 +89,15 @@ public class FetchConsumer {
     public void handleTMDBTVFetch(Map<String, Object> payload) {
         String query = (String) payload.get("query");
         String targetType = (String) payload.getOrDefault("targetType", "anime");
-        log.info("TMDB TV fetch: '{}' → type={}", query, targetType);
-        List<Item> items = tmdbService.searchTV(query);
+        String externalId = (String) payload.get("externalId");
+        log.info("TMDB TV fetch: '{}' extId={} → type={}", query, externalId, targetType);
+        List<Item> items;
+        if (externalId != null && !externalId.isBlank()) {
+            try { items = List.of(tmdbService.fetchTVDetail(Integer.parseInt(externalId))); }
+            catch (Exception e) { log.error("TMDB TV fetch by id failed: {}", e.getMessage()); items = List.of(); }
+        } else {
+            items = tmdbService.searchTV(query);
+        }
         saveItems(items, targetType, "TMDB-TV");
     }
 
@@ -81,8 +105,13 @@ public class FetchConsumer {
     public void handleItunesFetch(Map<String, Object> payload) {
         String query = (String) payload.get("query");
         String targetType = (String) payload.getOrDefault("targetType", "music");
-        log.info("iTunes fetch: '{}' → type={}", query, targetType);
+        String externalId = (String) payload.get("externalId");
+        log.info("iTunes fetch: '{}' extId={} → type={}", query, externalId, targetType);
         List<Item> items = itunesService.searchAlbums(query, targetType);
+        if (externalId != null && !externalId.isBlank()) {
+            String eid = externalId;
+            items = items.stream().filter(i -> eid.equals(i.getExternalId())).toList();
+        }
         saveItems(items, targetType, "iTunes");
     }
 
@@ -92,11 +121,18 @@ public class FetchConsumer {
         String query = (String) payload.get("query");
         Integer limit = payload.get("limit") != null ? ((Number) payload.get("limit")).intValue() : 10;
         String targetType = (String) payload.getOrDefault("targetType", "game");
+        String externalId = (String) payload.get("externalId");
+        log.info("IGDB fetch: '{}' endpoint={} extId={} → type={}", query, endpoint, externalId, targetType);
         List<Item> items;
-        switch (endpoint) {
-            case "popular": items = igdbService.fetchPopularGames(limit); break;
-            case "recent":  items = igdbService.fetchRecentGames(limit); break;
-            default:        items = igdbService.searchGames(query != null ? query : "", limit);
+        if (externalId != null && !externalId.isBlank()) {
+            try { items = List.of(igdbService.fetchGameById(Integer.parseInt(externalId))); }
+            catch (Exception e) { log.error("IGDB fetch by id failed: {}", e.getMessage()); items = List.of(); }
+        } else {
+            switch (endpoint) {
+                case "popular": items = igdbService.fetchPopularGames(limit); break;
+                case "recent":  items = igdbService.fetchRecentGames(limit); break;
+                default:        items = igdbService.searchGames(query != null ? query : "", limit);
+            }
         }
         saveItems(items, targetType, "IGDB");
     }

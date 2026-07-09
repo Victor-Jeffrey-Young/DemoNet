@@ -67,6 +67,11 @@ public class AdminController {
     private final tools.jackson.databind.ObjectMapper objectMapper;
     private final SteamService steamService;
     private final SteamGridDBService steamGridDBService;
+    private final com.example.demonet.service.TMDBService tmdbService;
+    private final com.example.demonet.service.AniListService aniListService;
+    private final com.example.demonet.service.BangumiService bangumiService;
+    private final com.example.demonet.service.ItunesService itunesService;
+    private final com.example.demonet.service.IGDBService igdbService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final org.springframework.web.client.RestClient restClient;
     private final SpotifyService spotifyService;
@@ -74,6 +79,12 @@ public class AdminController {
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
+    @Value("${app.tmdb.api-key:}")
+    private String tmdbApiKey;
+    @Value("${IGDB_CLIENT_ID:}")
+    private String igdbClientId;
+    @Value("${IGDB_CLIENT_SECRET:}")
+    private String igdbClientSecret;
 
     // ========== Item CRUD ==========
 
@@ -409,11 +420,78 @@ public class AdminController {
         return result;
     }
 
-    @PostMapping("/fetch/tmdb")
+    // ========== Search Preview Endpoints (不创建 Item，仅返回预览) ==========
+
+    @GetMapping("/tmdb/search")
+    public List<Map<String, Object>> searchTMDB(@RequestParam String q) {
+        if (!isApiKeyConfigured("TMDB_API_KEY", tmdbApiKey))
+            throw new BusinessException("未配置 TMDB_API_KEY，请在管理后台「API 设置」中配置");
+        return toPreviewList(tmdbService.searchMovies(q));
+    }
+
+    @GetMapping("/tmdb-tv/search")
+    public List<Map<String, Object>> searchTMDBTV(@RequestParam String q) {
+        if (!isApiKeyConfigured("TMDB_API_KEY", tmdbApiKey))
+            throw new BusinessException("未配置 TMDB_API_KEY，请在管理后台「API 设置」中配置");
+        return toPreviewList(tmdbService.searchTV(q));
+    }
+
+    @GetMapping("/anilist/search")
+    public List<Map<String, Object>> searchAniList(@RequestParam String q) {
+        return toPreviewList(aniListService.searchAnime(q, "anime"));
+    }
+
+    @GetMapping("/bangumi/search")
+    public List<Map<String, Object>> searchBangumi(@RequestParam String q) {
+        return toPreviewList(bangumiService.searchSubjects(q, "anime"));
+    }
+
+    @GetMapping("/itunes/search")
+    public List<Map<String, Object>> searchItunes(@RequestParam String q) {
+        return toPreviewList(itunesService.searchAlbums(q, "music"));
+    }
+
+    @GetMapping("/igdb/search")
+    public List<Map<String, Object>> searchIGDB(@RequestParam String q) {
+        if (!isApiKeyConfigured("IGDB_CLIENT_ID", igdbClientId) || !isApiKeyConfigured("IGDB_CLIENT_SECRET", igdbClientSecret))
+            throw new BusinessException("未配置 IGDB_CLIENT_ID / IGDB_CLIENT_SECRET，请在管理后台「API 设置」中配置");
+        return toPreviewList(igdbService.searchGames(q, 10));
+    }
+
+    /** 检查 API Key 是否已配置（优先查 app_settings 表，回退到 .env） */
+    private boolean isApiKeyConfigured(String settingKey, String configValue) {
+        try {
+            AppSetting row = appSettingMapper.selectById(settingKey);
+            if (row != null && row.getSettingValue() != null && !row.getSettingValue().isBlank()) return true;
+        } catch (Exception ignored) {}
+        return configValue != null && !configValue.isBlank();
+    }
+
+    /** 将 Item 列表转为轻量预览 Map 列表（不暴露 infoJson 等大字段） */
+    private List<Map<String, Object>> toPreviewList(List<Item> items) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Item item : items) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("externalId", item.getExternalId());
+            entry.put("title", item.getTitle());
+            entry.put("coverUrl", item.getCoverUrl());
+            entry.put("posterUrl", item.getPosterUrl());
+            String desc = item.getDescription();
+            entry.put("description", desc != null ? desc.substring(0, Math.min(120, desc.length())) : "");
+            entry.put("source", item.getSource());
+            result.add(entry);
+        }
+        return result;
+    }
     public Map<String, String> triggerTMDB(@Valid @RequestBody TriggerSearchReq body) {
         String query = body.getQuery();
         String targetType = body.getTargetType() != null ? body.getTargetType() : "movie";
-        Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("query", query);
+        payload.put("targetType", targetType);
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            payload.put("externalId", body.getExternalId());
+        }
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_TMDB, payload);
         return Map.of("message", "TMDB fetch queued: " + query + " → " + targetType);
     }
@@ -422,7 +500,12 @@ public class AdminController {
     public Map<String, String> triggerAniList(@Valid @RequestBody TriggerSearchReq body) {
         String query = body.getQuery();
         String targetType = body.getTargetType() != null ? body.getTargetType() : "anime";
-        Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("query", query);
+        payload.put("targetType", targetType);
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            payload.put("externalId", body.getExternalId());
+        }
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_ANILIST, payload);
         return Map.of("message", "AniList fetch queued: " + query + " → " + targetType);
     }
@@ -431,7 +514,12 @@ public class AdminController {
     public Map<String, String> triggerBangumi(@Valid @RequestBody TriggerSearchReq body) {
         String query = body.getQuery();
         String targetType = body.getTargetType() != null ? body.getTargetType() : "anime";
-        Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("query", query);
+        payload.put("targetType", targetType);
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            payload.put("externalId", body.getExternalId());
+        }
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_BANGUMI, payload);
         return Map.of("message", "Bangumi fetch queued: " + query + " → " + targetType);
     }
@@ -440,7 +528,12 @@ public class AdminController {
     public Map<String, String> triggerTMDBTV(@Valid @RequestBody TriggerSearchReq body) {
         String query = body.getQuery();
         String targetType = body.getTargetType() != null ? body.getTargetType() : "anime";
-        Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("query", query);
+        payload.put("targetType", targetType);
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            payload.put("externalId", body.getExternalId());
+        }
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_TMDB_TV, payload);
         return Map.of("message", "TMDB TV fetch queued: " + query + " → " + targetType);
     }
@@ -449,7 +542,12 @@ public class AdminController {
     public Map<String, String> triggerItunes(@Valid @RequestBody TriggerSearchReq body) {
         String query = body.getQuery();
         String targetType = body.getTargetType() != null ? body.getTargetType() : "music";
-        Map<String, Object> payload = Map.of("query", query, "targetType", targetType);
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("query", query);
+        payload.put("targetType", targetType);
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            payload.put("externalId", body.getExternalId());
+        }
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_ITUNES, payload);
         return Map.of("message", "iTunes fetch queued: " + query + " → " + targetType);
     }
@@ -460,12 +558,14 @@ public class AdminController {
         String endpoint = body.getEndpoint();
         int limit = body.getLimit();
         String targetType = body.getTargetType();
-        Map<String, Object> payload = Map.of(
-                "query", query != null ? query : "",
-                "endpoint", endpoint,
-                "limit", limit,
-                "targetType", targetType
-        );
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("query", query != null ? query : "");
+        payload.put("endpoint", endpoint);
+        payload.put("limit", limit);
+        payload.put("targetType", targetType);
+        if (body.getExternalId() != null && !body.getExternalId().isBlank()) {
+            payload.put("externalId", body.getExternalId());
+        }
         rabbitTemplate.convertAndSend("", RabbitMQConfig.QUEUE_IGDB, payload);
         return Map.of("message", "IGDB fetch queued: " + endpoint + " limit=" + limit + " → " + targetType);
     }

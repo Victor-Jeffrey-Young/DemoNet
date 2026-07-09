@@ -5,6 +5,8 @@ import {
   triggerBangumiFetch, triggerTMDBTVFetch, triggerItunesFetch, triggerIGDBFetch,
   triggerSpotifyFetch, triggerQQMusicFetch, searchQQMusicAlbums,
   getPendingItems, approveItem, rejectItem, rejectBatch, searchSteamGames,
+  searchTMDBMovies, searchTMDBTV, searchAniListAnime,
+  searchBangumiSubjects, searchItunesAlbums, searchIGDBGames,
 } from '../../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getMeta, TYPE_LIST } from '../../constants/types'
@@ -36,6 +38,37 @@ const igdbQuery = ref('')
 const igdbEndpoint = ref('search')
 const igdbLimit = ref(10)
 const igdbTarget = ref('game')
+const igdbResults = ref([])
+const igdbSearching = ref(false)
+const igdbSearched = ref(false)
+const igdbError = ref('')
+let igdbSearchTimer = null
+// 搜索预览状态
+const tmdbResults = ref([])
+const tmdbSearching = ref(false)
+const tmdbSearched = ref(false)
+const tmdbError = ref('')
+let tmdbSearchTimer = null
+const tmdbTVResults = ref([])
+const tmdbTVSearching = ref(false)
+const tmdbTVSearched = ref(false)
+const tmdbTVError = ref('')
+let tmdbTVSearchTimer = null
+const aniResults = ref([])
+const aniSearching = ref(false)
+const aniSearched = ref(false)
+const aniError = ref('')
+let aniSearchTimer = null
+const bangumiResults = ref([])
+const bangumiSearching = ref(false)
+const bangumiSearched = ref(false)
+const bangumiError = ref('')
+let bangumiSearchTimer = null
+const itunesResults = ref([])
+const itunesSearching = ref(false)
+const itunesSearched = ref(false)
+const itunesError = ref('')
+let itunesSearchTimer = null
 const pendingList = ref([])
 const pendingTotal = ref(0)
 const pendingPage = ref(1)
@@ -63,28 +96,64 @@ async function fetchSteamResult(game) {
   try { const r = await triggerSteamFetch([game.id], steamTarget.value); ElMessage.success(r.message || `${game.name} 已加入抓取队列`); setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
 }
 // TMDB Movie
-async function handleTMDBFetch() {
-  if (!tmdbQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerTMDBFetch(tmdbQuery.value.trim(), tmdbTarget.value); ElMessage.success(r.message); tmdbQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'TMDB 提交失败') }
+async function searchTMDB() {
+  if (!tmdbQuery.value.trim()) { tmdbResults.value = []; tmdbSearched.value = false; tmdbError.value = ''; return }
+  tmdbSearching.value = true; tmdbSearched.value = false; tmdbError.value = ''
+  try { tmdbResults.value = await searchTMDBMovies(tmdbQuery.value.trim()) } catch (e) { tmdbResults.value = []; tmdbError.value = e.response?.data?.error || e.response?.data?.message || '搜索失败' }
+  tmdbSearching.value = false; tmdbSearched.value = true
+}
+function debounceSearchTMDB() { clearTimeout(tmdbSearchTimer); tmdbSearchTimer = setTimeout(searchTMDB, 400) }
+async function fetchTMDBResult(item) {
+  try { const r = await triggerTMDBFetch(tmdbQuery.value.trim(), tmdbTarget.value, item.externalId); ElMessage.success(r.message || `${item.title} 已加入抓取队列`); setTimeout(loadPending, 2000) }
+  catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
 }
 // AniList
-async function handleAniListFetch() {
-  if (!aniQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerAniListFetch(aniQuery.value.trim(), aniTarget.value); ElMessage.success(r.message); aniQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'AniList 提交失败') }
+async function searchAniList() {
+  if (!aniQuery.value.trim()) { aniResults.value = []; aniSearched.value = false; aniError.value = ''; return }
+  aniSearching.value = true; aniSearched.value = false; aniError.value = ''
+  try { aniResults.value = await searchAniListAnime(aniQuery.value.trim()) } catch (e) { aniResults.value = []; aniError.value = e.response?.data?.error || e.response?.data?.message || '搜索失败' }
+  aniSearching.value = false; aniSearched.value = true
+}
+function debounceSearchAniList() { clearTimeout(aniSearchTimer); aniSearchTimer = setTimeout(searchAniList, 400) }
+async function fetchAniListResult(item) {
+  try { const r = await triggerAniListFetch(aniQuery.value.trim(), aniTarget.value, item.externalId); ElMessage.success(r.message || `${item.title} 已加入抓取队列`); setTimeout(loadPending, 2000) }
+  catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
 }
 // Bangumi
-async function handleBangumiFetch() {
-  if (!bangumiQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerBangumiFetch(bangumiQuery.value.trim(), bangumiTarget.value); ElMessage.success(r.message); bangumiQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'Bangumi 提交失败') }
+async function searchBangumi() {
+  if (!bangumiQuery.value.trim()) { bangumiResults.value = []; bangumiSearched.value = false; bangumiError.value = ''; return }
+  bangumiSearching.value = true; bangumiSearched.value = false; bangumiError.value = ''
+  try { bangumiResults.value = await searchBangumiSubjects(bangumiQuery.value.trim()) } catch (e) { bangumiResults.value = []; bangumiError.value = e.response?.data?.error || e.response?.data?.message || '搜索失败' }
+  bangumiSearching.value = false; bangumiSearched.value = true
+}
+function debounceSearchBangumi() { clearTimeout(bangumiSearchTimer); bangumiSearchTimer = setTimeout(searchBangumi, 400) }
+async function fetchBangumiResult(item) {
+  try { const r = await triggerBangumiFetch(bangumiQuery.value.trim(), bangumiTarget.value, item.externalId); ElMessage.success(r.message || `${item.title} 已加入抓取队列`); setTimeout(loadPending, 2000) }
+  catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
 }
 // TMDB TV
-async function handleTMDBTVFetch() {
-  if (!tmdbTVQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerTMDBTVFetch(tmdbTVQuery.value.trim(), tmdbTVTarget.value); ElMessage.success(r.message); tmdbTVQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'TMDB TV 提交失败') }
+async function doSearchTMDBTV() {
+  if (!tmdbTVQuery.value.trim()) { tmdbTVResults.value = []; tmdbTVSearched.value = false; tmdbTVError.value = ''; return }
+  tmdbTVSearching.value = true; tmdbTVSearched.value = false; tmdbTVError.value = ''
+  try { tmdbTVResults.value = await searchTMDBTV(tmdbTVQuery.value.trim()) } catch (e) { tmdbTVResults.value = []; tmdbTVError.value = e.response?.data?.error || e.response?.data?.message || '搜索失败' }
+  tmdbTVSearching.value = false; tmdbTVSearched.value = true
 }
-async function handleItunesFetch() {
-  if (!itunesQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
-  try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value); ElMessage.success(r.message); itunesQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'iTunes 提交失败') }
+function debounceSearchTMDBTV() { clearTimeout(tmdbTVSearchTimer); tmdbTVSearchTimer = setTimeout(doSearchTMDBTV, 400) }
+async function fetchTMDBTVResult(item) {
+  try { const r = await triggerTMDBTVFetch(tmdbTVQuery.value.trim(), tmdbTVTarget.value, item.externalId); ElMessage.success(r.message || `${item.title} 已加入抓取队列`); setTimeout(loadPending, 2000) }
+  catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
+}
+// iTunes
+async function searchItunes() {
+  if (!itunesQuery.value.trim()) { itunesResults.value = []; itunesSearched.value = false; itunesError.value = ''; return }
+  itunesSearching.value = true; itunesSearched.value = false; itunesError.value = ''
+  try { itunesResults.value = await searchItunesAlbums(itunesQuery.value.trim()) } catch (e) { itunesResults.value = []; itunesError.value = e.response?.data?.error || e.response?.data?.message || '搜索失败' }
+  itunesSearching.value = false; itunesSearched.value = true
+}
+function debounceSearchItunes() { clearTimeout(itunesSearchTimer); itunesSearchTimer = setTimeout(searchItunes, 400) }
+async function fetchItunesResult(item) {
+  try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value, item.externalId); ElMessage.success(r.message || `${item.title} 已加入抓取队列`); setTimeout(loadPending, 2000) }
+  catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
 }
 async function handleSpotifyFetch() {
   if (!spotifyQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
@@ -120,6 +189,19 @@ async function fetchQQMusicResult(album) {
   }
 }
 // IGDB
+async function searchIGDB() {
+  if (!igdbQuery.value.trim()) { igdbResults.value = []; igdbSearched.value = false; igdbError.value = ''; return }
+  igdbSearching.value = true; igdbSearched.value = false; igdbError.value = ''
+  try { igdbResults.value = await searchIGDBGames(igdbQuery.value.trim()) } catch (e) { igdbResults.value = []; igdbError.value = e.response?.data?.error || e.response?.data?.message || '搜索失败' }
+  igdbSearching.value = false; igdbSearched.value = true
+}
+function debounceSearchIGDB() { clearTimeout(igdbSearchTimer); igdbSearchTimer = setTimeout(searchIGDB, 400) }
+async function fetchIGDBResult(item) {
+  try {
+    const r = await triggerIGDBFetch('search', { query: igdbQuery.value.trim(), targetType: igdbTarget.value, externalId: item.externalId })
+    ElMessage.success(r.message || `${item.title} 已加入抓取队列`); setTimeout(loadPending, 2000)
+  } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败') }
+}
 async function handleIGDBFetch(endpoint) {
   try {
     const payload = { endpoint, limit: igdbLimit.value, targetType: igdbTarget.value }
@@ -217,10 +299,28 @@ defineExpose({ refresh: loadPending })
               <el-option v-for="n in [5,10,20,50]" :key="n" :label="'上限 '+n+'条'" :value="n" />
             </el-select>
           </div>
-          <div class="flex gap-2">
-            <el-input v-if="igdbEndpoint === 'search'" v-model="igdbQuery" placeholder="游戏英文名 (如 Hades)" class="flex-1" @keyup.enter="handleIGDBFetch('search')" clearable />
-            <el-button type="primary" @click="handleIGDBFetch(igdbEndpoint)" :class="{'flex-1': igdbEndpoint !== 'search'}">
-              {{ igdbEndpoint === 'search' ? '搜索并拉取' : igdbEndpoint === 'popular' ? '批量拉取热门' : '批量拉取新品' }}
+          <div v-if="igdbEndpoint === 'search'" class="relative">
+            <el-input v-model="igdbQuery" placeholder="游戏英文名 (如 Hades)..." @input="debounceSearchIGDB" clearable />
+            <div v-if="igdbSearching || igdbResults.length || igdbSearched" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+              <div v-if="igdbSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+              <div v-else-if="igdbError" class="p-3 text-sm text-amber-400 text-center">{{ igdbError }}</div>
+              <div v-else-if="!igdbResults.length" class="p-3 text-sm text-gray-500 text-center">无搜索结果</div>
+              <div v-else class="max-h-[250px] overflow-y-auto">
+                <div v-for="r in igdbResults" :key="r.externalId" @click="fetchIGDBResult(r)"
+                  class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                  <img v-if="r.coverUrl" :src="r.coverUrl" class="w-10 h-14 object-cover rounded shadow-sm shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm text-gray-200 truncate font-medium">{{ r.title }}</div>
+                    <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                  </div>
+                  <el-button size="small" type="primary" plain>抓取</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="flex gap-2">
+            <el-button type="primary" @click="handleIGDBFetch(igdbEndpoint)" class="flex-1">
+              {{ igdbEndpoint === 'popular' ? '批量拉取热门' : '批量拉取新品' }}
             </el-button>
           </div>
         </div>
@@ -234,9 +334,25 @@ defineExpose({ refresh: loadPending })
             <el-option v-for="t in ['movie','anime']" :key="t" :label="getMeta(t).label" :value="t" />
           </el-select>
         </div>
-        <el-input v-model="tmdbQuery" placeholder="电影名称或关键词..." @keyup.enter="handleTMDBFetch" clearable>
-          <template #append><el-button @click="handleTMDBFetch">拉取</el-button></template>
-        </el-input>
+        <div class="relative">
+          <el-input v-model="tmdbQuery" placeholder="搜索电影名称 (回车自动搜索)..." @input="debounceSearchTMDB" clearable />
+          <div v-if="tmdbSearching || tmdbResults.length || tmdbSearched" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+            <div v-if="tmdbSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+            <div v-else-if="tmdbError" class="p-3 text-sm text-amber-400 text-center">{{ tmdbError }}</div>
+            <div v-else-if="!tmdbResults.length" class="p-3 text-sm text-gray-500 text-center">无搜索结果</div>
+            <div v-else class="max-h-[250px] overflow-y-auto">
+              <div v-for="r in tmdbResults" :key="r.externalId" @click="fetchTMDBResult(r)"
+                class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                <img v-if="r.coverUrl || r.posterUrl" :src="r.posterUrl || r.coverUrl" class="w-10 h-14 object-cover rounded shadow-sm shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-200 truncate font-medium">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                </div>
+                <el-button size="small" type="primary" plain>抓取</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- TMDB TV -->
@@ -247,9 +363,25 @@ defineExpose({ refresh: loadPending })
             <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
           </el-select>
         </div>
-        <el-input v-model="tmdbTVQuery" placeholder="剧集或动漫关键词..." @keyup.enter="handleTMDBTVFetch" clearable>
-          <template #append><el-button @click="handleTMDBTVFetch">拉取</el-button></template>
-        </el-input>
+        <div class="relative">
+          <el-input v-model="tmdbTVQuery" placeholder="搜索剧集或动漫名称..." @input="debounceSearchTMDBTV" clearable />
+          <div v-if="tmdbTVSearching || tmdbTVResults.length || tmdbTVSearched" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+            <div v-if="tmdbTVSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+            <div v-else-if="tmdbTVError" class="p-3 text-sm text-amber-400 text-center">{{ tmdbTVError }}</div>
+            <div v-else-if="!tmdbTVResults.length" class="p-3 text-sm text-gray-500 text-center">无搜索结果</div>
+            <div v-else class="max-h-[250px] overflow-y-auto">
+              <div v-for="r in tmdbTVResults" :key="r.externalId" @click="fetchTMDBTVResult(r)"
+                class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                <img v-if="r.coverUrl || r.posterUrl" :src="r.posterUrl || r.coverUrl" class="w-10 h-14 object-cover rounded shadow-sm shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-200 truncate font-medium">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                </div>
+                <el-button size="small" type="primary" plain>抓取</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- AniList -->
@@ -260,9 +392,25 @@ defineExpose({ refresh: loadPending })
             <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
           </el-select>
         </div>
-        <el-input v-model="aniQuery" placeholder="动漫英文或罗马音..." @keyup.enter="handleAniListFetch" clearable>
-          <template #append><el-button @click="handleAniListFetch">拉取</el-button></template>
-        </el-input>
+        <div class="relative">
+          <el-input v-model="aniQuery" placeholder="搜索动漫英文或罗马音..." @input="debounceSearchAniList" clearable />
+          <div v-if="aniSearching || aniResults.length || aniSearched" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+            <div v-if="aniSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+            <div v-else-if="aniError" class="p-3 text-sm text-amber-400 text-center">{{ aniError }}</div>
+            <div v-else-if="!aniResults.length" class="p-3 text-sm text-gray-500 text-center">无搜索结果</div>
+            <div v-else class="max-h-[250px] overflow-y-auto">
+              <div v-for="r in aniResults" :key="r.externalId" @click="fetchAniListResult(r)"
+                class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                <img v-if="r.coverUrl" :src="r.coverUrl" class="w-10 h-14 object-cover rounded shadow-sm shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-200 truncate font-medium">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                </div>
+                <el-button size="small" type="primary" plain>抓取</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Bangumi -->
@@ -273,9 +421,25 @@ defineExpose({ refresh: loadPending })
             <el-option v-for="t in ['anime','movie']" :key="t" :label="getMeta(t).label" :value="t" />
           </el-select>
         </div>
-        <el-input v-model="bangumiQuery" placeholder="动漫中文名..." @keyup.enter="handleBangumiFetch" clearable>
-          <template #append><el-button @click="handleBangumiFetch">拉取</el-button></template>
-        </el-input>
+        <div class="relative">
+          <el-input v-model="bangumiQuery" placeholder="搜索动漫中文名..." @input="debounceSearchBangumi" clearable />
+          <div v-if="bangumiSearching || bangumiResults.length || bangumiSearched" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+            <div v-if="bangumiSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+            <div v-else-if="bangumiError" class="p-3 text-sm text-amber-400 text-center">{{ bangumiError }}</div>
+            <div v-else-if="!bangumiResults.length" class="p-3 text-sm text-gray-500 text-center">无搜索结果</div>
+            <div v-else class="max-h-[250px] overflow-y-auto">
+              <div v-for="r in bangumiResults" :key="r.externalId" @click="fetchBangumiResult(r)"
+                class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                <img v-if="r.coverUrl" :src="r.coverUrl" class="w-10 h-14 object-cover rounded shadow-sm shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-200 truncate font-medium">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                </div>
+                <el-button size="small" type="primary" plain>抓取</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- iTunes -->
@@ -286,9 +450,25 @@ defineExpose({ refresh: loadPending })
             <el-option v-for="t in ['music','anime']" :key="t" :label="getMeta(t).label" :value="t" />
           </el-select>
         </div>
-        <el-input v-model="itunesQuery" placeholder="专辑/艺人/歌曲..." @keyup.enter="handleItunesFetch" clearable>
-          <template #append><el-button @click="handleItunesFetch">拉取</el-button></template>
-        </el-input>
+        <div class="relative">
+          <el-input v-model="itunesQuery" placeholder="搜索专辑/艺人/歌曲..." @input="debounceSearchItunes" clearable />
+          <div v-if="itunesSearching || itunesResults.length || itunesSearched" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+            <div v-if="itunesSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+            <div v-else-if="itunesError" class="p-3 text-sm text-amber-400 text-center">{{ itunesError }}</div>
+            <div v-else-if="!itunesResults.length" class="p-3 text-sm text-gray-500 text-center">无搜索结果</div>
+            <div v-else class="max-h-[250px] overflow-y-auto">
+              <div v-for="r in itunesResults" :key="r.externalId" @click="fetchItunesResult(r)"
+                class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                <img v-if="r.coverUrl" :src="r.coverUrl" class="w-10 h-10 object-cover rounded shadow-sm shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-200 truncate font-medium">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                </div>
+                <el-button size="small" type="primary" plain>抓取</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Spotify -->

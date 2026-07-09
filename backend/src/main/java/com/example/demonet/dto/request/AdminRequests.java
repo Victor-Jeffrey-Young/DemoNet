@@ -62,6 +62,7 @@ public class AdminRequests {
         private String endpoint = "search";
         private Integer limit = 10;
         private String targetType = "game";
+        private String externalId;
     }
 
     @Data
