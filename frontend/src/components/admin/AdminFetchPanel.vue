@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import {
   triggerSteamFetch, triggerTMDBFetch, triggerAniListFetch,
   triggerBangumiFetch, triggerTMDBTVFetch, triggerItunesFetch, triggerIGDBFetch,
+  triggerSpotifyFetch, triggerQQMusicFetch, searchQQMusicAlbums,
   getPendingItems, approveItem, rejectItem, rejectBatch, searchSteamGames,
 } from '../../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -24,6 +25,13 @@ const tmdbTVQuery = ref('')
 const tmdbTVTarget = ref('anime')
 const itunesQuery = ref('')
 const itunesTarget = ref('music')
+const spotifyQuery = ref('')
+const spotifyTarget = ref('music')
+const qqmusicQuery = ref('')
+const qqmusicTarget = ref('music')
+const qqmusicResults = ref([])
+const qqmusicSearching = ref(false)
+let qqmusicSearchTimer = null
 const igdbQuery = ref('')
 const igdbEndpoint = ref('search')
 const igdbLimit = ref(10)
@@ -77,6 +85,39 @@ async function handleTMDBTVFetch() {
 async function handleItunesFetch() {
   if (!itunesQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
   try { const r = await triggerItunesFetch(itunesQuery.value.trim(), itunesTarget.value); ElMessage.success(r.message); itunesQuery.value = ''; setTimeout(loadPending, 2000) } catch (e) { ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'iTunes 提交失败') }
+}
+async function handleSpotifyFetch() {
+  if (!spotifyQuery.value.trim()) { ElMessage.warning('请输入关键词'); return }
+  try {
+    const r = await triggerSpotifyFetch(spotifyQuery.value.trim(), spotifyTarget.value);
+    if (r.url) {
+      ElMessage.success(r.message);
+    } else {
+      ElMessage.info(r.message);
+    }
+    spotifyQuery.value = '';
+  } catch (e) {
+    ElMessage.error(e.response?.data?.error || e.response?.data?.message || 'Spotify 提交失败');
+  }
+}
+async function searchQQMusic() {
+  if (!qqmusicQuery.value.trim()) { qqmusicResults.value = []; return }
+  qqmusicSearching.value = true
+  try { qqmusicResults.value = await searchQQMusicAlbums(qqmusicQuery.value.trim()) } catch { qqmusicResults.value = [] }
+  qqmusicSearching.value = false
+}
+function debounceSearchQQMusic() {
+  clearTimeout(qqmusicSearchTimer)
+  qqmusicSearchTimer = setTimeout(searchQQMusic, 400)
+}
+async function fetchQQMusicResult(album) {
+  try {
+    const r = await triggerQQMusicFetch(album.artist || qqmusicQuery.value, qqmusicTarget.value, album.albumMID)
+    ElMessage.success(r.message || `${album.name} 已加入抓取队列`)
+    setTimeout(loadPending, 2000)
+  } catch (e) {
+    ElMessage.error(e.response?.data?.error || e.response?.data?.message || '抓取提交失败')
+  }
 }
 // IGDB
 async function handleIGDBFetch(endpoint) {
@@ -248,6 +289,47 @@ defineExpose({ refresh: loadPending })
         <el-input v-model="itunesQuery" placeholder="专辑/艺人/歌曲..." @keyup.enter="handleItunesFetch" clearable>
           <template #append><el-button @click="handleItunesFetch">拉取</el-button></template>
         </el-input>
+      </div>
+
+      <!-- Spotify -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-green-800/50 hover:border-green-600 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-green-400 flex items-center gap-2">🎵 Spotify</h4>
+          <el-select v-model="spotifyTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['music']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <el-input v-model="spotifyQuery" placeholder="专辑/艺人名称（自动匹配补充到现有条目）..." @keyup.enter="handleSpotifyFetch" clearable>
+          <template #append><el-button @click="handleSpotifyFetch" type="success">补充链接</el-button></template>
+        </el-input>
+      </div>
+
+      <!-- QQ Music -->
+      <div class="bg-gray-800 rounded-lg p-4 border border-red-800/50 hover:border-red-600 transition-colors md:col-span-2 xl:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-semibold text-red-400 flex items-center gap-2">🎶 QQ音乐</h4>
+          <el-select v-model="qqmusicTarget" style="width:100px" size="small" :teleported="false">
+            <el-option v-for="t in ['music']" :key="t" :label="getMeta(t).label" :value="t" />
+          </el-select>
+        </div>
+        <div class="flex-1 relative">
+          <el-input v-model="qqmusicQuery" placeholder="搜索艺人名称（如：周杰伦）..." @input="debounceSearchQQMusic" clearable />
+          <div v-if="qqmusicSearching || qqmusicResults.length" class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden">
+            <div v-if="qqmusicSearching" class="p-3 text-sm text-gray-400 text-center">搜索中...</div>
+            <div v-else class="max-h-[300px] overflow-y-auto">
+              <div v-for="a in qqmusicResults" :key="a.id" @click="fetchQQMusicResult(a)"
+                class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-700 border-b border-gray-700 last:border-0">
+                <img v-if="a.cover" :src="a.cover" class="w-10 h-10 object-cover rounded shadow-sm" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-200 truncate font-medium">{{ a.name }}</div>
+                  <div class="text-xs text-gray-400 truncate">{{ a.artist }}</div>
+                </div>
+                <span class="text-xs text-gray-500 shrink-0">{{ a.songCount || '?' }} 首</span>
+                <el-button size="small" type="danger" plain>抓取</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
