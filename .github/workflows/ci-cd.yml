@@ -45,7 +45,7 @@ on:
 
 env:
   JAVA_VERSION: '17'
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PNPM_VERSION: '11.10.0'
 
 # 同分支新推送取消旧运行；main 分支不取消，确保部署完整执行
