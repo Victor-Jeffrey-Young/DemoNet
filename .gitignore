@@ -24,6 +24,9 @@ uploads/
 !frontend/**
 items.json
 
+# Planning & temp files
+tmp/
+
 # Explicitly re-exclude compiled files
 backend/target/
 backend/uploads/
