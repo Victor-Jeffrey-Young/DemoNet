@@ -94,28 +94,52 @@ export function searchSteamGames(query) {
   return request.get('/admin/steam/search', { params: { q: query } })
 }
 
-export function triggerTMDBFetch(query, targetType = 'movie') {
-  return request.post('/admin/fetch/tmdb', { query, targetType })
+export function triggerTMDBFetch(query, targetType = 'movie', externalId = '') {
+  return request.post('/admin/fetch/tmdb', { query, targetType, externalId })
 }
 
-export function triggerAniListFetch(query, targetType = 'anime') {
-  return request.post('/admin/fetch/anilist', { query, targetType })
+export function searchTMDBMovies(query) {
+  return request.get('/admin/tmdb/search', { params: { q: query } })
 }
 
-export function triggerBangumiFetch(query, targetType = 'anime') {
-  return request.post('/admin/fetch/bangumi', { query, targetType })
+export function triggerAniListFetch(query, targetType = 'anime', externalId = '') {
+  return request.post('/admin/fetch/anilist', { query, targetType, externalId })
 }
 
-export function triggerTMDBTVFetch(query, targetType = 'anime') {
-  return request.post('/admin/fetch/tmdb-tv', { query, targetType })
+export function searchAniListAnime(query) {
+  return request.get('/admin/anilist/search', { params: { q: query } })
 }
 
-export function triggerItunesFetch(query, targetType = 'music') {
-  return request.post('/admin/fetch/itunes', { query, targetType })
+export function triggerBangumiFetch(query, targetType = 'anime', externalId = '') {
+  return request.post('/admin/fetch/bangumi', { query, targetType, externalId })
 }
 
-export function triggerIGDBFetch(endpoint, { query, limit, targetType } = {}) {
-  return request.post('/admin/fetch/igdb', { endpoint, query, limit, targetType })
+export function searchBangumiSubjects(query) {
+  return request.get('/admin/bangumi/search', { params: { q: query } })
+}
+
+export function triggerTMDBTVFetch(query, targetType = 'anime', externalId = '') {
+  return request.post('/admin/fetch/tmdb-tv', { query, targetType, externalId })
+}
+
+export function searchTMDBTV(query) {
+  return request.get('/admin/tmdb-tv/search', { params: { q: query } })
+}
+
+export function triggerItunesFetch(query, targetType = 'music', externalId = '') {
+  return request.post('/admin/fetch/itunes', { query, targetType, externalId })
+}
+
+export function searchItunesAlbums(query) {
+  return request.get('/admin/itunes/search', { params: { q: query } })
+}
+
+export function triggerIGDBFetch(endpoint, { query, limit, targetType, externalId } = {}) {
+  return request.post('/admin/fetch/igdb', { endpoint, query, limit, targetType, externalId })
+}
+
+export function searchIGDBGames(query) {
+  return request.get('/admin/igdb/search', { params: { q: query } })
 }
 
 export function triggerSpotifyFetch(query, targetType = 'music') {

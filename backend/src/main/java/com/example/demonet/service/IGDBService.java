@@ -23,15 +23,46 @@ public class IGDBService {
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
     private final StringRedisTemplate redisTemplate;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @Value("${app.igdb.client-id:}")
-    private String clientId;
+    private String clientIdFromConfig;
 
     @Value("${app.igdb.client-secret:}")
-    private String clientSecret;
+    private String clientSecretFromConfig;
+
+    private String cachedClientId = null;
+    private String cachedClientSecret = null;
+    private long lastKeyFetchTime = 0;
 
     private static final String TOKEN_URL = "https://id.twitch.tv/oauth2/token";
     private static final String API_BASE = "https://api.igdb.com/v4";
+
+    /** 优先从 app_settings 表读取（管理后台可动态修改），回退到 .env 配置 */
+    private String getClientId() {
+        refreshCredentialsIfNeeded();
+        return cachedClientId;
+    }
+
+    private String getClientSecret() {
+        refreshCredentialsIfNeeded();
+        return cachedClientSecret;
+    }
+
+    private void refreshCredentialsIfNeeded() {
+        if (System.currentTimeMillis() - lastKeyFetchTime < 300000 && cachedClientId != null) {
+            return;
+        }
+        try {
+            cachedClientId = jdbcTemplate.queryForObject(
+                "SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_ID'", String.class);
+            cachedClientSecret = jdbcTemplate.queryForObject(
+                "SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_SECRET'", String.class);
+        } catch (Exception ignored) {}
+        if (cachedClientId == null || cachedClientId.isBlank()) cachedClientId = clientIdFromConfig;
+        if (cachedClientSecret == null || cachedClientSecret.isBlank()) cachedClientSecret = clientSecretFromConfig;
+        lastKeyFetchTime = System.currentTimeMillis();
+    }
 
     // ---- OAuth ----
 
@@ -40,14 +71,16 @@ public class IGDBService {
         if (cachedToken != null && !cachedToken.isBlank()) {
             return cachedToken;
         }
-        if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
+        String cId = getClientId();
+        String cSecret = getClientSecret();
+        if (cId == null || cId.isBlank() || cSecret == null || cSecret.isBlank()) {
             log.warn("IGDB credentials missing — set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET");
             return null;
         }
         try {
             Map<String, String> body = Map.of(
-                    "client_id", clientId,
-                    "client_secret", clientSecret,
+                    "client_id", cId,
+                    "client_secret", cSecret,
                     "grant_type", "client_credentials"
             );
             Map<String, Object> resp = restClient.post()
@@ -166,7 +199,7 @@ public class IGDBService {
 
             String response = restClient.post()
                     .uri(API_BASE + "/games")
-                    .header("Client-ID", clientId)
+                    .header("Client-ID", getClientId())
                     .header("Authorization", "Bearer " + token)
                     .header("Content-Type", "text/plain")
                     .body(bodyStr)
@@ -223,7 +256,20 @@ public class IGDBService {
             Item item = new Item();
             item.setType("game");
             item.setTitle(name);
-            item.setSlug("igdb-" + id);
+            // 如果 IGDB 提供了 Steam 链接，使用与 Steam 源相同的 slug（steam-{appId}），
+            // 这样同一游戏只会有一条记录，第二次抓取自动触发 updateBySlug 合并
+            String slug = "igdb-" + id;
+            if (steamUrl != null) {
+                int appStart = steamUrl.indexOf("/app/");
+                if (appStart >= 0) {
+                    int appEnd = steamUrl.indexOf("/", appStart + 5);
+                    String steamAppId = appEnd > 0
+                            ? steamUrl.substring(appStart + 5, appEnd)
+                            : steamUrl.substring(appStart + 5);
+                    if (!steamAppId.isBlank()) slug = "steam-" + steamAppId;
+                }
+            }
+            item.setSlug(slug);
             item.setCoverUrl(coverUrl);
             item.setDescription(summary != null ? summary : "");
             item.setExternalId(String.valueOf(id));
