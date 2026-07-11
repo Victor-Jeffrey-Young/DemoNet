@@ -108,6 +108,15 @@ class IGDBServiceTest {
     @Test
     void searchGames_noToken() {
         when(valueOperations.get("igdb:token")).thenReturn(null);
+        // OAuth flow needs DB credentials
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_ID'"),
+                eq(String.class)))
+                .thenReturn("test-client-id");
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_SECRET'"),
+                eq(String.class)))
+                .thenReturn("test-client-secret");
 
         doReturn(requestBodyUriSpec).when(restClient).post();
         doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());

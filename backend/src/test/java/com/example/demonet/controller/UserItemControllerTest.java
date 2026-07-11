@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.withSettings;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,7 +42,7 @@ class UserItemControllerTest {
     }
 
     private Authentication mockAuth(Long userId) {
-        Authentication auth = mock(Authentication.class);
+        Authentication auth = mock(Authentication.class, withSettings().lenient());
         when(auth.getPrincipal()).thenReturn(userId);
         return auth;
     }

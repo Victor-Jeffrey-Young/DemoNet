@@ -60,7 +60,7 @@ class SteamGridDBServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(gameResp).doReturn(gridResp)
@@ -81,7 +81,7 @@ class SteamGridDBServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(gameResp).when(responseSpec).body(any(ParameterizedTypeReference.class));
@@ -104,7 +104,7 @@ class SteamGridDBServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(gameResp).doReturn(gridResp)
@@ -132,7 +132,7 @@ class SteamGridDBServiceTest {
     @Test
     void findPosterUrl_apiThrows() {
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doThrow(new RuntimeException("API error")).when(responseSpec).body(any(ParameterizedTypeReference.class));
