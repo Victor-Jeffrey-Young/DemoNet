@@ -44,15 +44,17 @@ class TMDBServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(jdbcTemplate.queryForObject(
-                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'TMDB_API_KEY'"),
-                eq(String.class)))
-                .thenReturn("test-api-key");
+        // jdbcTemplate stub moved to individual tests that need it
+        // to avoid UnnecessaryStubbingException (searchMovies_emptyApiKey overrides it).
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void fetchMovieDetail_success() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'TMDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-api-key");
         Map<String, Object> tmdbResponse = new HashMap<>();
         tmdbResponse.put("id", 12345);
         tmdbResponse.put("title", "Test Movie");
@@ -68,7 +70,7 @@ class TMDBServiceTest {
         )));
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), any(), any(), any(), any());
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(tmdbResponse).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
@@ -93,8 +95,12 @@ class TMDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void fetchMovieDetail_apiReturnsNull() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'TMDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-api-key");
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), any(), any(), any(), any());
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(null).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
@@ -106,8 +112,12 @@ class TMDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void fetchMovieDetail_apiThrows() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'TMDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-api-key");
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), any(), any(), any(), any());
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doThrow(new RuntimeException("API unreachable")).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
@@ -119,6 +129,10 @@ class TMDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void searchMovies_returnsResults() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'TMDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-api-key");
         Map<String, Object> searchResponse = Map.of(
                 "results", List.of(Map.of("id", 12345))
         );
@@ -135,7 +149,7 @@ class TMDBServiceTest {
         detailResponse.put("credits", Map.of("crew", List.of()));
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), any(), any(), any(), any());
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(searchResponse).doReturn(detailResponse)
                 .when(responseSpec).body(any(ParameterizedTypeReference.class));
@@ -161,6 +175,10 @@ class TMDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void fetchTVDetail_success() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'TMDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-api-key");
         Map<String, Object> tvResponse = new HashMap<>();
         tvResponse.put("id", 56789);
         tvResponse.put("name", "Test TV Show");
@@ -179,7 +197,7 @@ class TMDBServiceTest {
         tvResponse.put("credits", Map.of());
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), any(), any(), any(), any());
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(tvResponse).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
