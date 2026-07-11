@@ -1,11 +1,9 @@
 package com.example.demonet.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Item;
 import com.example.demonet.mapper.ItemMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,13 +31,6 @@ class ItemServiceTest {
     @Mock private ItemMapper itemMapper;
     @Mock private JdbcTemplate jdbcTemplate;
     @Mock private ObjectMapper objectMapper;
-
-    @BeforeEach
-    void initTableInfo() {
-        // MyBatis-Plus LambdaQueryWrapper requires TableInfoHelper to be
-        // initialized; in pure Mockito tests this isn't auto-configured.
-        TableInfoHelper.initTableInfo(null, Item.class);
-    }
 
     @Test
     void getBySlug_found() {
