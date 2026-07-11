@@ -47,12 +47,12 @@ class TagServiceTest {
     @Test
     void create_success() {
         when(tagMapper.selectCount(any())).thenReturn(0L);
-        when(tagMapper.insert(any(Tag.class))).thenReturn(1);
+        when(tagMapper.insert((Tag) any())).thenReturn(1);
 
         Tag result = tagService.create("newtag");
 
         assertThat(result.getName()).isEqualTo("newtag");
-        verify(tagMapper).insert(any(Tag.class));
+        verify(tagMapper).insert((Tag) any());
     }
 
     @Test
@@ -88,13 +88,13 @@ class TagServiceTest {
         Long tagId = tagService.ensureTag("action");
 
         assertThat(tagId).isEqualTo(5L);
-        verify(tagMapper, never()).insert(any());
+        verify(tagMapper, never()).insert((Tag) any());
     }
 
     @Test
     void ensureTag_new() {
         when(tagMapper.selectOne(any())).thenReturn(null);
-        when(tagMapper.insert(any(Tag.class))).thenAnswer(invocation -> {
+        when(tagMapper.insert((Tag) any())).thenAnswer(invocation -> {
             Tag t = invocation.getArgument(0);
             t.setId(10L);
             return 1;
@@ -103,7 +103,7 @@ class TagServiceTest {
         Long tagId = tagService.ensureTag("newtag");
 
         assertThat(tagId).isEqualTo(10L);
-        verify(tagMapper).insert(any(Tag.class));
+        verify(tagMapper).insert((Tag) any());
     }
 
     @Test

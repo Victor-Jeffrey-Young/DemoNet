@@ -28,14 +28,14 @@ class UserItemServiceTest {
     @Test
     void saveOrUpdate_new() {
         when(userItemMapper.selectOne(any())).thenReturn(null);
-        when(userItemMapper.insert(any(UserItem.class))).thenReturn(1);
+        when(userItemMapper.insert((UserItem) any())).thenReturn(1);
 
         UserItem result = userItemService.saveOrUpdate(1L, 100L, "want_to_play");
 
         assertThat(result.getStatus()).isEqualTo("want_to_play");
         assertThat(result.getUserId()).isEqualTo(1L);
         assertThat(result.getItemId()).isEqualTo(100L);
-        verify(userItemMapper).insert(any(UserItem.class));
+        verify(userItemMapper).insert((UserItem) any());
     }
 
     @Test
@@ -51,7 +51,7 @@ class UserItemServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("loved");
         verify(userItemMapper).updateById(existing);
-        verify(userItemMapper, never()).insert(any());
+        verify(userItemMapper, never()).insert((UserItem) any());
     }
 
     @Test
