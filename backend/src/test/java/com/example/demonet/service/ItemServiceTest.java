@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demonet.entity.Item;
 import com.example.demonet.mapper.ItemMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,6 +32,18 @@ class ItemServiceTest {
     @Mock private ItemMapper itemMapper;
     @Mock private JdbcTemplate jdbcTemplate;
     @Mock private ObjectMapper objectMapper;
+
+    @BeforeEach
+    void initTableInfo() {
+        // MyBatis-Plus LambdaQueryWrapper needs TableInfoHelper, which isn't
+        // initialized in pure Mockito tests. Use reflection for CI compatibility.
+        try {
+            Class<?> clazz = Class.forName("com.baomidou.mybatisplus.core.toolkit.TableInfoHelper");
+            clazz.getMethod("initTableInfo", Class.class).invoke(null, (Object) null, Item.class);
+        } catch (Exception ignored) {
+            // TableInfoHelper not available on this CI — tests using lambdaQuery will NPE
+        }
+    }
 
     @Test
     void getBySlug_found() {

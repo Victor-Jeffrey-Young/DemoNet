@@ -41,15 +41,18 @@ class SteamGridDBServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(jdbcTemplate.queryForObject(
-                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'"),
-                eq(String.class)))
-                .thenReturn("test-sgdb-key");
+        // jdbcTemplate stub moved to individual tests that need it
+        // to avoid Mockito UnnecessaryStubbingException for tests
+        // that don't call the DB (findPosterUrl_emptyApiKey overrides it).
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void findPosterUrl_success() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-sgdb-key");
         Map<String, Object> gameResp = Map.of(
                 "success", true,
                 "data", Map.of("id", 12345)
@@ -60,7 +63,7 @@ class SteamGridDBServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(gameResp).doReturn(gridResp)
@@ -75,13 +78,17 @@ class SteamGridDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void findPosterUrl_gameNotFound() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-sgdb-key");
         Map<String, Object> gameResp = Map.of(
                 "success", false,
                 "data", null
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(gameResp).when(responseSpec).body(any(ParameterizedTypeReference.class));
@@ -94,6 +101,10 @@ class SteamGridDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void findPosterUrl_noGrids() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-sgdb-key");
         Map<String, Object> gameResp = Map.of(
                 "success", true,
                 "data", Map.of("id", 12345)
@@ -104,7 +115,7 @@ class SteamGridDBServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(gameResp).doReturn(gridResp)
@@ -131,8 +142,12 @@ class SteamGridDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void findPosterUrl_apiThrows() {
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'"),
+                eq(String.class)))
+                .thenReturn("test-sgdb-key");
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).header(anyString(), anyString());
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doThrow(new RuntimeException("API error")).when(responseSpec).body(any(ParameterizedTypeReference.class));
