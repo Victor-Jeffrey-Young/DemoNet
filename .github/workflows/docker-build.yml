@@ -1,12 +1,8 @@
 # =============================================================================
 # DemoNet Docker 镜像构建 — 推送到 GHCR
 # =============================================================================
-# CI 通过后，复用已有构建产物打包 Docker 镜像并推送。
-# 触发条件：
-#   - main 分支代码推送
-#   - 语义化版本标签（如 v1.2.3）
-#
-# 使用 .github/docker/Dockerfile.*（仅复制预构建产物，不重复编译）。
+# 自包含构建，不从其他工作流下载产物（GitHub Actions 无法跨工作流共享）。
+# 触发条件：push → main 或语义化版本标签。
 # =============================================================================
 name: 构建 Docker 镜像
 
@@ -20,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '22'
+  PNPM_VERSION: '11.10.0'
   REGISTRY: ghcr.io
 
 jobs:
@@ -49,18 +48,50 @@ jobs:
           echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
-      # ---- 前端镜像 ----
-      - name: 下载前端构建产物
-        uses: actions/download-artifact@v4
+      # ---- 后端：编译 + 打包 JAR ----
+      - name: 安装 JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
         with:
-          name: 前端产物
-          path: frontend/dist
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: 打包后端 JAR
+        working-directory: backend
+        run: mvn -B -ntp package -DskipTests
+
+      - name: 准备后端 JAR
+        run: |
+          cp backend/target/*.jar backend/target/app.jar
+          ls -lh backend/target/app.jar
+
+      # ---- 前端：安装依赖 + 构建 ----
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 安装 Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: 安装前端依赖
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建前端
+        working-directory: frontend
+        run: pnpm build
 
       - name: 验证前端产物
         run: |
           ls -lh frontend/dist/
           test -d frontend/dist && echo "前端产物就绪"
 
+      # ---- Docker 构建 ----
       - name: 设置 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -76,19 +107,6 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
           provenance: false
-
-      # ---- 后端镜像 ----
-      - name: 下载后端 JAR 产物
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-jar
-          path: backend-jar-download
-
-      - name: 准备 JAR
-        run: |
-          mkdir -p backend/target
-          cp backend-jar-download/*.jar backend/target/app.jar
-          ls -lh backend/target/app.jar
 
       - name: 构建并推送后端镜像
         uses: docker/build-push-action@v6
@@ -112,5 +130,3 @@ jobs:
           echo "|------|------|" >> $GITHUB_STEP_SUMMARY
           echo "| \`demonet-frontend\` | \`latest\`, \`${{ steps.meta.outputs.sha }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| \`demonet-backend\` | \`latest\`, \`${{ steps.meta.outputs.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "镜像已推送到 \`ghcr.io/${{ github.repository }}\`" >> $GITHUB_STEP_SUMMARY
