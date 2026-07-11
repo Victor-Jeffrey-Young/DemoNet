@@ -87,7 +87,7 @@ class SteamServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(appResponse).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
@@ -119,7 +119,7 @@ class SteamServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(appResponse).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
@@ -132,7 +132,7 @@ class SteamServiceTest {
     @Test
     void fetchAppDetail_apiThrows() {
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doThrow(new RuntimeException("Timeout")).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
@@ -165,7 +165,7 @@ class SteamServiceTest {
         );
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
-        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(String.class));
+        doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString(), isA(Object.class));
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doReturn(response1).when(responseSpec).body(any(ParameterizedTypeReference.class));
 

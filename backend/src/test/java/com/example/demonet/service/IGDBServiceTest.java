@@ -48,10 +48,18 @@ class IGDBServiceTest {
 
     @Mock
     private RestClient.ResponseSpec responseSpec;
-
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        // jdbcTemplate stubs moved to individual tests that need them
+        // to avoid Mockito UnnecessaryStubbingException.
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchGames_returnsResults() {
+        when(valueOperations.get("igdb:token")).thenReturn(null);
+        // Mock DB credentials for OAuth flow
         when(jdbcTemplate.queryForObject(
                 eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_ID'"),
                 eq(String.class)))
@@ -60,12 +68,6 @@ class IGDBServiceTest {
                 eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_SECRET'"),
                 eq(String.class)))
                 .thenReturn("test-client-secret");
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    void searchGames_returnsResults() {
-        when(valueOperations.get("igdb:token")).thenReturn(null);
 
         Map<String, Object> tokenResponse = Map.of(
                 "access_token", "test-access-token",
@@ -110,7 +112,7 @@ class IGDBServiceTest {
         doReturn(requestBodyUriSpec).when(restClient).post();
         doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());
         doReturn(requestBodyUriSpec).when(requestBodyUriSpec).body(any());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).retrieve();
+        doReturn(responseSpec).when(requestBodyUriSpec).retrieve();
         doReturn(null).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
         List<Item> results = igdbService.searchGames("Test", 10);

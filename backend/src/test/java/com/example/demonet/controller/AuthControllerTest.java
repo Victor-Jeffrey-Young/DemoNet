@@ -52,8 +52,8 @@ class AuthControllerTest {
                         new AuthController(authService, redisTemplate, appSettingMapper))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
-        // Mock Redis ops for rate limiting (increment returns 1, then OK)
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        // Note: Redis stub moved to individual test methods to avoid
+        // Mockito UnnecessaryStubbingException for tests that don't use it.
     }
 
     @Test
@@ -71,6 +71,7 @@ class AuthControllerTest {
 
     @Test
     void register_success() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.increment(anyString())).thenReturn(1L);
         when(authService.register(eq("testuser"), eq("test@example.com"), eq("Pass1234"), isNull(), isNull()))
                 .thenReturn(100L);
@@ -105,6 +106,7 @@ class AuthControllerTest {
 
     @Test
     void register_rateLimited_returns429() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.increment(anyString())).thenReturn(5L);  // > 3 = rate limited
 
         mockMvc.perform(post("/api/auth/register")
@@ -116,6 +118,7 @@ class AuthControllerTest {
 
     @Test
     void login_success() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.increment(anyString())).thenReturn(1L);
         when(authService.login("testuser", "Pass1234"))
                 .thenReturn(Map.of("token", "jwt-token-xxx", "message", "登录成功"));
@@ -130,6 +133,7 @@ class AuthControllerTest {
 
     @Test
     void login_invalidCredentials_returns401() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.increment(anyString())).thenReturn(1L);
         when(authService.login("baduser", "wrongpass"))
                 .thenThrow(new BusinessException(HttpStatus.UNAUTHORIZED, "用户名或密码错误"));
@@ -152,6 +156,7 @@ class AuthControllerTest {
 
     @Test
     void login_rateLimited_returns429() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.increment(anyString())).thenReturn(10L);  // > 5 = rate limited
 
         mockMvc.perform(post("/api/auth/login")
