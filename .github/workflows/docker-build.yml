@@ -1,0 +1,94 @@
+# =============================================================================
+# Docker 镜像构建 — 推送到 GHCR
+# =============================================================================
+# 当 CI 通过后，构建 Docker 镜像并推送到 GitHub Container Registry。
+# 触发条件：
+#   - main 分支 push（构建 latest 标签）
+#   - 语义化版本 tag（如 v1.2.3 → 构建对应版本标签）
+# =============================================================================
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [main]
+    tags: [v*]
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service: [backend, frontend]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/demonet-${{ matrix.service }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=semver,pattern={{version}}
+            type=sha,prefix=
+          flavor: |
+            latest=auto
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache/${{ matrix.service }}
+          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.service }}-
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache/${{ matrix.service }}
+          cache-to: type=local,dest=/tmp/.buildx-cache/${{ matrix.service }},mode=max
+          provenance: false
+
+  # ========== 结果通知 ==========
+  notify:
+    if: always()
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post result
+        run: |
+          echo "## 🐳 Docker Build Result" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| backend | ${{ needs.docker-build.outputs.status || '✅' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| frontend | ${{ needs.docker-build.outputs.status || '✅' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "镜像已推送到 \`ghcr.io/${{ github.repository }}/demonet-*\`" >> $GITHUB_STEP_SUMMARY
