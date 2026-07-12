@@ -136,9 +136,9 @@ class SteamServiceTest {
         doReturn(responseSpec).when(requestHeadersUriSpec).retrieve();
         doThrow(new RuntimeException("Timeout")).when(responseSpec).body(any(ParameterizedTypeReference.class));
 
-        Item result = steamService.fetchAppDetail(99999L);
-
-        assertThat(result).isNull();
+        assertThatThrownBy(() -> steamService.fetchAppDetail(99999L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Timeout");
     }
 
     @SuppressWarnings("unchecked")
