@@ -135,6 +135,7 @@ class IGDBServiceTest {
         String gameResponse = "[]";
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(String.class)).thenReturn(gameResponse);
@@ -159,6 +160,7 @@ class IGDBServiceTest {
 
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(String.class)).thenReturn(gameResponse);

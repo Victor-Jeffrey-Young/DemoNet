@@ -8,16 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.support.WebDataBinderFactory;
-import org.springframework.web.context.request.NativeWebRequest;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.util.List;
 import java.util.Map;
@@ -25,12 +20,13 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.withSettings;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * ReviewController 单元测试（Standalone MockMvc）。
- * 使用 SecurityContextHolder + 自定义 HandlerMethodArgumentResolver 解析 Authentication 参数。
+ * 使用 AuthenticationPrincipalArgumentResolver 注册 Authentication 参数解析器。
  */
 @ExtendWith(MockitoExtension.class)
 class ReviewControllerTest {
@@ -42,10 +38,8 @@ class ReviewControllerTest {
 
     @BeforeEach
     void setUp() {
-        SecurityContextHolder.getContext().setAuthentication(mockAuth(1L));
-
         mockMvc = MockMvcBuilders.standaloneSetup(new ReviewController(reviewService))
-                .setCustomArgumentResolvers(new AuthResolver())
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -67,6 +61,8 @@ class ReviewControllerTest {
         when(reviewService.create(anyLong(), eq(100L), eq(5), eq("Great!"))).thenReturn(review);
 
         mockMvc.perform(post("/api/reviews")
+                        .with(authentication(mockAuth(1L)))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"itemId\":100,\"rating\":5,\"comment\":\"Great!\"}"))
                 .andExpect(status().isOk())
@@ -112,26 +108,12 @@ class ReviewControllerTest {
     void delete_success() throws Exception {
         doNothing().when(reviewService).delete(1L, 1L);
 
-        mockMvc.perform(delete("/api/reviews/1"))
+        mockMvc.perform(delete("/api/reviews/1")
+                        .with(authentication(mockAuth(1L)))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("删除成功"));
 
         verify(reviewService).delete(1L, 1L);
-    }
-
-    /**
-     * 自定义 HandlerMethodArgumentResolver：从 SecurityContextHolder 提供 Authentication 参数。
-     */
-    private static class AuthResolver implements HandlerMethodArgumentResolver {
-        @Override
-        public boolean supportsParameter(MethodParameter parameter) {
-            return Authentication.class.isAssignableFrom(parameter.getParameterType());
-        }
-
-        @Override
-        public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                      NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-            return SecurityContextHolder.getContext().getAuthentication();
-        }
     }
 }
