@@ -85,7 +85,7 @@ class ItemControllerTest {
 
         mockMvc.perform(get("/api/items/nonexistent"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(content().string(""));
     }
 
     @Test

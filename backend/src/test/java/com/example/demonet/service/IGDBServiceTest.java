@@ -85,13 +85,13 @@ class IGDBServiceTest {
                 + "\"involved_companies\":[{\"company\":{\"name\":\"Test Studio\"},\"developer\":true,\"publisher\":true}],"
                 + "\"screenshots\":[],\"videos\":[],\"websites\":[],\"similar_games\":[]}]";
 
-        doReturn(requestBodyUriSpec).when(restClient).post();
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).body(any());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).header(anyString(), anyString());
-        doReturn(responseSpec).when(requestBodyUriSpec).retrieve();
-        doReturn(tokenResponse).when(responseSpec).body(any(ParameterizedTypeReference.class));
-        doReturn(gameResponse).when(responseSpec).body(String.class);
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(tokenResponse);
+        when(responseSpec.body(String.class)).thenReturn(gameResponse);
 
         List<Item> results = igdbService.searchGames("Test", 10);
 
@@ -108,7 +108,6 @@ class IGDBServiceTest {
     @Test
     void searchGames_noToken() {
         when(valueOperations.get("igdb:token")).thenReturn(null);
-        // OAuth flow needs DB credentials
         when(jdbcTemplate.queryForObject(
                 eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_ID'"),
                 eq(String.class)))
@@ -118,11 +117,11 @@ class IGDBServiceTest {
                 eq(String.class)))
                 .thenReturn("test-client-secret");
 
-        doReturn(requestBodyUriSpec).when(restClient).post();
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).body(any());
-        doReturn(responseSpec).when(requestBodyUriSpec).retrieve();
-        doReturn(null).when(responseSpec).body(any(ParameterizedTypeReference.class));
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(null);
 
         List<Item> results = igdbService.searchGames("Test", 10);
 
@@ -134,11 +133,11 @@ class IGDBServiceTest {
         when(valueOperations.get("igdb:token")).thenReturn("cached-token");
 
         String gameResponse = "[]";
-        doReturn(requestBodyUriSpec).when(restClient).post();
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).header(anyString(), anyString());
-        doReturn(responseSpec).when(requestBodyUriSpec).retrieve();
-        doReturn(gameResponse).when(responseSpec).body(String.class);
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn(gameResponse);
 
         List<Item> results = igdbService.searchGames("Test", 10);
 
@@ -158,11 +157,11 @@ class IGDBServiceTest {
                 + "\"genres\":[],\"platforms\":[],\"themes\":[],\"game_modes\":[],"
                 + "\"screenshots\":[],\"videos\":[],\"websites\":[],\"similar_games\":[]}]";
 
-        doReturn(requestBodyUriSpec).when(restClient).post();
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).header(anyString(), anyString());
-        doReturn(responseSpec).when(requestBodyUriSpec).retrieve();
-        doReturn(gameResponse).when(responseSpec).body(String.class);
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn(gameResponse);
 
         Item result = igdbService.fetchGameById(100);
 
@@ -175,11 +174,11 @@ class IGDBServiceTest {
     void fetchGameById_emptyResponse() {
         when(valueOperations.get("igdb:token")).thenReturn("cached-token");
 
-        doReturn(requestBodyUriSpec).when(restClient).post();
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).uri(anyString());
-        doReturn(requestBodyUriSpec).when(requestBodyUriSpec).header(anyString(), anyString());
-        doReturn(responseSpec).when(requestBodyUriSpec).retrieve();
-        doReturn("[]").when(responseSpec).body(String.class);
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn("[]");
 
         Item result = igdbService.fetchGameById(100);
 
