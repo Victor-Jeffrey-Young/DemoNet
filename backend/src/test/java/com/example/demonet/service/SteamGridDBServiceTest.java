@@ -10,6 +10,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.client.RestClient;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,10 +83,9 @@ class SteamGridDBServiceTest {
                 eq("SELECT setting_value FROM app_settings WHERE setting_key = 'STEAMGRIDDB_API_KEY'"),
                 eq(String.class)))
                 .thenReturn("test-sgdb-key");
-        Map<String, Object> gameResp = Map.of(
-                "success", false,
-                "data", null
-        );
+        Map<String, Object> gameResp = new HashMap<>();
+        gameResp.put("success", false);
+        gameResp.put("data", null);
 
         doReturn(requestHeadersUriSpec).when(restClient).get();
         doReturn(requestHeadersUriSpec).when(requestHeadersUriSpec).uri(anyString());

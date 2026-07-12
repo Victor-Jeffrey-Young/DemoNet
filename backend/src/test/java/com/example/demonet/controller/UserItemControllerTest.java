@@ -18,6 +18,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.withSettings;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -38,6 +39,7 @@ class UserItemControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new UserItemController(userItemService))
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .apply(springSecurity())
                 .build();
     }
 
