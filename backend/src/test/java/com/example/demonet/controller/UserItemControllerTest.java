@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -19,34 +18,30 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.withSettings;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * UserItemController 单元测试（Standalone MockMvc）。
- * 使用 AuthenticationPrincipalArgumentResolver + authentication() PostProcessor。
+ * UserItemController 单元测试。
+ * 通过 MockHttpServletRequest principal 注入 Authentication 参数。
  */
 @ExtendWith(MockitoExtension.class)
 class UserItemControllerTest {
 
     private MockMvc mockMvc;
+    private Authentication auth;
 
     @Mock
     private UserItemService userItemService;
 
     @BeforeEach
     void setUp() {
+        auth = mock(Authentication.class, withSettings().lenient());
+        when(auth.getPrincipal()).thenReturn(1L);
+
         mockMvc = MockMvcBuilders.standaloneSetup(new UserItemController(userItemService))
-                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
-    }
-
-    private Authentication mockAuth(Long userId) {
-        Authentication auth = mock(Authentication.class, withSettings().lenient());
-        when(auth.getPrincipal()).thenReturn(userId);
-        return auth;
     }
 
     @Test
@@ -59,8 +54,7 @@ class UserItemControllerTest {
         when(userItemService.saveOrUpdate(eq(1L), eq(100L), eq("want_to_play"))).thenReturn(ui);
 
         mockMvc.perform(post("/api/user/items")
-                        .with(authentication(mockAuth(1L)))
-                        .with(csrf())
+                        .principal(auth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"itemId\":100,\"status\":\"want_to_play\"}"))
                 .andExpect(status().isOk())
@@ -89,7 +83,7 @@ class UserItemControllerTest {
                 .thenReturn(List.of(Map.of("itemId", 100L, "status", "played")));
 
         mockMvc.perform(get("/api/user/items")
-                        .with(authentication(mockAuth(1L)))
+                        .principal(auth)
                         .param("status", "played"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].itemId").value(100));
@@ -104,8 +98,7 @@ class UserItemControllerTest {
         ui.setStatus("played");
         when(userItemService.getStatus(1L, 100L)).thenReturn(ui);
 
-        mockMvc.perform(get("/api/user/items/100")
-                        .with(authentication(mockAuth(1L))))
+        mockMvc.perform(get("/api/user/items/100").principal(auth))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("played"));
     }
@@ -114,19 +107,16 @@ class UserItemControllerTest {
     void getOne_notFound() throws Exception {
         when(userItemService.getStatus(1L, 999L)).thenReturn(null);
 
-        mockMvc.perform(get("/api/user/items/999")
-                        .with(authentication(mockAuth(1L))))
+        mockMvc.perform(get("/api/user/items/999").principal(auth))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(content().string(""));
     }
 
     @Test
     void remove_success() throws Exception {
         doNothing().when(userItemService).remove(1L, 100L);
 
-        mockMvc.perform(delete("/api/user/items/100")
-                        .with(authentication(mockAuth(1L)))
-                        .with(csrf()))
+        mockMvc.perform(delete("/api/user/items/100").principal(auth))
                 .andExpect(status().isOk());
 
         verify(userItemService).remove(1L, 100L);

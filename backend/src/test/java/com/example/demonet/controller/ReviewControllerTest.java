@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -20,34 +19,30 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.withSettings;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * ReviewController 单元测试（Standalone MockMvc）。
- * 使用 AuthenticationPrincipalArgumentResolver 注册 Authentication 参数解析器。
+ * ReviewController 单元测试。
+ * 通过 MockHttpServletRequest principal 注入 Authentication 参数。
  */
 @ExtendWith(MockitoExtension.class)
 class ReviewControllerTest {
 
     private MockMvc mockMvc;
+    private Authentication auth;
 
     @Mock
     private ReviewService reviewService;
 
     @BeforeEach
     void setUp() {
+        auth = mock(Authentication.class, withSettings().lenient());
+        when(auth.getPrincipal()).thenReturn(1L);
+
         mockMvc = MockMvcBuilders.standaloneSetup(new ReviewController(reviewService))
-                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
-    }
-
-    private Authentication mockAuth(Long userId) {
-        Authentication auth = mock(Authentication.class, withSettings().lenient());
-        when(auth.getPrincipal()).thenReturn(userId);
-        return auth;
     }
 
     @Test
@@ -61,8 +56,7 @@ class ReviewControllerTest {
         when(reviewService.create(anyLong(), eq(100L), eq(5), eq("Great!"))).thenReturn(review);
 
         mockMvc.perform(post("/api/reviews")
-                        .with(authentication(mockAuth(1L)))
-                        .with(csrf())
+                        .principal(auth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"itemId\":100,\"rating\":5,\"comment\":\"Great!\"}"))
                 .andExpect(status().isOk())
@@ -108,9 +102,7 @@ class ReviewControllerTest {
     void delete_success() throws Exception {
         doNothing().when(reviewService).delete(1L, 1L);
 
-        mockMvc.perform(delete("/api/reviews/1")
-                        .with(authentication(mockAuth(1L)))
-                        .with(csrf()))
+        mockMvc.perform(delete("/api/reviews/1").principal(auth))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("删除成功"));
 

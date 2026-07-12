@@ -176,11 +176,12 @@ class IGDBServiceTest {
     void fetchGameById_emptyResponse() {
         when(valueOperations.get("igdb:token")).thenReturn("cached-token");
 
-        when(restClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.body(String.class)).thenReturn("[]");
+        lenient().when(restClient.post()).thenReturn(requestBodyUriSpec);
+        lenient().when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        lenient().when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
+        lenient().when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
+        lenient().when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        lenient().when(responseSpec.body(String.class)).thenReturn("[]");
 
         Item result = igdbService.fetchGameById(100);
 
