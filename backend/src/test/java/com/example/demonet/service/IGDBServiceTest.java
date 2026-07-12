@@ -87,7 +87,7 @@ class IGDBServiceTest {
 
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(tokenResponse);
@@ -119,7 +119,7 @@ class IGDBServiceTest {
 
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(null);
 
