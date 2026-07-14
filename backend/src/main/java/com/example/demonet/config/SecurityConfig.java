@@ -30,8 +30,10 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/config").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/scenes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tags").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tags/items/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/item/**").permitAll()

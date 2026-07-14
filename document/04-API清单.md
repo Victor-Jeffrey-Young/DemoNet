@@ -20,6 +20,12 @@
 | POST | `/api/auth/login` | 登录，返回 JWT token |
 | GET | `/api/auth/config` | 公开配置（Turnstile site key、邀请码开关状态） |
 | GET | `/api/categories/visible` | 前台可见品类列表（按 sort_order 排序，仅 visible=1） |
+| GET | `/api/scenes` | 公开场景摘要，`limit` 取 1–6、默认 4；仅 visible=1 |
+| GET | `/api/scenes/{slug}` | 公开场景详情和已发布的有序条目；隐藏或不存在时返回 404 |
+
+### 场景策展接口
+
+`GET /api/scenes` 返回 `slug`、`title`、`description`、`coverUrl` 与 `constraintsJson`。`GET /api/scenes/{slug}` 在此基础上返回 `items`；每个条目只包含公开内容字段和面向用户的 `reason`，绝不返回后台 `editorNote`。集合按 `display_order` 排序，条目也按集合内的 `display_order` 排序。
 
 ---
 
@@ -70,6 +76,20 @@
 | GET | `/api/admin/carousel/{type}` | 获取当前轮播序列 |
 | POST | `/api/admin/carousel/{type}` | 保存轮播序列（body: `{ "itemIds": [...] }`） |
 | DELETE | `/api/admin/carousel/{type}/{itemId}` | 从轮播移除 |
+
+### 场景策展
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/admin/scenes` | 获取全部场景，包含草稿，按 `displayOrder` 排序 |
+| GET | `/api/admin/scenes/{id}` | 获取单个场景配置 |
+| GET | `/api/admin/scenes/{id}/items` | 获取场景条目、顺序、入选理由及仅后台可见的编辑备注 |
+| POST | `/api/admin/scenes` | 创建场景；body 含 slug、标题、简介、约束 JSON、可见状态和排序 |
+| PUT | `/api/admin/scenes/{id}` | 更新场景配置 |
+| PUT | `/api/admin/scenes/{id}/items` | 原子替换场景条目及顺序；body: `{ "items": [{ "itemId", "reason", "editorNote" }] }` |
+| DELETE | `/api/admin/scenes/{id}` | 删除场景及其关联条目 |
+
+场景条目 API 可以读取和保存 `editorNote`，但公开 `/api/scenes/**` 永不返回它。重复内容 ID、无效的 slug 或非对象形式的 `constraintsJson` 会返回 400；数据库外键保证删除场景时清理关联。
 
 ### 图片上传
 

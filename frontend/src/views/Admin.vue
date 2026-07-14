@@ -9,6 +9,7 @@ import AdminCarouselManager from '../components/admin/AdminCarouselManager.vue'
 import AdminFetchPanel from '../components/admin/AdminFetchPanel.vue'
 import AdminCategoryManager from '../components/admin/AdminCategoryManager.vue'
 import AdminUserManager from '../components/admin/AdminUserManager.vue'
+import AdminSceneManager from '../components/admin/AdminSceneManager.vue'
 import { getAppSettings, updateAppSetting, getInviteCodes, generateInviteCodes } from '../api/admin'
 import { ElMessage } from 'element-plus'
 import { Icon } from '@iconify/vue'
@@ -51,6 +52,7 @@ const tagManagerRef = ref(null)
 const carouselRef = ref(null)
 const fetchPanelRef = ref(null)
 const userManagerRef = ref(null)
+const sceneManagerRef = ref(null)
 
 function handleTabChange(tab) {
   switch (tab) {
@@ -60,6 +62,7 @@ function handleTabChange(tab) {
     case 'carousel': carouselRef.value?.refresh(); break
     case 'fetch': fetchPanelRef.value?.refresh(); break
     case 'users': userManagerRef.value?.refresh(); break
+    case 'scenes': sceneManagerRef.value?.refresh(); break
     case 'settings': loadSettings(); loadInviteCodes(); break
   }
 }
@@ -100,6 +103,9 @@ onMounted(() => {
         </el-tab-pane>
         <el-tab-pane label="轮播管理" name="carousel">
           <AdminCarouselManager ref="carouselRef" />
+        </el-tab-pane>
+        <el-tab-pane label="场景策展" name="scenes">
+          <AdminSceneManager ref="sceneManagerRef" />
         </el-tab-pane>
         <el-tab-pane label="数据抓取" name="fetch">
           <AdminFetchPanel ref="fetchPanelRef" />

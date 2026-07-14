@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { getHotItems, getFeatured, getVisibleCategories } from "../api/item";
+import { getScenes } from "../api/scene";
 import AppCard from "../components/AppCard.vue";
 import SearchBar from "../components/SearchBar.vue";
 import TypeIcon from "../components/TypeIcon.vue";
@@ -11,10 +12,12 @@ import { TYPE_META } from "../constants/types.js";
 const router = useRouter();
 const hotItems = ref([]);
 const featured = ref([]);
+const scenes = ref([]);
 
 // Carousel state
 const hotIdx = ref(0);
 const featIdx = ref(0);
+const sceneIdx = ref(0);
 const cardWidth = ref(320); // default, updated on resize
 const cardsPerPage = ref(1);
 const GAP = 20; // gap-5
@@ -47,14 +50,18 @@ function calcDimensions() {
 // Page-aware navigation
 const hotMaxIdx = computed(() => Math.max(0, Math.min(HOT_TOTAL, hotItems.value.length) - cardsPerPage.value));
 const featMaxIdx = computed(() => Math.max(0, featured.value.length - cardsPerPage.value));
+const sceneMaxIdx = computed(() => Math.max(0, scenes.value.length - cardsPerPage.value));
 
 function hotNext() { hotIdx.value = Math.min(hotIdx.value + 1, hotMaxIdx.value); }
 function hotPrev() { hotIdx.value = Math.max(hotIdx.value - 1, 0); }
 function featNext() { featIdx.value = Math.min(featIdx.value + 1, featMaxIdx.value); }
 function featPrev() { featIdx.value = Math.max(featIdx.value - 1, 0); }
+function sceneNext() { sceneIdx.value = Math.min(sceneIdx.value + 1, sceneMaxIdx.value); }
+function scenePrev() { sceneIdx.value = Math.max(sceneIdx.value - 1, 0); }
 
 const hotOffset = computed(() => -hotIdx.value * (cardWidth.value + GAP));
 const featOffset = computed(() => -featIdx.value * (cardWidth.value + GAP));
+const sceneOffset = computed(() => -sceneIdx.value * (cardWidth.value + GAP));
 
 onMounted(async () => {
     calcDimensions();
@@ -78,6 +85,12 @@ onMounted(async () => {
     }
 
     try {
+        scenes.value = (await getScenes({ limit: 4 })) || [];
+    } catch (e) {
+        // 场景是渐进式入口；接口未就绪时不影响既有首页浏览。
+    }
+
+    try {
         const vis = await getVisibleCategories();
         categories.value = vis.filter(s => s.visible).map(s => ({ key: s.type, ...TYPE_META[s.type] }));
     } catch (e) { /* fallback to all */
@@ -95,6 +108,10 @@ function goList(type) {
 
 function goItem(slug) {
     router.push(`/item/${slug}`);
+}
+
+function goScene(slug) {
+    router.push(`/scene/${slug}`);
 }
 
 
@@ -178,6 +195,57 @@ function goItem(slug) {
                         探索详情
                     </button>
                 </div>
+            </div>
+        </section>
+
+        <!-- ======= Curated Scenarios ======= -->
+        <section v-if="scenes.length > 1" class="py-8">
+            <div class="flex justify-between items-end px-6 mb-6 max-w-[90%] mx-auto">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">不知道做什么？从场景开始</h2>
+                    <p class="text-gray-400 text-sm mt-1">先看时间、人数和条件，再决定要体验什么</p>
+                </div>
+            </div>
+
+            <div class="relative">
+                <button
+                    v-if="sceneIdx > 0"
+                    @click="scenePrev"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-gray-900/90 backdrop-blur-sm border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-all shadow-lg hover:scale-105"
+                    aria-label="上一个场景"
+                >
+                    <el-icon :size="24" class="text-white"><ArrowLeft /></el-icon>
+                </button>
+
+                <div class="overflow-hidden" :style="{ paddingLeft: 'calc(5% + 1.5rem)' }">
+                    <div class="flex gap-5 transition-transform duration-500 ease-out will-change-transform" :style="{ transform: `translateX(${sceneOffset}px)` }">
+                        <button
+                            v-for="scene in scenes"
+                            :key="scene.slug"
+                            type="button"
+                            @click="goScene(scene.slug)"
+                            class="shrink-0 w-[300px] md:w-[360px] min-h-[220px] text-left rounded-3xl overflow-hidden border border-amber-900/50 bg-amber-950/30 hover:border-amber-500/60 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 group relative"
+                        >
+                            <div v-if="scene.coverUrl" class="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 group-hover:scale-105 transition duration-500" :style="{ backgroundImage: 'url(' + scene.coverUrl + ')' }" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/85 to-gray-900/40" />
+                            <div class="relative z-10 flex h-full flex-col p-6">
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-amber-400">场景策展</span>
+                                <h3 class="mt-2 text-xl font-bold text-white group-hover:text-amber-200 transition-colors">{{ scene.title }}</h3>
+                                <p class="mt-2 text-sm leading-6 text-gray-300 line-clamp-3">{{ scene.description }}</p>
+                                <span class="mt-auto pt-5 text-sm font-semibold text-amber-300">查看条件与候选 <span aria-hidden="true">→</span></span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    v-if="sceneIdx < sceneMaxIdx"
+                    @click="sceneNext"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-gray-900/90 backdrop-blur-sm border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-all shadow-lg hover:scale-105"
+                    aria-label="下一个场景"
+                >
+                    <el-icon :size="24" class="text-white"><ArrowRight /></el-icon>
+                </button>
             </div>
         </section>
 
