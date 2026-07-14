@@ -1,0 +1,190 @@
+# Claude Code 中文化配置修复记录
+
+**记录时间**: 2026-07-15
+**问题**: macOS 上的 Claude Code 斜杠命令（skills）未显示中文化，与 Windows 不一致
+
+---
+
+## 问题诊断
+
+### 根本原因
+
+`claude-code-zh-cn` 插件的**技能翻译功能默认是禁用的**：
+
+1. **环境变量缺失**: `ZH_CN_SKILL_I18N_ENABLE` 未设置（默认为 `0`）
+2. **符号链接未跟随**: 本地技能通过 `.cc-switch` 符号链接管理，插件默认不跟随符号链接（`ZH_CN_SKILL_I18N_FOLLOW_SYMLINKS=0`）
+
+### 配置状态对比
+
+| 配置项 | Windows | macOS（修复前） | macOS（修复后） |
+|--------|---------|----------------|----------------|
+| `ZH_CN_SKILL_I18N_ENABLE` | `1` | `0`（缺失） | `1` ✅ |
+| `ZH_CN_SKILL_I18N_FOLLOW_SYMLINKS` | `1` | `0`（缺失） | `1` ✅ |
+| 技能翻译状态 | ✅ 已翻译 | ❌ 未翻译 | ✅ 已翻译 |
+
+---
+
+## 修复步骤
+
+### 1. 更新 `~/.claude/settings.json`
+
+**⚠️ 注意**: `~/.claude/settings.json` 包含敏感凭据（`ANTHROPIC_AUTH_TOKEN`、`ANTHROPIC_BASE_URL`），**不应提交到 Git 仓库**。
+
+仅在本地修改以下配置：
+
+```json
+{
+  "env": {
+    // ... 其他配置 ...
+    "ZH_CN_SKILL_I18N_ENABLE": "1",          // 新增：启用技能翻译
+    "ZH_CN_SKILL_I18N_FOLLOW_SYMLINKS": "1"  // 新增：跟随符号链接
+  }
+}
+```
+
+### 2. 手动执行翻译
+
+```bash
+bash ~/.claude/plugins/claude-code-zh-cn/skill-i18n/translate-skills.sh --root ~/.claude
+```
+
+**翻译结果**:
+- 待翻译: 35 条唯一 / 67 项
+- 完成: 写入 67，跳过 0
+
+### 3. 验证翻译效果
+
+```bash
+# 检查翻译标记
+grep -l "x-zh-cn-translated: true" ~/.claude/skills/*/SKILL.md | wc -l
+# 输出: 31 个技能已翻译
+
+# 查看翻译示例
+head -3 ~/.claude/skills/codebase-memory/SKILL.md
+# 输出:
+# description: "使用代码库知识图谱进行结构化代码查询。触发场景：..."
+# description_en: "Use the codebase knowledge graph for structural code queries..."
+# x-zh-cn-translated: true
+```
+
+---
+
+## 修复前后对比
+
+### 修复前（macOS）
+
+```
+$ claude
+> /skill
+
+Available skills:
+- api-and-interface-design: Guides stable API and interface design...
+- code-review-and-quality: Conducts multi-axis code review...
+- frontend-ui-engineering: Builds production-quality UIs...
+```
+
+### 修复后（macOS）
+
+```
+$ claude
+> /skill
+
+Available skills:
+- api-and-interface-design: 指导稳定的API和接口设计...
+- code-review-and-quality: 开展多维度代码审查...
+- frontend-ui-engineering: 构建生产级UI...
+```
+
+---
+
+## 已翻译的技能清单
+
+| 技能名 | 中文描述 |
+|--------|---------|
+| `api-and-interface-design` | 指导稳定的API和接口设计 |
+| `browser-testing-with-devtools` | 通过Chrome DevTools MCP在真实浏览器中测试 |
+| `ci-cd-and-automation` | 自动化CI/CD流水线搭建 |
+| `code-review-and-quality` | 开展多维度代码审查 |
+| `code-simplification` | 简化代码以提升清晰度 |
+| `codebase-memory` | 使用代码库知识图谱进行结构化代码查询 |
+| `context-engineering` | 优化agent上下文配置 |
+| `debugging-and-error-recovery` | 指导系统性根因调试 |
+| `deprecation-and-migration` | 管理废弃与迁移 |
+| `documentation-and-adrs` | 记录决策与文档 |
+| `doubt-driven-development` | 在每一项重要决策落地前进行对抗性审查 |
+| `frontend-ui-engineering` | 构建生产级UI |
+| `git-workflow-and-versioning` | 规范git工作流实践 |
+| `idea-refine` | 通过结构化的发散与收敛思维打磨原始想法 |
+| `incremental-implementation` | 增量交付变更 |
+| `interview-me` | 挖掘用户的真实需求 |
+| `observability-and-instrumentation` | 为代码添加可观测性 |
+| `performance-optimization` | 优化应用性能 |
+| `planning-and-task-breakdown` | 将工作拆分为有序任务 |
+| `security-and-hardening` | 加固代码以抵御漏洞 |
+| `shipping-and-launch` | 筹备生产发布 |
+| `source-driven-development` | 将每个实现决策建立在官方文档之上 |
+| `spec-driven-development` | 在编码前创建规格说明 |
+| `test-driven-development` | 以测试驱动开发 |
+| `using-agent-skills` | 发现并调用agent技能 |
+
+**以及 7 个自定义命令**: `/build`、`/plan`、`/review`、`/ship`、`/spec`、`/test`、`/webperf`、`/code-simplify`
+
+---
+
+## 防止问题复发
+
+### 配置同步
+
+建议在 Windows 和 macOS 之间同步 `~/.claude/settings.json` 的以下配置：
+
+```json
+{
+  "env": {
+    "ZH_CN_SKILL_I18N_ENABLE": "1",
+    "ZH_CN_SKILL_I18N_FOLLOW_SYMLINKS": "1"
+  }
+}
+```
+
+### 插件更新后重新翻译
+
+如果 `claude-code-zh-cn` 插件更新或安装了新的 skills，需要重新运行翻译：
+
+```bash
+bash ~/.claude/plugins/claude-code-zh-cn/skill-i18n/translate-skills.sh --root ~/.claude
+```
+
+### 查看待翻译项目
+
+```bash
+bash ~/.claude/plugins/claude-code-zh-cn/skill-i18n/translate-skills.sh --root ~/.claude --dry-run
+```
+
+### 一键还原英文
+
+如果翻译出现问题，可以一键还原：
+
+```bash
+node ~/.claude/plugins/claude-code-zh-cn/skill-i18n/restore.js --all
+```
+
+---
+
+## 安全注意事项
+
+**⚠️ 重要**: `~/.claude/settings.json` 包含敏感凭据，**绝对不要提交到 Git 仓库**：
+
+- `ANTHROPIC_AUTH_TOKEN`: 认证令牌
+- `ANTHROPIC_BASE_URL`: 内部 API 地址
+- 其他环境变量可能包含 API 密钥
+
+Git 已通过 `.gitignore` 排除 `~/.claude/` 目录，但额外配置（如 `settings.json` 的符号链接或同步）仍需小心。
+
+---
+
+## 参考资料
+
+- 插件文档: `~/.claude/plugins/claude-code-zh-cn/skill-i18n/README.md`
+- 插件仓库: https://github.com/taekchef/claude-code-zh-cn
+- Claude Code 设置: `~/.claude/settings.json`（本地，未提交）
+- 文档整理完成报告: `document/99-文档整理完成报告.md`
