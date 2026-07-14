@@ -27,12 +27,25 @@ services:
       MYSQL_DATABASE: demonet
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
 
   redis:
     image: redis:7-alpine
     container_name: demonet-redis
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -41,15 +54,24 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?请在 .env 中设置 RABBITMQ_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
 
   backend:
-    image: ghcr.io/${REGISTRY_OWNER:?请在 .env 中设置 REGISTRY_OWNER}/demonet-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${REGISTRY_OWNER:?请在 .env 中设置 REGISTRY_OWNER}/demonet-backend:${IMAGE_TAG:?请通过 .env.deploy 设置 IMAGE_TAG}
     container_name: demonet-backend
     restart: always
     depends_on:
-      - mysql
-      - redis
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/demonet?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-root}
@@ -69,15 +91,27 @@ services:
     volumes:
       - uploads:/app/uploads
       - logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
   frontend:
-    image: ghcr.io/${REGISTRY_OWNER:?请在 .env 中设置 REGISTRY_OWNER}/demonet-frontend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${REGISTRY_OWNER:?请在 .env 中设置 REGISTRY_OWNER}/demonet-frontend:${IMAGE_TAG:?请通过 .env.deploy 设置 IMAGE_TAG}
     container_name: demonet-frontend
     restart: always
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
 
 volumes:
   mysql_data:
