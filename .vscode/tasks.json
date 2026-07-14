@@ -168,7 +168,14 @@
       "presentation": { "reveal": "always", "panel": "new", "clear": true, "showReuseMessage": true },
       "problemMatcher": {
         "owner": "java",
-        "pattern": [{ "regexp": "^\\[ERROR\\] .*$" }],
+        "fileLocation": ["relative", "${workspaceFolder}/backend"],
+        "pattern": {
+          "regexp": "\\[ERROR\\]\\s+(.*?):\\[(\\d+),(\\d+)\\]\\s+(.*)",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": ".*spring-boot:run.*|Building.*",
