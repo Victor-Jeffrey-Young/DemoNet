@@ -31,6 +31,16 @@ request.interceptors.response.use(
     return res
   },
   (error) => {
+    // 404 静态资源错误（uploads/actuator/swagger）— 静默降级，不弹窗打扰用户
+    if (error.response?.status === 404 && isStaticResourceError(error.config?.url)) {
+      // 仅在开发环境记录 debug 日志
+      if (import.meta.env.DEV) {
+        console.debug('[RequestInterceptor] Static resource not found:', error.config.url)
+      }
+      // 静默返回，不弹窗
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401 || error.response?.status === 403) {
       ElMessage.warning('登录已过期，请重新登录')
       localStorage.removeItem('token')
@@ -43,5 +53,18 @@ request.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+/**
+ * 判断是否为静态资源错误路径
+ * @param {string} url - 请求 URL
+ * @returns {boolean} 是否为静态资源
+ */
+function isStaticResourceError(url) {
+  if (!url) return false
+  return url.startsWith('/uploads/') ||
+         url.startsWith('/actuator/') ||
+         url.startsWith('/swagger-ui/') ||
+         url.startsWith('/v3/api-docs/')
+}
 
 export default request

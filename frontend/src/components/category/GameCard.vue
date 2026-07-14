@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 
 import TypeIcon from '../TypeIcon.vue'
+import LazyImage from '../common/LazyImage.vue'
 
 const props = defineProps({ item: { type: Object, required: true } })
 const router = useRouter()
@@ -28,9 +29,13 @@ const demoUrl = computed(() => {
 <template>
   <div @click="go"
     class="game-card-hover relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer group ring-1 ring-emerald-900/20 hover:ring-emerald-400/50 shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500">
-    <div v-if="item.posterUrl || item.coverUrl"
-      class="card-bg absolute inset-0 bg-cover bg-top transition-transform duration-700"
-      :style="{ backgroundImage: 'url(' + (item.posterUrl || item.coverUrl) + ')' }" />
+    <LazyImage
+      v-if="item.posterUrl || item.coverUrl"
+      :src="item.posterUrl || item.coverUrl"
+      :alt="item.title"
+      fallback-type="poster"
+      class="card-bg absolute inset-0"
+    />
     <div v-else class="card-bg absolute inset-0 bg-gradient-to-br from-emerald-950 via-gray-950 to-black flex items-center justify-center transition-transform duration-700"><TypeIcon type="game" size="40" /></div>
 
     <div v-if="hasDemo" class="absolute top-3 left-3 z-10">
