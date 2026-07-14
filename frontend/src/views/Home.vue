@@ -217,7 +217,7 @@ function goScene(slug) {
                     <el-icon :size="24" class="text-white"><ArrowLeft /></el-icon>
                 </button>
 
-                <div class="overflow-hidden" :style="{ paddingLeft: 'calc(5% + 1.5rem)' }">
+                <div class="overflow-x-clip overflow-y-visible" :style="{ paddingTop: '4px', paddingBottom: '28px', paddingLeft: 'calc(5% + 1.5rem)' }">
                     <div class="flex gap-5 transition-transform duration-500 ease-out will-change-transform" :style="{ transform: `translateX(${sceneOffset}px)` }">
                         <button
                             v-for="scene in scenes"
