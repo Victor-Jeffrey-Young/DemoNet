@@ -6,6 +6,32 @@ export function getAdminItems(params) {
   return request.get('/admin/items', { params })
 }
 
+// ========== 场景策展 ==========
+
+export function getAdminScenes() {
+  return request.get('/admin/scenes')
+}
+
+export function createAdminScene(data) {
+  return request.post('/admin/scenes', data)
+}
+
+export function updateAdminScene(id, data) {
+  return request.put(`/admin/scenes/${id}`, data)
+}
+
+export function getAdminSceneItems(id) {
+  return request.get(`/admin/scenes/${id}/items`)
+}
+
+export function saveAdminSceneItems(id, items) {
+  return request.put(`/admin/scenes/${id}/items`, { items })
+}
+
+export function deleteAdminScene(id) {
+  return request.delete(`/admin/scenes/${id}`)
+}
+
 export function getAdminItem(id) {
   return request.get(`/admin/items/${id}`)
 }
