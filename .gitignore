@@ -18,6 +18,12 @@ dist/
 .reasonix/
 .codebuddy/
 .workbuddy/
+# Claude Code 本地知识库索引（含大体积压缩 DB + 自定义 .gitattributes，不应入库）
+.codebase-memory/
+# Docker 卷数据备份
+.mysql_volume_backup_*/
+# Claude Code 本地会话产物（计划、待办、聊天历史）
+tasks/
 uploads/
 
 # Temp scripts and SQL files in root
