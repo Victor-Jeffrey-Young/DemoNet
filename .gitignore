@@ -13,6 +13,8 @@ dist/
 *.log
 .env
 .env.local
+.env.deploy
+.env.deploy.tmp.*
 .reasonix/
 .codebuddy/
 .workbuddy/
