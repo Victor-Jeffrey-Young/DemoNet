@@ -4,11 +4,8 @@ import com.example.demonet.entity.Item;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.client.RestClient;
@@ -22,44 +19,34 @@ import static org.mockito.Mockito.*;
 
 /**
  * IGDBService 外部 API Mock 测试。
- * mock OAuth token 获取和 API 查询的完整调用链。
- * 注意：restClient.post() 返回 RequestBodyUriSpec（不是 RequestHeadersUriSpec）。
+ * 继承 BaseIGDBServiceTest 提供共享 Mock 对象和辅助方法。
+ *
+ * <h3>测试策略:</h3>
+ * <ul>
+ *   <li>缓存命中的简单场景: 使用 mockTokenCache + mockRestClientChain</li>
+ *   <li>空响应场景: 使用 mockEmptyResponse (宽松模式,避免不必要的 stub 异常)</li>
+ * </ul>
+ *
+ * <p>注意:searchGames_returnsResults 测试完整 OAuth 流程(缓存未命中),
+ * 这是唯一需要复杂 stub 的测试方法。</p>
  */
 @ExtendWith(MockitoExtension.class)
-class IGDBServiceTest {
+class IGDBServiceTest extends BaseIGDBServiceTest {
 
-    @InjectMocks
-    private IGDBService igdbService;
-
-    @Mock
-    private RestClient restClient;
-
-    @Mock
-    private StringRedisTemplate redisTemplate;
-
-    @Mock
-    private JdbcTemplate jdbcTemplate;
-
-    @Mock
-    private ValueOperations<String, String> valueOperations;
-
-    @Mock
-    private RestClient.RequestBodyUriSpec requestBodyUriSpec;
-
-    @Mock
-    private RestClient.ResponseSpec responseSpec;
     @BeforeEach
     void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        // jdbcTemplate stubs moved to individual tests that need them
-        // to avoid Mockito UnnecessaryStubbingException.
+        // 手动初始化 igdbService (因为 @RequiredArgsConstructor 无法在父类 Mockito 环境中自动工作)
+        igdbService = new IGDBService(restClient, redisTemplate, jdbcTemplate);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void searchGames_returnsResults() {
+        // 模拟缓存未命中,触发 OAuth 流程
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("igdb:token")).thenReturn(null);
-        // Mock DB credentials for OAuth flow
+
+        // Mock DB credentials
         when(jdbcTemplate.queryForObject(
                 eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_ID'"),
                 eq(String.class)))
@@ -85,13 +72,16 @@ class IGDBServiceTest {
                 + "\"involved_companies\":[{\"company\":{\"name\":\"Test Studio\"},\"developer\":true,\"publisher\":true}],"
                 + "\"screenshots\":[],\"videos\":[],\"websites\":[],\"similar_games\":[]}]";
 
+        // 完整 mock RestClient 链 (OAuth + executeQuery)
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
+        // OAuth token 请求返回 ParameterizedTypeReference
         when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(tokenResponse);
-        when(responseSpec.body(String.class)).thenReturn(gameResponse);
+        // executeQuery 请求返回 String
+        when(responseSpec.body(eq(String.class))).thenReturn(gameResponse);
 
         List<Item> results = igdbService.searchGames("Test", 10);
 
@@ -107,21 +97,8 @@ class IGDBServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     void searchGames_noToken() {
-        when(valueOperations.get("igdb:token")).thenReturn(null);
-        when(jdbcTemplate.queryForObject(
-                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_ID'"),
-                eq(String.class)))
-                .thenReturn("test-client-id");
-        when(jdbcTemplate.queryForObject(
-                eq("SELECT setting_value FROM app_settings WHERE setting_key = 'IGDB_CLIENT_SECRET'"),
-                eq(String.class)))
-                .thenReturn("test-client-secret");
-
-        when(restClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.body(any(ParameterizedTypeReference.class))).thenReturn(null);
+        // 模拟缓存未命中,但 DB 查询失败(credentials 为空),直接返回空列表
+        mockTokenCache(null);
 
         List<Item> results = igdbService.searchGames("Test", 10);
 
@@ -130,25 +107,19 @@ class IGDBServiceTest {
 
     @Test
     void searchGames_usesCachedToken() {
-        when(valueOperations.get("igdb:token")).thenReturn("cached-token");
-
-        String gameResponse = "[]";
-        when(restClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.body(String.class)).thenReturn(gameResponse);
+        mockTokenCache("cached-token");
+        mockRestClientChain("[]");
 
         List<Item> results = igdbService.searchGames("Test", 10);
 
         assertThat(results).isEmpty();
+        // 搜索模式不发送 body(),验证 body() 未被调用
         verify(requestBodyUriSpec, never()).body(any());
     }
 
     @Test
     void fetchGameById_success() {
-        when(valueOperations.get("igdb:token")).thenReturn("cached-token");
+        mockTokenCache("cached-token");
 
         String gameResponse = "[{\"id\":100,\"name\":\"Specific Game\",\"summary\":\"Detailed.\","
                 + "\"cover\":{\"url\":\"//images.igdb.com/specific.jpg\"},"
@@ -158,12 +129,7 @@ class IGDBServiceTest {
                 + "\"genres\":[],\"platforms\":[],\"themes\":[],\"game_modes\":[],"
                 + "\"screenshots\":[],\"videos\":[],\"websites\":[],\"similar_games\":[]}]";
 
-        when(restClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.body(String.class)).thenReturn(gameResponse);
+        mockRestClientChain(gameResponse);
 
         Item result = igdbService.fetchGameById(100);
 
@@ -174,14 +140,11 @@ class IGDBServiceTest {
 
     @Test
     void fetchGameById_emptyResponse() {
-        when(valueOperations.get("igdb:token")).thenReturn("cached-token");
+        mockTokenCache("cached-token");
 
-        lenient().when(restClient.post()).thenReturn(requestBodyUriSpec);
-        lenient().when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-        lenient().when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodyUriSpec);
-        lenient().when(requestBodyUriSpec.header(anyString(), any())).thenReturn(requestBodyUriSpec);
-        lenient().when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
-        lenient().when(responseSpec.body(String.class)).thenReturn("[]");
+        // 空响应场景:RestClient 调用链可能根本不会被消费
+        // 使用 mockEmptyResponse() 提供宽松的 stub,避免 UnnecessaryStubbingException
+        mockEmptyResponse();
 
         Item result = igdbService.fetchGameById(100);
 

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.withSettings;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static com.example.demonet.test.TestAuthentication.*; // 测试认证工具
 
 /**
  * ReviewController 单元测试。
@@ -37,8 +38,7 @@ class ReviewControllerTest {
 
     @BeforeEach
     void setUp() {
-        auth = mock(Authentication.class, withSettings().lenient());
-        when(auth.getPrincipal()).thenReturn(1L);
+        auth = withUserId(1L); // 使用标准认证工具
 
         mockMvc = MockMvcBuilders.standaloneSetup(new ReviewController(reviewService))
                 .setControllerAdvice(new GlobalExceptionHandler())
